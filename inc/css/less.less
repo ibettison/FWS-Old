@@ -1,0 +1,29 @@
+@colour: #eee;
+@height: 150px;
+
+.padding-standard {
+	padding:10px;
+}
+.border-standard {
+	border: 1px solid #555;
+}
+
+.block {
+	background-color: @colour;
+	width: 30px;
+	height: @height;
+}
+
+.rounded-corners {
+	  -webkit-border-radius: 5px;
+	  -moz-border-radius: 5px;
+	  border-radius: 5px;
+}
+#login-box {
+	background-color: @colour;
+	width: 130px;
+	height: @height;
+	 .rounded-corners;
+	 .padding-standard;
+	 .border-standard;
+}

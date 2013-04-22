@@ -1,0 +1,266 @@
+body {
+	background-color: #BDD9FD;
+	font-family:Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	color:#003366;
+	/*padding:3px;*/
+}
+
+.calendar_main{
+	float:left;
+	width:300px;
+	height:820px;;
+	background-color:#FFFFFF;
+	border-left:1px #6593CF solid;
+	border-right:1px #6593CF solid;
+	border-bottom:1px #6593CF solid;
+	padding-bottom:3px;
+}
+
+.logoff {
+	float:right;
+	height:20px;
+	background: transparent url('../images/logoff-icon.png') no-repeat top left;
+	padding-left:25px;
+	padding-top:3px;
+	padding-right:20px;
+}
+
+.working_space {
+	float:left;
+	margin-left:2px;
+	width:935px;
+	height:820px;
+	background: transparent url('images/flexitimeclocks.gif') no-repeat bottom right;
+	background-color:#FFFFFF;
+	padding-bottom:3px;
+	border-left:1px #6593CF solid;
+	border-right:1px #6593CF solid;
+	border-bottom:1px #6593CF solid;
+}
+
+.top_menu_space, .sub_menu_space {
+	border-bottom: 1px #6593CF solid;
+}
+
+.top_menu_space {
+	height:24px;
+	background-color:#BDD9FD;
+	border-top: 1px #6593CF solid;
+}
+
+.sub_menu_space {
+	padding-left:5px;
+	height:23px;
+	background: transparent url('images/submenu_background.png') repeat;
+}
+
+.sub_menu_button {
+	float:left;
+	padding-top:3px;
+	padding-left:5px;
+	font-size:13px;
+	padding-right:10px;
+}
+
+.sub_menu_button A:link {text-decoration: none; color:#666}
+.sub_menu_button A:visited {text-decoration: none; color:#666}
+.sub_menu_button A:active {text-decoration: none}
+.sub_menu_button A:hover {text-decoration: none; color:#333;}
+
+.header_left, .button_top {
+	background: transparent url('images/header_background.png') repeat;
+}
+
+.header_left {
+	float:left;
+	height:24px;
+	border-top: 1px #6593CF solid;
+	border-bottom: 1px #6593CF solid;
+	width:300px;
+}
+
+.button_choice {
+	background-color:#FC9;
+}
+
+.button_link A:link {text-decoration: none; color:blue}
+.button_link A:visited {text-decoration: none; color:blue}
+.button_link A:active {text-decoration: none}
+.button_link A:hover {text-decoration: none; color: red;}
+	
+.button_top, .button_choice{
+	float:left;
+	height:21px;
+	padding-top:3px;
+	font-family:Geneva, Arial, Helvetica, sans-serif;
+	font-size:14px;
+	text-align:center;
+	width:80px;
+	border-right: 1px #6593CF solid;
+}
+
+.header_text {
+	font-family:Arial, Helvetica, sans-serif;
+	font-size:16px;
+	font-weight:bold;
+	color:#036;
+	padding:3px;
+	padding-left:10px;
+	text-align:left;
+}
+
+.left_body {
+	padding-top:10px;
+	padding-bottom:10px;
+	font-family:Verdana, Geneva, sans-serif;
+}
+
+.left_body_spacer {
+	padding-left:10px;
+	padding-right:10px;
+}
+.left_header {
+	display:block;
+	float:left;
+	font-size:11px;
+	font-weight:bold;
+	width:90px;
+}
+
+.left_text {
+	display: block;
+	overflow:hidden;
+	font-family:Arial, Helvetica, sans-serif;
+	font-size:12px;
+}
+.left_clear {
+	clear:both;
+}
+.calendar_holder {
+	padding-left:7px;
+	background-color:#fff;
+}
+.calendar_header {
+	float:left;
+	text-align:center;
+	background-color:#bfdbff;
+	font-family:Arial, Helvetica, sans-serif;
+	font-size:9px;
+	width:140px;
+	height:13px;
+	margin-top:5px;
+	margin-left:2px;
+	margin-bottom:1px;
+}
+
+.calendar_body {
+	float:left;
+	background-color:#fff;
+	width:140px;
+	height:115px;
+	margin-top:1px;
+	margin-left:2px;
+	margin-bottom:1px;
+	
+}
+
+.calendar_day, .calendar_day_name, .calendar_today{
+	float:left;
+	font-family:Geneva, Arial, Helvetica, sans-serif;
+	font-size:9px;
+	padding-bottom:2px;
+	text-align:right;
+}
+
+.calendar_day {
+	width:18px;
+	background-color:#fff;
+	border:1px #fff solid;
+}
+
+.calendar_day_name {
+	width:18px;
+	background-color:#fff;
+	border:1px #fff solid;
+	border-bottom:1px #bfdbff solid;
+}
+
+.calendar_today {
+	width:15px;
+	margin-left:3px;
+	background-color:#FF9900;
+	border:1px #FF6600 solid;
+}
+
+.calendar_view {
+	float:left;
+	width:300px;
+	margin-bottom:10px;
+	padding-top:3px;
+	padding-bottom:3px;
+	background-color:#FDFAEE;
+	border-top: 1px #FDE31D solid;
+	border-bottom: 1px #FDE31D solid;
+}
+
+.calendar_pic {
+	vertical-align:middle;	
+}
+.request_view, .request_message {
+	float:left;
+	width:300px;
+	margin-top:10px;
+	margin-bottom:10px;
+	padding-top:3px;
+	padding-bottom:5px;
+
+}
+
+.request_message {
+	background-color:#FEDBBC;
+	border-top: 1px #900 solid;
+	border-bottom: 1px #900 solid;
+}
+
+.request_pad {
+	padding-left:10px;
+}
+
+.main_header {
+	padding-top:100px;
+	padding-bottom:10px;
+	font-family:Tahoma, Geneva, sans-serif;
+	font-size:18px;
+	color:#336;
+	text-align:center;
+}
+
+.main_left {
+	margin-left:220px;
+	float:left;
+	background: transparent url('images/flexitimeJuggler.gif') no-repeat;
+	padding-left:20px;
+	width:450px;
+	height:442px;
+	border: 1px #6593CF solid;
+}
+
+.main_right {
+	margin-top:100px;
+	margin-left:220px;
+	padding-left:20px;
+	padding-right:20px;
+	padding-top:5px;
+}
+
+.show_icon {
+	float:left;
+	padding:50px;
+}
+
+.edit_icon {
+	border:none;
+	padding-top:5px;
+	vertical-align:middle;
+}

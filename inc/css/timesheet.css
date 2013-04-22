@@ -1,0 +1,136 @@
+.timesheet_header {
+	padding:10px;
+	font-size:18px;
+	color:#F00;
+}
+
+.timesheet_footer {
+	float:left;
+	margin:10px;
+	padding:5px;
+	vertical-align:middle;
+	font-family:Verdana, Geneva, sans-serif;
+	font-size:12px;
+	color:#003366;
+	background-color:#FFF;
+	border: 1px #6593CF solid;
+}
+
+.timesheet_name {
+	padding-left:30px;
+	font-size:14px;
+	color:#003366;
+}
+.timesheet_workspace{
+	width:929px;
+	margin-top:5px;
+	margin-left:2px;
+	padding-bottom:10px;
+	background-color:#BDD9FD;
+	float:left;
+	border: 1px #6593CF solid;
+}
+
+.timesheet_flexipot {
+	height:17px;
+	margin-top: 5px;
+	margin-left:10px;
+	font-size:11px;
+	color:#06F;
+	background: transparent url('images/flexitimePot.jpg') no-repeat;
+	padding-left:25px;
+}
+
+.timesheet_event_filter {
+	margin-right:300px;
+	width: 218px;
+	float:right;
+	padding:10px;
+	background-color:#B3CAF4;
+	border: 1px #666 solid;
+}
+	
+.timesheet_table_header, .timesheet_table_header_we, .timesheet_table_header_blank, .timesheet_table_header_white, .timesheet_table_header_white_we, .timesheet_table_header_time {
+	float:left;
+	text-align:center;
+	font-size:11px;
+	height:24px;
+}
+
+.timesheet_padding {
+	padding-top:5px;
+}
+
+.timesheet_table_header {
+	width: 12.5%;
+	text-align:center;
+	margin-top:10px;
+	background: transparent url('images/header_background.png') repeat;
+	border-right: 1px #fff solid;
+	border-left: 1px #6593CF solid;
+	border-bottom:1px #fff solid;
+}
+
+.timesheet_table_header_we {
+	width:7%;
+	text-align:center;
+	margin-top:10px;
+	background: transparent url('images/header_background.png') repeat;
+	border-right: 1px #fff solid;
+	border-left: 1px #6593CF solid;
+	border-bottom:1px #fff solid;
+}
+
+.timesheet_table_header_blank {
+	width:7.5%;
+	font-size:9px;
+}
+
+.timesheet_table_header_white {
+	overflow:hidden;
+	width:12.5%;
+	background-color:#fff;
+	border-right: 1px #eee solid;
+	border-left: 1px #6593CF solid;
+	border-top: 1px #6593CF solid;
+}
+	
+.timesheet_table_header_white_we, .timesheet_table_header_time {
+	width:7%;
+	border-right: 1px #fff solid;
+	border-left: 1px #6593CF solid;
+	border-top: 1px #6593CF solid;
+}
+
+.timesheet_table_header_time {
+	background-color:#FC9;	
+}
+
+.timesheet_event_time {
+	float:left;
+	width:75px;
+	background-color:#0F0;
+	height:15px;
+}
+
+.timesheet_event_flex {
+	float:left;
+	width:40px;
+	background-color:#F00;
+	height:15px;
+}
+
+.timesheet_event_leave {
+	float:left;
+	width:75px;
+	background-color:#09C;
+	height:80%;
+}
+
+.timesheet_event_sickness {
+	float:left;
+	width:75px;
+	background-color:#9C0;
+	height:80%;
+}
+	

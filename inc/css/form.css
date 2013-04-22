@@ -1,0 +1,66 @@
+.form {
+	float:left;
+	margin:5px;
+	font-family:Verdana, Geneva, sans-serif;
+	font-size:12px;
+	color:#003366;
+	background-color:#BDD9FD;
+	border: 1px #6593CF solid;
+
+}
+.formPrompt {
+	float:left;
+	padding:3px;
+}
+.fieldForm {
+	z-index:1;
+	float:left;
+	padding:3px;
+}
+.formLabel {
+	background-color:#eee;
+	margin-left:5px;
+	width:420px;
+	padding-top:10px;
+	padding-left:10px;
+	padding-bottom:10px;
+	font-size:11px;
+	font-weight:500;
+	border-top:#aaa 1px solid;
+	border-left:#aaa 1px solid;
+	border-bottom:#fff 1px solid;
+	border-right:#fff 1px solid;
+}
+
+.form_intro_title {
+	text-align:left;
+	font-size:16px;
+	font-weight:bold;
+	padding:3px 3px;	
+}
+.form_intro {
+	padding:3px;
+}
+
+.formSubmit {
+	padding:3px;
+	float:left;
+}
+
+.table_view table {
+	border:1px #6593CF solid;
+}
+
+.table_view th {
+	background-color:#CCC;
+	font-family:Verdana, Geneva, sans-serif;
+	font-size:14px;
+	border:1px #6593CF solid;
+}
+
+.table_view td {
+	margin:1px;
+	font-size:11px;
+	background-color:#EEE;
+	border:1px #6593CF solid;
+}
