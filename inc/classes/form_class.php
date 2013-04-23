@@ -68,8 +68,8 @@ class forms {
 			break;
 			case "text":
 			?>
-				<div class="formPrompt" style="width:<?=$width?>"><?=$this->field_prompt?></div>
-                <span class="fieldForm"><input type="<?=$type?>" size="<?=$this->field_length?>" name="<?=$this->field_name?>" value="<?=$this->field_value?>"/></span>
+				<div class="formPrompt" style="width:<?php echo $width?>"><?php echo $this->field_prompt?></div>
+                <span class="fieldForm"><input type="<?php echo $type?>" size="<?php echo $this->field_length?>" name="<?php echo $this->field_name?>" value="<?php echo $this->field_value?>"/></span>
             <?php
 			break;
 			case "label":

@@ -372,7 +372,7 @@ function show_subMenu($button_choice) {
 	}elseif($button_choice=="Add") {
 		if($_SESSION["userPermissions"]["add_time"]=="true") {
     		echo "<div class='sub_menu_button'>".show_menuLink($_SERVER['PHP_SELF']."?choice=".$_GET["choice"]."&subchoice=addtime", 'Time')."</div>";
-			echo "<div class='sub_menu_button'>".show_menuLink($_SERVER['PHP_SELF']."?choice=".$_GET["choice"]."&subchoice=addevent", 'Event')."</div>";
+			echo "<div class='sub_menu_button'>".show_menuLink($_SERVER['PHP_SELF']."?choice=".$_GET["choice"]."&subchoice=addevent&type=Working Day", 'Event')."</div>";
 		}
 		if($_SESSION["userPermissions"]["teams"]=="true") {
 			echo "<div class='sub_menu_button'>".show_menuLink($_SERVER['PHP_SELF']."?choice=".$_GET["choice"]."&subchoice=addteam", 'Team')."</div>";
@@ -762,7 +762,7 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 						echo "<div class='timesheet_table_header_blank'><div class='timesheet_padding'>".date($dateFormat, strtotime($date))."</div></div>";
 					}
 					if(date('l',strtotime($date))!="Saturday") { 
-						echo "<div class='timesheet_table_header_white' onclick='location.href=\"index.php?choice=Add&subchoice=addevent&userid=".$userId."&date=".date("Y-m-d", strtotime($date))."\"' style='cursor: pointer;'><div class='timesheet_padding'>".date($shortDate, strtotime($date))."</div></div>";
+						echo "<div class='timesheet_table_header_white' onclick='location.href=\"index.php?choice=Add&subchoice=addevent&type=Working Day&userid=".$userId."&date=".date("Y-m-d", strtotime($date))."\"' style='cursor: pointer;'><div class='timesheet_padding'>".date($shortDate, strtotime($date))."</div></div>";
 						$date = add_date(strtotime($date),1);
 					}else{
 						if($own_timesheet or $authorise) {
@@ -1163,7 +1163,7 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 				echo "<div class='timesheet_table_header_blank'>".date($dateFormat, strtotime($date))."</div>";
 			}
 			if(date('l',strtotime($date))!="Saturday") { 
-				echo "<div class='timesheet_table_header_white' onclick='location.href=\"index.php?choice=Add&subchoice=addevent&userid=".$userId."&date=".date("Y-m-d", strtotime($date))."\"' style='cursor: pointer;'><div class='timesheet_padding'>".date($shortDate, strtotime($date))."</div></div>";
+				echo "<div class='timesheet_table_header_white' onclick='location.href=\"index.php?choice=Add&subchoice=addevent&type=Working Day&userid=".$userId."&date=".date("Y-m-d", strtotime($date))."\"' style='cursor: pointer;'><div class='timesheet_padding'>".date($shortDate, strtotime($date))."</div></div>";
 				$date = add_date(strtotime($date),1);
 			}else{
 				if($own_timesheet or $authorise) {
@@ -2267,9 +2267,11 @@ function add_event($title, $intro, $user="") {
 			$working_session = $event[0]["event_work"];
 		}else{
 			//use default settings
+			$eventGlobal = $event[0]["event_global"];
 			$event_type_settings=$dl->select("flexi_event_settings", "event_typeid=$default_event");
 			$duration_type = $event_type_settings[0]["duration_type"];
 			$multi_date = $event_type_settings[0]["multi_date_allowed"];
+			$working_session = $event[0]["event_work"];
 		}
 		if($duration_type=="Fixed" or $duration_type=="Both") {
 			$durations = $dl->select("flexi_fixed_durations", "template_link = $template_days_id");
@@ -2371,7 +2373,7 @@ function save_event($userId) {
 	if($durationType == "Fixed" and empty($_POST["duration"])) { //need to message the user ?>
 		<SCRIPT language="javascript">
 		alert("The event type you have tried to enter is a fixed type and therefore requires you to select an event duration. \n\nPlease re-enter the times to include the duration time (day, morning, afternoon).");
-		redirect("index.php?choice=Add&subchoice=addevent");
+		redirect("index.php?choice=Add&subchoice=addevent&type=".<?php echo $_GET["type"]?>");
 		</SCRIPT>
     	<?php
 		die();
@@ -2387,7 +2389,7 @@ function save_event($userId) {
 				?>
 				<SCRIPT language="javascript">
 				alert("The dates you have entered are incorrect. \n\nPlease re-enter the dates making sure the `Date To` is the same or later than the `Date From` date.");
-				redirect("index.php?choice=Add&subchoice=addevent");
+				redirect("index.php?choice=Add&subchoice=addevent&type=".<?php echo $_GET["type"]?>");
 				</SCRIPT>
 				<?php
 				die();
@@ -2402,7 +2404,9 @@ function save_event($userId) {
 	if(!empty($duration_link)) {
 		$duration = $duration_link[0]["duration"];
 		$startTime = $_POST["duration_time_start"].":".$_POST["duration_time_start_mins"].":00";
-		$endTime = date("H:i:s", strtotime($startTime) + strtotime($duration));
+		$startTimeSecs = $_POST["duration_time_start"] * 60 * 60 + $_POST["duration_time_start_mins"] * 60;
+		$endTimeSecs = substr($duration,0,2) * 60 * 60 + substr($duration,3,2) * 60 + substr($duration,6,2) * 60;
+		$endTime = date("H:i:s", $startTimeSecs + $endTimeSecs);
 	}else{
 		$startTime = $_POST["time_start"].":".$_POST["time_start_mins"].":00";
 		$endTime = $_POST["time_end"].":".$_POST["time_end_mins"].":00";
@@ -2414,7 +2418,7 @@ function save_event($userId) {
 		//redirect to message and reenter details ?>
 		<SCRIPT language="javascript">
 		alert("The start/end date you entered lands on a weekend and therefore cannot be added to the flexitime system. \n\nPlease re-enter the times to fall outside of the weekend. Be aware that you are able to enter dates that span a weekend as the system will ignore the weekend dates.");
-		redirect("index.php?choice=Add&subchoice=addevent");
+		redirect("index.php?choice=Add&subchoice=addevent&type=".<?php echo $_GET["type"]?>");
 		</SCRIPT>
 		<?php die();
 	}
@@ -2425,14 +2429,14 @@ function save_event($userId) {
 	if($startTime < $earliest_start or $startTime > $latest_start and $eventWork=="Yes" and empty($earlyFlex)) {
 		//redirect to message and reenter details
 		echo "<SCRIPT language='javascript'>alert('The start/end time you entered is not within the range specified for the Clinical Research Platforms flexitime scheme. Please re-enter the times to fall between the ranges of (Earliest Start : $earliest_start & Latest Start : $latest_start). If you have legitimately worked outside of these ranges please speak with Mandy Jarvis who will alter your times to reflect this.');" ;
-		echo "redirect('index.php?choice=Add&subchoice=addevent');</SCRIPT>" ;
+		echo "redirect('index.php?choice=Add&subchoice=addevent&type=".$_GET["type"]."');</SCRIPT>" ;
 		die();
 	}else{
 		if($_POST["extended_lunch"]=="Yes") {
 			if(strtotime($_POST["lunch_time_start"].":".$_POST["lunch_time_start_mins"].":00") < strtotime($earliest_lunch_start) or strtotime($_POST["lunch_time_end"].":".$_POST["lunch_time_end_mins"].":00") > strtotime($latest_lunch_end)) {
 				//redirect to message and reenter details
 				echo "<SCRIPT language='javascript'>alert('The start/end time you entered for your extended lunch is not within the range specified for the Clinical Research Platforms flexitime scheme. Please re-enter the times to fall between the ranges of (Lunch Start : ".$earliest_lunch_start." & Lunch End : ".$latest_lunch_end.").');" ;
-				echo "redirect('index.php?choice=Add&subchoice=addevent');</SCRIPT>" ;
+				echo "redirect('index.php?choice=Add&subchoice=addevent&type=".$_GET["type"]."');</SCRIPT>" ;
 				die();
 			}
 		}
@@ -2440,7 +2444,7 @@ function save_event($userId) {
 			if($endTime < $earliest_end or $endTime > $latest_end) {
 				echo $eventWork;
 				echo "<SCRIPT language='javascript'>alert('The start/end time you entered is not within the range specified for the Clinical Research Platforms flexitime scheme. Please re-enter the times to fall between the ranges of (Earliest End Time : $earliest_end & Latest End Time : $latest_end). If you have legitimately worked outside of these ranges please speak with Mandy Jarvis who will alter your times to reflect this.');" ;
-				echo "redirect('index.php?choice=Add&subchoice=addevent');</SCRIPT>" ;
+				echo "redirect('index.php?choice=Add&subchoice=addevent&type=".$_GET["type"]."');</SCRIPT>" ;
 				die();
 			}
 		}
@@ -2627,7 +2631,7 @@ function save_event($userId) {
 			$highLevel=false;
 			//now need to see if this user is a manager/approver within this team
 			//this determines if the manager in this team receives the approval request or the none local team member approver/manager
-			$sql = "select fu.user_id, fu.user_email from flexi_permission_template as fpt 
+			$sql = "select fu.user_id, fu.user_email, fpt.permission_LM_constraint from flexi_permission_template as fpt 
 			join flexi_user as fu on (fu.user_permission_id=fpt.permission_template_name_id) 
 			join flexi_team_user as ftu on (ftu.user_id=fu.user_id)
 			left outer join flexi_team_local as tl on (ftu.team_user_id=tl.team_user_id)
@@ -2639,6 +2643,15 @@ function save_event($userId) {
 				if($lm["user_id"] == $userId) {
 					//this is a local manager request therefore needs to be authorised at a higher level
 					$highLevel = true;
+				}
+			}
+			//run through the list of local managers again to check if any of them have the override Local Manager constraint which means they are in the same team but have been given the responsibility to authorise leave
+			if( $highLevel ){
+				foreach($localManager as $lm) {
+					if($lm["permission_LM_constraint"] == 'true') {
+						//this is a local manager with access to authorise other managers' leave in their local team
+						$recipients[] = $lm["user_email"];
+					}
 				}
 			}
 			if($highLevel or empty($localManager)) { // this is a request from the local team manager so the request should go to the non-local manager	or there is no local manager in this group
@@ -2735,8 +2748,10 @@ function save_event($userId) {
 						$duration = $dl->getQuery($sql);
 						$fullDay = $duration[0]["normal_day_duration"];
 						$endTime = $startDateTime;
-						$time = substr(date("Y-m-d H:i:s", strtotime($endTime) + strtotime($fullDay)),11,8);
-						$endDateTime = substr($endDateTime,0,11).$time;
+						$startTimeSecs = $_POST["duration_time_start"] * 60 * 60 + $_POST["duration_time_start_mins"] * 60;
+						$endTimeSecs = substr($fullDay,0,2) * 60 * 60 + substr($fullDay,3,2) * 60 + substr($fullDay,6,2) * 60;
+						$endTime = date("H:i:s", $startTimeSecs + $endTimeSecs);
+						$endDateTime = substr($endDateTime,0,11).$endTime;
 						$sql = "select * from flexi_user as u join flexi_timesheet as t on (u.user_id=t.user_id) where u.user_id = ".$user["user_id"];
 						$timesheet = $dl->getQuery($sql);
 						$timeSheetId = $timesheet[0]["timesheet_id"];
@@ -2767,9 +2782,9 @@ function save_event($userId) {
 		echo "<SCRIPT language='javascript'>alert('This event cannot overlap another event. Please check you have entered the correct dates for this event, or delete the existing event to create the new one.')</SCRIPT>" ;
 	}
 	if($userId == $_SESSION["userSettings"]["userId"]) {
-		echo "<SCRIPT language='javascript'>redirect('index.php?choice=View&subchoice=timesheet')</SCRIPT>" ;
+		echo "<SCRIPT language='javascript'>redirect('index.php?choice=View&subchoice=timesheet&type=".$_GET["type"]."')</SCRIPT>" ;
 	}else{
-		echo "<SCRIPT language='javascript'>redirect('index.php?func=viewuserstimesheet&userid=".$userId."')</SCRIPT>" ;
+		echo "<SCRIPT language='javascript'>redirect('index.php?func=viewuserstimesheet&type=".$_GET["type"]."&userid=".$userId."')</SCRIPT>" ;
 	}
 }
 
@@ -3105,7 +3120,7 @@ function delete_events($id, $confirmation="", $deltype="") {
 				}
 			}
 			//also need to delete the request to tie up all the loose ends.
-			echo "<SCRIPT language='javascript'>redirect('index.php?choice=Add&subchoice=addevent')</SCRIPT>" ;
+			echo "<SCRIPT language='javascript'>redirect('index.php?choice=Add&subchoice=addevent&type=".$_GET["type"]."')</SCRIPT>" ;
 		}
 	}
 }
@@ -3434,8 +3449,8 @@ function add_permissions() {
 			array(prompt=>"Allow view timesheet", type=>"selection", name=>"usertimesheet", listarr=>array( "false", "true" ), selected=>"false", value=>"", clear=>true),
 			array(prompt=>"View reports", type=>"selection", name=>"viewreports", listarr=>array( "false", "true" ), selected=>"false", value=>"", clear=>false),
 			array(prompt=>"Year End reports", type=>"selection", name=>"yearend", listarr=>array( "false", "true" ), selected=>"false", value=>"", clear=>true),
-			array(prompt=>"Override view timesheet", type=>"selection", name=>"overridetimesheet", listarr=>array( "false", "true" ), selected=>"false", value=>"", clear=>true),
-			
+			array(prompt=>"Override view timesheet", type=>"selection", name=>"overridetimesheet", listarr=>array( "false", "true" ), selected=>"false", value=>"", clear=>false),
+			array(prompt=>"Override Local Manager constraint", type=>"selection", name=>"overrideLM", listarr=>array( "false", "true" ), selected=>"false", value=>"", clear=>true),
 			array(type=>"submit", buttontext=>"Create Template", clear=>true), 
 			array(type=>'endform'));
 			$form = new forms;
@@ -3461,8 +3476,8 @@ function save_permissions() {
 	foreach($get_id as $id) {
 		$fieldId = $id["permission_id"];
 	}
-	$fieldarr= array("permission_template_name_id", "permission_description", "permission_user","permission_templates","permission_teams","permission_team_events","permission_team_authorise","permission_events","permission_event_types","permission_add_time","permission_edit_time","permission_edit_locked_time","permission_add_global","permission_override_delete","permission_edit_flexipot","permission_view_leave","permission_messaging", "permission_view_timesheet", "permission_view_override", "permission_view_reports", "permission_year_end");
-	$postarr= array($fieldId,$_POST["temp_description"],$_POST["edit_users"],$_POST["edit_templates"],$_POST["edit_teams"],$_POST["edit_teamevents"],$_POST["team_authority"],$_POST["events"], $_POST["event_types"],$_POST["add_time"],$_POST["edit_time"],$_POST["edit_locked"], $_POST["add_global"], $_POST["override"], $_POST["flexipot"], $_POST["userleave"], $_POST["usertimesheet"], $_POST["usermessaging"], $_POST["overridetimesheet"], $_POST["viewreports"], $_POST["yearend"]);
+	$fieldarr= array("permission_template_name_id", "permission_description", "permission_user","permission_templates","permission_teams","permission_team_events","permission_team_authorise","permission_events","permission_event_types","permission_add_time","permission_edit_time","permission_edit_locked_time","permission_add_global","permission_override_delete","permission_edit_flexipot","permission_view_leave","permission_messaging", "permission_view_timesheet", "permission_view_override", "permission_LM_constraint","permission_view_reports", "permission_year_end");
+	$postarr= array($fieldId,$_POST["temp_description"],$_POST["edit_users"],$_POST["edit_templates"],$_POST["edit_teams"],$_POST["edit_teamevents"],$_POST["team_authority"],$_POST["events"], $_POST["event_types"],$_POST["add_time"],$_POST["edit_time"],$_POST["edit_locked"], $_POST["add_global"], $_POST["override"], $_POST["flexipot"], $_POST["userleave"], $_POST["usertimesheet"], $_POST["usermessaging"], $_POST["overridetimesheet"], $_POST["overrideLM"], $_POST["viewreports"], $_POST["yearend"]);
 	$save=array_combine($fieldarr, $postarr);
 	$dl->insert("flexi_permission_template", $save);
 	echo "<SCRIPT language='javascript'>redirect('index.php?choice=Templates&subchoice=permissiontemplate')</SCRIPT>" ;
@@ -3497,8 +3512,8 @@ function edit_permissions() {
 			array(prompt=>"Allow view timesheet", type=>"selection", name=>"usertimesheet", listarr=>array( "false", "true" ), selected=>$permissions[0]["permission_view_timesheet"], value=>"", clear=>true),
 			array(prompt=>"View Reports", type=>"selection", name=>"viewreports", listarr=>array( "false", "true" ), selected=>$permissions[0]["permission_view_reports"], value=>"", clear=>false),
 			array(prompt=>"Year End reports", type=>"selection", name=>"yearend", listarr=>array( "false", "true" ), selected=>$permissions[0]["permission_year_end"], value=>"", clear=>true),
-			array(prompt=>"Override view timesheet", type=>"selection", name=>"overridetimesheet", listarr=>array( "false", "true" ), selected=>$permissions[0]["permission_view_override"], value=>"", clear=>true),
-			
+			array(prompt=>"Override view timesheet", type=>"selection", name=>"overridetimesheet", listarr=>array( "false", "true" ), selected=>$permissions[0]["permission_view_override"], value=>"", clear=>false),
+			array(prompt=>"Override Local Manager constraint", type=>"selection", name=>"overrideLM", listarr=>array( "false", "true" ), selected=>$permissions[0]["permission_LM_constraint"], value=>"", clear=>true),
 			array(type=>"submit", buttontext=>"Save Template", clear=>true), 
 			array(type=>'endform'));
 			$form = new forms;
@@ -3511,8 +3526,8 @@ function save_permissions_edit() {
 	$fieldarr=array("permission_template_name");
 	$save = array_combine($fieldarr, array($_POST['template_name']));
 	$dl->update("flexi_permission_template_name", $save, "permission_id=".$_GET["id"]);
-	$fieldarr= array("permission_description", "permission_user","permission_templates","permission_teams","permission_team_events","permission_team_authorise","permission_events","permission_event_types","permission_add_time","permission_edit_time","permission_edit_locked_time", "permission_add_global","permission_override_delete","permission_edit_flexipot","permission_view_leave","permission_view_timesheet","permission_messaging", "permission_view_override", "permission_view_reports", "permission_year_end");
-	$postarr= array($_POST["temp_description"],$_POST["edit_users"],$_POST["edit_templates"],$_POST["edit_teams"],$_POST["edit_teamevents"],$_POST["team_authority"],$_POST["events"], $_POST["event_types"],$_POST["add_time"],$_POST["edit_time"],$_POST["edit_locked"],$_POST["add_global"],$_POST["override"],$_POST["flexipot"],$_POST["userleave"], $_POST["usertimesheet"], $_POST["usermessaging"], $_POST["overridetimesheet"], $_POST["viewreports"], $_POST["yearend"]);
+	$fieldarr= array("permission_description", "permission_user","permission_templates","permission_teams","permission_team_events","permission_team_authorise","permission_events","permission_event_types","permission_add_time","permission_edit_time","permission_edit_locked_time", "permission_add_global","permission_override_delete","permission_edit_flexipot","permission_view_leave","permission_view_timesheet","permission_messaging", "permission_view_override", "permission_LM_constraint","permission_view_reports", "permission_year_end");
+	$postarr= array($_POST["temp_description"],$_POST["edit_users"],$_POST["edit_templates"],$_POST["edit_teams"],$_POST["edit_teamevents"],$_POST["team_authority"],$_POST["events"], $_POST["event_types"],$_POST["add_time"],$_POST["edit_time"],$_POST["edit_locked"],$_POST["add_global"],$_POST["override"],$_POST["flexipot"],$_POST["userleave"], $_POST["usertimesheet"], $_POST["usermessaging"], $_POST["overridetimesheet"], $_POST["overrideLM"], $_POST["viewreports"], $_POST["yearend"]);
 	$save=array_combine($fieldarr, $postarr);
 	$dl->update("flexi_permission_template", $save, "permission_template_name_id=".$_GET["id"]);
 	echo "<SCRIPT language='javascript'>redirect('index.php?choice=Templates&subchoice=permissiontemplate')</SCRIPT>" ;
