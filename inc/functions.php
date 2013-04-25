@@ -1252,8 +1252,49 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 	if($authorise) {
 		echo "<a href='index.php?func=edituserevents&userid=".$userId."&page=0'><img src='inc/images/small_pen_paper_icon.jpg' border='0' align='middle' />Edit Users events</a> <a href='index.php?func=showuserleave&userid=".$userId."'><img src='inc/images/leave.png' border='0' align='middle' />View Users leave dates</a>";
 	}
-	echo "</div>";
 	
+	echo "</div>";
+	/*This is the portion to show team members leave in the currently displayed period*/
+	//$dl->debug=true;
+	$team = $dl->select("flexi_team_user", "user_id = ".$userId);
+	if($authorise) {
+		foreach($team as $t) {
+			$localTeam = $dl->select("flexi_team_local", "team_user_id = ".$t["team_user_id"]);
+			if(!empty($localTeam)) {
+				$userLocalTeam_id = $t["team_id"];
+				$localTeamName = $dl->select("flexi_team", "team_id = ".$userLocalTeam_id);
+				$sql = "select * from flexi_team_user as u join flexi_team_local as l on (u.team_user_id=l.team_user_id)
+				where u.team_id = ".$userLocalTeam_id." and l.team_user_id IS NOT NULL";
+				$localTeamMembers = $dl->getQuery($sql);
+			}
+		}
+		echo "<div class='timesheet_team_leave'><div>Team Name : ".$localTeamName[0]["team_name"]."</div>";
+		echo "<div class='timesheet_members'>MEMBERS</div>";
+		foreach($localTeamMembers as $members) {
+			//get timesheet id of member
+			$timesheet_id = $dl->select("flexi_timesheet", "user_id = ".$members["user_id"]);
+			$userName = $dl->select("flexi_user", "user_id = ".$members["user_id"]);
+			//need to check if the user has not got the permission_view_override permmission set to true
+			$sql = "select * from flexi_user as u join flexi_permission_template_name as n on (u.user_permission_id=n.permission_id) 
+						join flexi_permission_template as t on (n.permission_id=t.permission_template_name_id)
+						where u.user_id = ".$members["user_id"];
+			$checkPermission = $dl->getQuery($sql);
+			if($checkPermission[0]["permission_view_override"] == 'false') {
+			//check for a deleted user too
+				$deleted = $dl->select("flexi_deleted", "user_id = ".$members["user_id"]);
+				if(empty($deleted)) {
+					$events = $dl->select("flexi_event", "event_startdate_time >= '".$eventStartDate."' and event_enddate_time <= '".$eventEndDate."' and timesheet_id = ".$timesheet_id[0]["timesheet_id"]. " and event_type_id != 1", "event_startdate_time");
+					echo "<div class='timesheet_leave_name'><a href='index.php?func=viewuserstimesheet&userid=".$members["user_id"]."'>".$userName[0]["user_name"]."</a></div>";
+					foreach($events as $event) {
+						$event_type = $dl->select("flexi_event_type", "event_type_id = ".$event["event_type_id"]);
+						echo "<div class='timesheet_leave_day' style='background-color: ".$event_type[0]["event_colour"]."'>".date("d/m", strtotime($event["event_startdate_time"]))." (".$event_type[0]["event_shortcode"].")</div>";
+					}
+				}
+			}
+			echo "<BR>";
+		}
+		echo "</div>"; //timesheet_team_leave
+	}
 }
 
 function add_messages_template() {
@@ -1843,15 +1884,11 @@ function save_user() {
 				join flexi_template_days as td on (td.template_name_id=tn.flexi_template_name_id) 
 				join flexi_template_days_settings as tds on (td.flexi_template_days_id=tds.template_days_id) where u.user_id = ".$fieldId;
 				$dayDuration = $dl->getQuery($sql);
-				$duration = $dayDuration[0]["day_duration"]; //format HH:MM:SS
-				$minLunch = $dayDuration[0]["minimum_lunch"];
-				$minLunchDuration = $dayDuration[0]["minimum_lunch_duration"];
-				$addedTime = 0;
-				if($minLunch=="Yes") {
-					$addedTime = strtotime($minLunchDuration);
-				}
+				$fullDay = $dayDuration[0]["normal_day_duration"]; //format HH:MM:SS
 				$startTime = "09:00:00";
-				$endTime = date("H:i:s", strtotime($startTime) + strtotime($duration) + $addedTime);
+				$startTimeSecs = substr($startTime,0,2) * 60 * 60 + substr($startTime,3,2) * 60 + substr($startTime,6,2) * 60;
+				$endTimeSecs = substr($fullDay,0,2) * 60 * 60 + substr($fullDay,3,2) * 60 + substr($fullDay,6,2) * 60;
+				$endTime = date("H:i:s", $startTimeSecs + $endTimeSecs);
 				$startDateTime = $date." ".$startTime;
 				$endDateTime = $date." ".$endTime;
 				//check to see if the event has already been entered and does not overlap any other time/leave etc.

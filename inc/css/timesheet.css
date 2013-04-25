@@ -133,4 +133,34 @@
 	background-color:#9C0;
 	height:80%;
 }
-	
+
+.timesheet_team_leave {
+	clear: both;
+	padding: 1em;
+	width: 90%;
+}
+
+.timesheet_leave_name {
+	margin: 2px;
+	clear: both;
+	float:left;
+	width: 13em;
+	padding: 1em;
+	background-color: #ccc;
+}
+
+.timesheet_members {
+	padding: 1em;
+}
+
+.timesheet_leave_day {
+	margin: 2px;
+	float: left;
+	text-align: center;
+	width: 4em;
+	font-size: 0.9em;
+	line-height: 1.5em;
+	padding: 0.2em;
+	border: 1px solid #999;
+}
+
