@@ -2,7 +2,7 @@
  class DataLayer {
    var $link;  
    var $errors = array();
-   var $debug = false;
+   public $debug_report = false;
    var $database;
  
    function DataLayer( ) {
@@ -76,7 +76,7 @@
           $keys = "(".implode( array_keys( $add_array ), ", ").")";
           $values = "values (".implode( array_values( $add_array ), ", ").")";
           $query = "INSERT INTO $table $keys $values";
-      $this->debug( $query );
+		  $this->debug( $query );
           return $this->setQuery( $query );
     }
   
@@ -100,8 +100,8 @@
     }
     
    function debug( $msg ) {
-     if ( $this->debug )
-       print "$msg<br>";
+    if ( $this->debug_report )
+       echo "<br>$msg";
    }
  
    function _makeWhereList( $condition ) {

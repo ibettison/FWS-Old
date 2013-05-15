@@ -434,12 +434,12 @@ function show_subMenu($button_choice) {
 
 function send_message() {
 	echo "<div class='timesheet_workspace'>";
-		$formArr = array(array(type=>"intro", formtitle=>"Send a message to all users", formintro=>"A form to send a message to all users"), 
-			array(type=>"form", form=>array(action=>"index.php?func=sendMessage",method=>"post")),
-			array(prompt=>"Subject", type=>"text", name=>"subject", length=>50, value=>"", clear=>true),	
-			array(prompt=>"Message", type=>"textarea", name=>"message", rows=>15, cols=>90, selected=>"", value=>"", clear=>true),
-			array(type=>"submit", buttontext=>"Send Message", clear=>true), 
-			array(type=>'endform'));
+		$formArr = array(array("type"=>"intro", "formtitle"=>"Send a message to all users", "formintro"=>"A form to send a message to all users"), 
+			array("type"=>"form", "form"=>array("action"=>"index.php?func=sendMessage","method"=>"post")),
+			array("prompt"=>"Subject", "type"=>"text", "name"=>"subject", "length"=>50, "value"=>"", "clear"=>true),	
+			array("prompt"=>"Message", "type"=>"textarea", "name"=>"message", rows=>15, cols=>90, "selected"=>"", "value"=>"", "clear"=>true),
+			array("type"=>"submit", "buttontext"=>"Send Message", "clear"=>true), 
+			array("type"=>'endform'));
 			$form = new forms;
 			$form->create_form($formArr);
 }
@@ -501,15 +501,15 @@ function flexi_pot_edit($timesheetId) {
 			}
 		}
 		echo "<div class='timesheet_workspace'>";
-		$formArr = array(array(type=>"intro", formtitle=>"Carried Forward Time", formintro=>"Listed here is the time that has been carried forward. You can edit the time here but also swap time accumulated for supplemental holidays"), 
-			array(type=>"form", form=>array(action=>"index.php?func=saveflexipot&timesheet=".$timesheetId."&endDate=".$_GET["endDate"],method=>"post")),	
-			array(prompt=>"Positive/minus", type=>"selection", name=>"posneg", listarr=>array("+","-"), selected=>$carried[0]["sign"], value=>"", clear=>true),
-			array(prompt=>"Carried over time", type=>"time", name=>"carried_over", starttime=>"0000", endtime=>"2300", interval=>1, selected=>$carriedOverTime, clear=>true),	
-			array(prompt=>"Additional Leave", type=>"label", name=>"additionalLeave", length=>10, value=>$carried[0]["additional_leave"], clear=>true),
-			array(prompt=>"New Leave (+/-)", type=>"text", name=>"newLeave", length=>10, selected=>"", clear=>true),
-			array(prompt=>"Note", type=>"textarea", name=>"note", rows=>8, cols=>50, selected=>"", clear=>true),
-			array(type=>"submit", buttontext=>"Edit", clear=>true), 
-			array(type=>'endform'));
+		$formArr = array(array("type"=>"intro", "formtitle"=>"Carried Forward Time", "formintro"=>"Listed here is the time that has been carried forward. You can edit the time here but also swap time accumulated for supplemental holidays"), 
+			array("type"=>"form", "form"=>array("action"=>"index.php?func=saveflexipot&timesheet=".$timesheetId."&endDate=".$_GET["endDate"],"method"=>"post")),	
+			array("prompt"=>"Positive/minus", "type"=>"selection", "name"=>"posneg", "listarr"=>array("+","-"), "selected"=>$carried[0]["sign"], "value"=>"", "clear"=>true),
+			array("prompt"=>"Carried over time", "type"=>"time", "name"=>"carried_over", "starttime"=>"0000", "endtime"=>"2300", "interval"=>1, "selected"=>$carriedOverTime, "clear"=>true),	
+			array("prompt"=>"Additional Leave", "type"=>"label", "name"=>"additionalLeave", "length"=>10, "value"=>$carried[0]["additional_leave"], "clear"=>true),
+			array("prompt"=>"New Leave (+/-)", "type"=>"text", "name"=>"newLeave", "length"=>10, "selected"=>"", "clear"=>true),
+			array("prompt"=>"Note", "type"=>"textarea", "name"=>"note", rows=>8, cols=>50, "selected"=>"", "clear"=>true),
+			array("type"=>"submit", "buttontext"=>"Edit", "clear"=>true), 
+			array("type"=>'endform'));
 			$form = new forms;
 			$form->create_form($formArr);
 			echo "<div style='clear:both; padding:5px;'><a href='index.php?func=showCFNotes&timesheet=$timesheetId'>View</a> all notes for this timesheet</div>";
@@ -1315,7 +1315,7 @@ function view_team_members() {
 	}
 	foreach($teams as $tm) {
 		$user_name = $dl->select("flexi_user", "user_id = ".$tm["user_id"]);
-		$userNames[] = array(user_name=>$user_name[0]["user_name"], user_id=>$user_name[0]["user_id"]);
+		$userNames[] = array("user_name"=>$user_name[0]["user_name"], user_id=>$user_name[0]["user_id"]);
 		$timesheet= $dl->select("flexi_timesheet", "user_id=".$user_name[0]["user_id"]);
 		//get annual leave entitlement and used leave
 		$used = checkLeaveEntitlement($tm["user_id"]);
@@ -1494,7 +1494,7 @@ function approve_leave() {
 				where event_id = ".$request["event_id"];
 				$check_permission = $dl->getQuery($sql);
 				if($check_permission[0]["permission_team_authorise"]=="false") { //the permission of the requestor
-					$reqArr[] = array(id=>$request["event_id"], startdate=>$request["event_startdate_time"], enddate=>$request["event_enddate_time"], timesheetId=>$request["timesheet_id"], type=>$request["event_type_name"], user=>$request["user_name"], userId=>$request["user_id"], team=>$request["team_id"]);
+					$reqArr[] = array(id=>$request["event_id"], startdate=>$request["event_startdate_time"], enddate=>$request["event_enddate_time"], timesheetId=>$request["timesheet_id"], "type"=>$request["event_type_name"], user=>$request["user_name"], userId=>$request["user_id"], team=>$request["team_id"]);
 				}else{ //the requestor is a manager
 					//need to check if the current user is in the requestors home team
 					$inTeam = $dl->select("flexi_team_user", "user_id = ".$request["user_id"]." and team_user_id = ".$user_homeTeamId);
@@ -1503,7 +1503,7 @@ function approve_leave() {
 						$managed = $dl->select("flexi_team_user", "user_id = ".$_SESSION["userSettings"]["userId"]." and team_id = ".$inTeam[0]["team_id"]);
 						if(!empty($managed)){
 							if($user_homeTeamId <> $homeTeamId) {
-								$reqArr[] = array(id=>$request["event_id"], startdate=>$request["event_startdate_time"], enddate=>$request["event_enddate_time"], timesheetId=>$request["timesheet_id"], type=>$request["event_type_name"], user=>$request["user_name"], userId=>$request["user_id"], team=>$request["team_id"]);
+								$reqArr[] = array(id=>$request["event_id"], startdate=>$request["event_startdate_time"], enddate=>$request["event_enddate_time"], timesheetId=>$request["timesheet_id"], "type"=>$request["event_type_name"], user=>$request["user_name"], userId=>$request["user_id"], team=>$request["team_id"]);
 							}
 						}
 					}
@@ -1752,13 +1752,13 @@ function reset_pass($pEmail) {
 }
 
 function reset_password($passcode) {
-	$formArr = array(array(type=>"intro", formtitle=>"Reset your Password", formintro=>"Enter your email address and password to change your password."), 
-			array(type=>"form", form=>array(action=>"index.php?func=changePassword&passcode=".$_GET["passcode"],method=>"post")),
-			array(prompt=>"Email Address", type=>"text", name=>"email_address", length=>20, value=>""), 
-			array(prompt=>"Password", type=>"password", name=>"password", length=>20, value=>""),
-			array(prompt=>"retype Password", type=>"password", name=>"password2", length=>20, value=>""),
-			array(type=>"submit", buttontext=>"Change Password"), 
-			array(type=>'endform'));
+	$formArr = array(array("type"=>"intro", "formtitle"=>"Reset your Password", "formintro"=>"Enter your email address and password to change your password."), 
+			array("type"=>"form", "form"=>array("action"=>"index.php?func=changePassword&passcode=".$_GET["passcode"],"method"=>"post")),
+			array("prompt"=>"Email Address", "type"=>"text", "name"=>"email_address", "length"=>20, "value"=>""), 
+			array("prompt"=>"Password", "type"=>"password", "name"=>"password", "length"=>20, "value"=>""),
+			array("prompt"=>"retype Password", "type"=>"password", "name"=>"password2", "length"=>20, "value"=>""),
+			array("type"=>"submit", "buttontext"=>"Change Password"), 
+			array("type"=>'endform'));
 		$form = new forms;
 		echo $form->create_form($formArr, "120px");
 }
@@ -1812,19 +1812,19 @@ function add_user($title, $intro) {
 			$aAl[]=$al["al_description"];
 		}
 		echo "<div class='timesheet_workspace'>";
-		$formArr = array(array(type=>"intro", formtitle=>$title, formintro=>$intro), 
-			array(type=>"form", form=>array(action=>"index.php?func=saveuser",method=>"post")),	
-			array(prompt=>"Name", type=>"text", name=>"name", length=>20, value=>"Enter the users name", clear=>true),	
-			array(prompt=>"Email Address", type=>"text", name=>"email", length=>30, value=>"Enter the users email address", clear=>true),
-			array(prompt=>"Email Compare", type=>"textcompare", field=>"email", name=>"compare", message=>"The email addresses are different. Please Check!", length=>30, value=>"retype email address", clear=>true),
-			array(prompt=>"User Type", type=>"selection", name=>"permission", listarr=>$aPermission, selected=>"User", value=>"", clear=>true),
-			array(prompt=>"Flexi Template", type=>"selection", name=>"flexitemp", listarr=>$aFlexi, selected=>"Standard Flexi Template", value=>"", clear=>true),
-			array(prompt=>"Time Template", type=>"selection", name=>"timetemp", listarr=>$aTime, selected=>"Standard Time Template", value=>"", clear=>true),
-			array(prompt=>"Select Teams", type=>"selection", name=>"teams[]", listarr=>$aTeams, multiple=>true, selected=>"", value=>"", clear=>true),
-			array(prompt=>"Select Local Team", type=>"selection", name=>"localteam", listarr=>$aTeams, selected=>"", value=>"", clear=>true),
-			array(prompt=>"Annual Leave", type=>"selection", name=>"al", listarr=>$aAl, selected=>"", value=>"", clear=>true),
-			array(type=>"submit", buttontext=>"Add user", clear=>true), 
-			array(type=>'endform'));
+		$formArr = array(array("type"=>"intro", "formtitle"=>$title, "formintro"=>$intro), 
+			array("type"=>"form", "form"=>array("action"=>"index.php?func=saveuser","method"=>"post")),	
+			array("prompt"=>"Name", "type"=>"text", "name"=>"name", "length"=>20, "value"=>"Enter the users name", "clear"=>true),	
+			array("prompt"=>"Email Address", "type"=>"text", "name"=>"email", "length"=>30, "value"=>"Enter the users email address", "clear"=>true),
+			array("prompt"=>"Email Compare", "type"=>"textcompare", field=>"email", "name"=>"compare", message=>"The email addresses are different. Please Check!", "length"=>30, "value"=>"retype email address", "clear"=>true),
+			array("prompt"=>"User Type", "type"=>"selection", "name"=>"permission", "listarr"=>$aPermission, "selected"=>"User", "value"=>"", "clear"=>true),
+			array("prompt"=>"Flexi Template", "type"=>"selection", "name"=>"flexitemp", "listarr"=>$aFlexi, "selected"=>"Standard Flexi Template", "value"=>"", "clear"=>true),
+			array("prompt"=>"Time Template", "type"=>"selection", "name"=>"timetemp", "listarr"=>$aTime, "selected"=>"Standard Time Template", "value"=>"", "clear"=>true),
+			array("prompt"=>"Select Teams", "type"=>"selection", "name"=>"teams[]", "listarr"=>$aTeams, multiple=>true, "selected"=>"", "value"=>"", "clear"=>true),
+			array("prompt"=>"Select Local Team", "type"=>"selection", "name"=>"localteam", "listarr"=>$aTeams, "selected"=>"", "value"=>"", "clear"=>true),
+			array("prompt"=>"Annual Leave", "type"=>"selection", "name"=>"al", "listarr"=>$aAl, "selected"=>"", "value"=>"", "clear"=>true),
+			array("type"=>"submit", "buttontext"=>"Add user", "clear"=>true), 
+			array("type"=>'endform'));
 			$form = new forms;
 			$form->create_form($formArr);
 		echo "</div>";
@@ -2008,20 +2008,20 @@ function edit_user() {
 		$localTeamName = $dl->select("flexi_team", "team_id=".$localTeam[0]["team_id"]);
 		$annualLeave[0]["al_description"];
 		echo "<div class='timesheet_workspace'>";
-		$formArr = array(array(type=>"intro", formtitle=>$title, formintro=>$intro), 
-			array(type=>"form", form=>array(action=>"index.php?func=saveuseredit&id=".$_GET["id"],method=>"post")),	
-			array(prompt=>"Name", type=>"text", name=>"name", length=>20, value=>$users[0]["user_name"], clear=>true),	
-			array(prompt=>"Email Address", type=>"text", name=>"email", length=>30, value=>$users[0]["user_email"], clear=>true),
-			array(prompt=>"Email Compare", type=>"textcompare", field=>"email", name=>"compare", message=>"The email addresses are different. Please Check!", length=>30, value=>$users[0]["user_email"], clear=>true),
-			array(prompt=>"User Type", type=>"selection", name=>"permission", listarr=>$aPermission, selected=>$permissions[0]["permission_template_name"], value=>"", clear=>true),
-			array(prompt=>"Flexi Template", type=>"selection", name=>"flexitemp", listarr=>$aFlexi, selected=>$flexiTemplate[0]["description"], value=>"", clear=>true),
-			array(prompt=>"Change Applies on", type=>"date", name=>"date_change", length=>20, value=>"", clear=>true),
-			array(prompt=>"Time Template", type=>"selection", name=>"timetemp", listarr=>$aTime, selected=>$timeTemplate[0]["time_template_name"], value=>"", clear=>true),
-			array(prompt=>"Select Teams", type=>"selection", name=>"teams[]", listarr=>$aTeams, multiple=>true, selected=>$teamNames, value=>"", clear=>true),
-			array(prompt=>"Select Local Team", type=>"selection", name=>"localteam", listarr=>$aTeams, selected=>$localTeamName[0]["team_name"], value=>"", clear=>true),
-			array(prompt=>"Annual Leave", type=>"selection", name=>"al", listarr=>$aAl, selected=>$annualLeave[0]["al_description"], value=>"", clear=>true),
-			array(type=>"submit", buttontext=>"Edit user", clear=>true), 
-			array(type=>'endform'));
+		$formArr = array(array("type"=>"intro", "formtitle"=>$title, "formintro"=>$intro), 
+			array("type"=>"form", "form"=>array("action"=>"index.php?func=saveuseredit&id=".$_GET["id"],"method"=>"post")),	
+			array("prompt"=>"Name", "type"=>"text", "name"=>"name", "length"=>20, "value"=>$users[0]["user_name"], "clear"=>true),	
+			array("prompt"=>"Email Address", "type"=>"text", "name"=>"email", "length"=>30, "value"=>$users[0]["user_email"], "clear"=>true),
+			array("prompt"=>"Email Compare", "type"=>"textcompare", field=>"email", "name"=>"compare", message=>"The email addresses are different. Please Check!", "length"=>30, "value"=>$users[0]["user_email"], "clear"=>true),
+			array("prompt"=>"User Type", "type"=>"selection", "name"=>"permission", "listarr"=>$aPermission, "selected"=>$permissions[0]["permission_template_name"], "value"=>"", "clear"=>true),
+			array("prompt"=>"Flexi Template", "type"=>"selection", "name"=>"flexitemp", "listarr"=>$aFlexi, "selected"=>$flexiTemplate[0]["description"], "value"=>"", "clear"=>true),
+			array("prompt"=>"Change Applies on", "type"=>"date", "name"=>"date_change", "length"=>20, "value"=>"", "clear"=>true),
+			array("prompt"=>"Time Template", "type"=>"selection", "name"=>"timetemp", "listarr"=>$aTime, "selected"=>$timeTemplate[0]["time_template_name"], "value"=>"", "clear"=>true),
+			array("prompt"=>"Select Teams", "type"=>"selection", "name"=>"teams[]", "listarr"=>$aTeams, multiple=>true, "selected"=>$teamNames, "value"=>"", "clear"=>true),
+			array("prompt"=>"Select Local Team", "type"=>"selection", "name"=>"localteam", "listarr"=>$aTeams, "selected"=>$localTeamName[0]["team_name"], "value"=>"", "clear"=>true),
+			array("prompt"=>"Annual Leave", "type"=>"selection", "name"=>"al", "listarr"=>$aAl, "selected"=>$annualLeave[0]["al_description"], "value"=>"", "clear"=>true),
+			array("type"=>"submit", "buttontext"=>"Edit user", "clear"=>true), 
+			array("type"=>'endform'));
 			$form = new forms;
 			$form->create_form($formArr);
 		echo "</div>";
@@ -2229,28 +2229,28 @@ function add_time($title, $intro) {
 		}
 		
 		echo "<div class='timesheet_workspace'>";
-		$formArr[] = array(type=>"intro", formtitle=>$title, formintro=>$intro); 
-		$formArr[] = array(type=>"form", form=>array(action=>"index.php?func=saveevent&user=".$_SESSION["userSettings"]["userId"],method=>"post"));	
-		$formArr[] = array(prompt=>"Event Type", type=>"selection", name=>"event_type", listarr=>$eTypes, selected=>$default_event_description, value=>"", clear=>true);
+		$formArr[] = array("type"=>"intro", "formtitle"=>$title, "formintro"=>$intro); 
+		$formArr[] = array("type"=>"form", "form"=>array("action"=>"index.php?func=saveevent&user=".$_SESSION["userSettings"]["userId"],"method"=>"post"));	
+		$formArr[] = array("prompt"=>"Event Type", "type"=>"selection", "name"=>"event_type", "listarr"=>$eTypes, "selected"=>$default_event_description, "value"=>"", "clear"=>true);
 		if($multi_date == "Yes") {
-			$formArr[]=array(prompt=>"Date From", type=>"date", name=>"date_name", length=>20, value=>"", zindex=>0, clear=>true);
-			$formArr[]=array(prompt=>"Date To", type=>"date", name=>"date_name2", length=>20, value=>"", zindex=>1, clear=>true);
+			$formArr[]=array("prompt"=>"Date From", "type"=>"date", "name"=>"date_name", "length"=>20, "value"=>"", zindex=>0, "clear"=>true);
+			$formArr[]=array("prompt"=>"Date To", "type"=>"date", "name"=>"date_name2", "length"=>20, "value"=>"", zindex=>1, "clear"=>true);
 		}else{
-			$formArr[]=array(prompt=>"Date", type=>"date", name=>"date_name", length=>20, value=>$dateVal, zindex=>1, clear=>true);
+			$formArr[]=array("prompt"=>"Date", "type"=>"date", "name"=>"date_name", "length"=>20, "value"=>$dateVal, zindex=>1, "clear"=>true);
 		}	
 		if($duration_type=="Fixed" or $duration_type == "Both") {
-			$formArr[]=array(prompt=>"Start Duration", type=>"time", name=>"duration_time_start", length=>20, starttime=>$event_settings[0]["earliest_starttime"], endtime=>$event_settings[0]["latest_endtime"], selected=>"0900", interval=>1, value=>"", clear=>true);
-			$formArr[]=array(prompt=>"Event Duration", type=>"selection", name=>"duration", listarr=>$arrDurations, selected=>"", value=>"", clear=>true);
+			$formArr[]=array("prompt"=>"Start Duration", "type"=>"time", "name"=>"duration_time_start", "length"=>20, "starttime"=>$event_settings[0]["earliest_starttime"], "endtime"=>$event_settings[0]["latest_endtime"], "selected"=>"0900", "interval"=>1, "value"=>"", "clear"=>true);
+			$formArr[]=array("prompt"=>"Event Duration", "type"=>"selection", "name"=>"duration", "listarr"=>$arrDurations, "selected"=>"", "value"=>"", "clear"=>true);
 		}
 		if($duration_type=="User definable" or $duration_type == "Both") {
-			$formArr[]=array(prompt=>"Start Time", type=>"time", name=>"time_start", length=>20, starttime=>$event_settings[0]["earliest_starttime"], endtime=>$event_settings[0]["latest_endtime"], selected=>"0900", interval=>1, value=>"", clear=>true);
-			$formArr[]=array(prompt=>"End Time", type=>"time", name=>"time_end", length=>20, starttime=>$event_settings[0]["earliest_endtime"], endtime=>$event_settings[0]["latest_endtime"], selected=>"1700", interval=>1, value=>"", clear=>true);
+			$formArr[]=array("prompt"=>"Start Time", "type"=>"time", "name"=>"time_start", "length"=>20, "starttime"=>$event_settings[0]["earliest_starttime"], "endtime"=>$event_settings[0]["latest_endtime"], "selected"=>"0900", "interval"=>1, "value"=>"", "clear"=>true);
+			$formArr[]=array("prompt"=>"End Time", "type"=>"time", "name"=>"time_end", "length"=>20, "starttime"=>$event_settings[0]["earliest_endtime"], "endtime"=>$event_settings[0]["latest_endtime"], "selected"=>"1700", "interval"=>1, "value"=>"", "clear"=>true);
 		}
-		$formArr[]=array(prompt=>"Extended Lunch", type=>"checkbox", name=>"extended_lunch", value=>"Yes", clear=>true);
-		$formArr[]=array(prompt=>"Lunch Start Time", type=>"time", name=>"lunch_time_start", length=>20, starttime=>$event_settings[0]["lunch_earliest_start_time"], endtime=>$event_settings[0]["lunch_latest_end_time"], selected=>"1200", interval=>1, value=>"", clear=>true);
-		$formArr[]=array(prompt=>"Lunch End Time", type=>"time", name=>"lunch_time_end", length=>20, starttime=>$event_settings[0]["lunch_earliest_start_time"], endtime=>$event_settings[0]["lunch_latest_end_time"], selected=>"1230", interval=>1, value=>"", clear=>true);
-		$formArr[]=array(type=>"submit", buttontext=>"Add Event", clear=>true); 
-		$formArr[]=array(type=>'endform');
+		$formArr[]=array("prompt"=>"Extended Lunch", "type"=>"checkbox", "name"=>"extended_lunch", "value"=>"Yes", "clear"=>true);
+		$formArr[]=array("prompt"=>"Lunch Start Time", "type"=>"time", "name"=>"lunch_time_start", "length"=>20, "starttime"=>$event_settings[0]["lunch_earliest_start_time"], "endtime"=>$event_settings[0]["lunch_latest_end_time"], "selected"=>"1200", "interval"=>1, "value"=>"", "clear"=>true);
+		$formArr[]=array("prompt"=>"Lunch End Time", "type"=>"time", "name"=>"lunch_time_end", "length"=>20, "starttime"=>$event_settings[0]["lunch_earliest_start_time"], "endtime"=>$event_settings[0]["lunch_latest_end_time"], "selected"=>"1230", "interval"=>1, "value"=>"", "clear"=>true);
+		$formArr[]=array("type"=>"submit", "buttontext"=>"Add Event", "clear"=>true); 
+		$formArr[]=array("type"=>'endform');
 		$form = new forms;
 		$form->create_form($formArr);
 		echo "</div>";
@@ -2330,27 +2330,27 @@ function add_event($title, $intro, $user="") {
 			}
 		}
 		echo "<div class='timesheet_workspace'>";
-		$formArr[] = array(type=>"intro", formtitle=>$title, formintro=>$intro); 
-		$formArr[] = array(type=>"form", form=>array(action=>"index.php?func=saveevent&user=$userId",method=>"post"));	
-		$formArr[] = array(prompt=>"Event Type", type=>"selection", name=>"event_type", listarr=>$eTypes, selected=>$default_event_description, value=>"", clear=>true, onchange=>"this.value");
+		$formArr[] = array("type"=>"intro", "formtitle"=>$title, "formintro"=>$intro); 
+		$formArr[] = array("type"=>"form", "form"=>array("action"=>"index.php?func=saveevent&user=$userId","method"=>"post"));	
+		$formArr[] = array("prompt"=>"Event Type", "type"=>"selection", "name"=>"event_type", "listarr"=>$eTypes, "selected"=>$default_event_description, "value"=>"", "clear"=>true, onchange=>"this.value");
 		if($multi_date == "Yes") {
-			$formArr[]=array(prompt=>"Date From", type=>"date", name=>"date_name", length=>20, value=>$dateVal, zindex=>2, clear=>true);
-			$formArr[]=array(prompt=>"Date To", type=>"date", name=>"date_name2", length=>20, value=>$dateVal, zindex=>1, clear=>true);
+			$formArr[]=array("prompt"=>"Date From", "type"=>"date", "name"=>"date_name", "length"=>20, "value"=>$dateVal, zindex=>2, "clear"=>true);
+			$formArr[]=array("prompt"=>"Date To", "type"=>"date", "name"=>"date_name2", "length"=>20, "value"=>$dateVal, zindex=>1, "clear"=>true);
 		}else{
-			$formArr[]=array(prompt=>"Date", type=>"date", name=>"date_name", length=>20, value=>$dateVal, zindex=>1, clear=>true);
+			$formArr[]=array("prompt"=>"Date", "type"=>"date", "name"=>"date_name", "length"=>20, "value"=>$dateVal, zindex=>1, "clear"=>true);
 		}	
 		if($duration_type=="Fixed" or $duration_type == "Both") {
-			$formArr[]=array(prompt=>"Start Duration", type=>"time", name=>"duration_time_start", length=>20, starttime=>$event_settings[0]["earliest_starttime"], endtime=>$event_settings[0]["latest_endtime"], selected=>"0900", interval=>1, value=>"", clear=>true);
-			$formArr[]=array(prompt=>"Event Duration", type=>"selection", name=>"duration", listarr=>$arrDurations, selected=>"", value=>"", clear=>true);
+			$formArr[]=array("prompt"=>"Start Duration", "type"=>"time", "name"=>"duration_time_start", "length"=>20, "starttime"=>$event_settings[0]["earliest_starttime"], "endtime"=>$event_settings[0]["latest_endtime"], "selected"=>"0900", "interval"=>1, "value"=>"", "clear"=>true);
+			$formArr[]=array("prompt"=>"Event Duration", "type"=>"selection", "name"=>"duration", "listarr"=>$arrDurations, "selected"=>"", "value"=>"", "clear"=>true);
 		}
 		if($duration_type=="User definable" or $duration_type == "Both") {
-			$formArr[]=array(prompt=>"Start Time", type=>"time", name=>"time_start", length=>20, starttime=>$event_settings[0]["earliest_starttime"], endtime=>$event_settings[0]["latest_endtime"], selected=>"0900", interval=>1, value=>"", clear=>true);
-			$formArr[]=array(prompt=>"End Time", type=>"time", name=>"time_end", length=>20, starttime=>$event_settings[0]["earliest_starttime"], endtime=>$event_settings[0]["latest_endtime"], selected=>"1700", interval=>1, value=>"", clear=>true);
+			$formArr[]=array("prompt"=>"Start Time", "type"=>"time", "name"=>"time_start", "length"=>20, "starttime"=>$event_settings[0]["earliest_starttime"], "endtime"=>$event_settings[0]["latest_endtime"], "selected"=>"0900", "interval"=>1, "value"=>"", "clear"=>true);
+			$formArr[]=array("prompt"=>"End Time", "type"=>"time", "name"=>"time_end", "length"=>20, "starttime"=>$event_settings[0]["earliest_starttime"], "endtime"=>$event_settings[0]["latest_endtime"], "selected"=>"1700", "interval"=>1, "value"=>"", "clear"=>true);
 		}
 		if($working_session=="Yes") {
-			$formArr[]=array(prompt=>"Extended Lunch", type=>"checkbox", name=>"extended_lunch", value=>"Yes", clear=>true);
-			$formArr[]=array(prompt=>"Lunch Start Time", type=>"time", name=>"lunch_time_start", length=>20, starttime=>$event_settings[0]["lunch_earliest_start_time"], endtime=>$event_settings[0]["lunch_latest_end_time"], selected=>"1200", interval=>1, value=>"", clear=>true);
-			$formArr[]=array(prompt=>"Lunch End Time", type=>"time", name=>"lunch_time_end", length=>20, starttime=>$event_settings[0]["lunch_earliest_start_time"], endtime=>$event_settings[0]["lunch_latest_end_time"], selected=>"1230", interval=>1, value=>"", clear=>true);
+			$formArr[]=array("prompt"=>"Extended Lunch", "type"=>"checkbox", "name"=>"extended_lunch", "value"=>"Yes", "clear"=>true);
+			$formArr[]=array("prompt"=>"Lunch Start Time", "type"=>"time", "name"=>"lunch_time_start", "length"=>20, "starttime"=>$event_settings[0]["lunch_earliest_start_time"], "endtime"=>$event_settings[0]["lunch_latest_end_time"], "selected"=>"1200", "interval"=>1, "value"=>"", "clear"=>true);
+			$formArr[]=array("prompt"=>"Lunch End Time", "type"=>"time", "name"=>"lunch_time_end", "length"=>20, "starttime"=>$event_settings[0]["lunch_earliest_start_time"], "endtime"=>$event_settings[0]["lunch_latest_end_time"], "selected"=>"1230", "interval"=>1, "value"=>"", "clear"=>true);
 		}
 		if($eventGlobal=="Yes") {
 			//add teams to provide multiple selection
@@ -2358,15 +2358,15 @@ function add_event($title, $intro, $user="") {
 			foreach($teams as $team) {
 				$aTeams[]=$team["team_name"];
 			}
-			$formArr[] = array(prompt=>"Select Teams", type=>"selection", name=>"teams[]", listarr=>$aTeams, multiple=>true, selected=>"", value=>"", clear=>true);
-			$formArr[]=array(prompt=>"Individual Edit?", type=>"checkbox", name=>"individual", value=>"Yes", clear=>true);
+			$formArr[] = array("prompt"=>"Select Teams", "type"=>"selection", "name"=>"teams[]", "listarr"=>$aTeams, multiple=>true, "selected"=>"", "value"=>"", "clear"=>true);
+			$formArr[]=array("prompt"=>"Individual Edit?", "type"=>"checkbox", "name"=>"individual", "value"=>"Yes", "clear"=>true);
 		}
 		
-		$formArr[]=array(prompt=>"Event Note", type=>"textarea", name=>"event_note", rows=>8, cols=>50, value=>"", clear=>true);
-		$formArr[]=array(prompt=>"The Note type allows you to select whether the above note is Public or Private. A `Public` note can <u>ONLY</u> be seen by you and your manager, whereas a `Private` note can only be seen by you.", type=>"note", name=>"void", value=>"", clear=>true);
-		$formArr[] = array(prompt=>"Note Type", type=>"radio", name=>"event_note_type", listarr=>array("Public","Private"), selected=>"Public", value=>"", clear=>true);
-		$formArr[]=array(type=>"submit", buttontext=>"Add Event", clear=>true); 
-		$formArr[]=array(type=>'endform');
+		$formArr[]=array("prompt"=>"Event Note", "type"=>"textarea", "name"=>"event_note", rows=>8, cols=>50, "value"=>"", "clear"=>true);
+		$formArr[]=array("prompt"=>"The Note type allows you to select whether the above note is Public or Private. A `Public` note can <u>ONLY</u> be seen by you and your manager, whereas a `Private` note can only be seen by you.", "type"=>"note", "name"=>"void", "value"=>"", "clear"=>true);
+		$formArr[] = array("prompt"=>"Note Type", "type"=>"radio", "name"=>"event_note_type", "listarr"=>array("Public","Private"), "selected"=>"Public", "value"=>"", "clear"=>true);
+		$formArr[]=array("type"=>"submit", "buttontext"=>"Add Event", "clear"=>true); 
+		$formArr[]=array("type"=>'endform');
 		$form = new forms;
 		$form->create_form($formArr);
 		echo "</div>";
@@ -2567,10 +2567,10 @@ function save_event($userId) {
 			}
 		}
 		if(!empty($_POST["event_note"])) {
-			$dl->insert("flexi_notes", array(notes_note=>$_POST["event_note"], notes_type=>$_POST["event_note_type"]));
+			$dl->insert("flexi_notes", array("notes_note"=>$_POST["event_note"], "notes_type"=>$_POST["event_note_type"]));
 			$sql = "select MAX(notes_id) as max_id from flexi_notes";
 			$notes = $dl->getQuery($sql);
-			$dl->insert("flexi_event_notes", array(event_id=>$id[0]["event_id"], note_id=>$notes[0]["max_id"]));
+			$dl->insert("flexi_event_notes", array("event_id"=>$id[0]["event_id"], "note_id"=>$notes[0]["max_id"]));
 		}
 		//first record written now check if need to add other dates
 		if($multipleDates) { // already checked that the dates do not match
@@ -2625,18 +2625,18 @@ function save_event($userId) {
 							if($eventFlexiLeave == "Yes") {
 								if(date("h", strtotime($endDateTime) - strtotime($startDateTime)) >=4) {
 									//write the request record
-									$dl->insert("flexi_requests", array(request_event_id=>$id[0]["event_id"]));
+									$dl->insert("flexi_requests", array("request_event_id"=>$id[0]["event_id"]));
 								}
 							}else{
 								if($eventAuthorisation == "Yes") {
 									//write the request record
-									$dl->insert("flexi_requests", array(request_event_id=>$id[0]["event_id"]));
+									$dl->insert("flexi_requests", array("request_event_id"=>$id[0]["event_id"]));
 								}
 							}
 							
 							if(!empty($_POST["event_note"])) {
 								$notes = $dl->select("flexi_notes", "notes_note='".$_POST["event_note"]."'");
-								$dl->insert("flexi_event_notes", array(event_id=>$id[0]["event_id"], note_id=>$notes[0]["notes_id"]));
+								$dl->insert("flexi_event_notes", array("event_id"=>$id[0]["event_id"], "note_id"=>$notes[0]["notes_id"]));
 							}	
 						}
 					}
@@ -3166,26 +3166,26 @@ function delete_events($id, $confirmation="", $deltype="") {
 function add_event_type() {
 	if(check_permission("Event Types")) {
 		echo "<div class='timesheet_workspace'>";
-		$formArr = array(array(type=>"intro", formtitle=>"Add Event Type", formintro=>"Create the Event types"), 
-			array(type=>"form", form=>array(action=>"index.php?func=saveeventtype",method=>"post", formname=>"types")),	
-			array(prompt=>"Event Type Name", type=>"text", name=>"type_name", length=>20, value=>"Enter a name", clear=>true),	
-			array(prompt=>"Event Short code", type=>"text", name=>"short_code", length=>20, value=>"Two character code", clear=>true),
-			array(prompt=>"Event Type Description", type=>"textarea", name=>"type_description", rows=>6, cols=>50, value=>"", clear=>true),
-			array(prompt=>"Signifies Leave", type=>"checkbox", name=>"leave_tag", value=>"Yes", clear=>false),
-			array(prompt=>"Signifies Flexitime", type=>"checkbox", name=>"flexi_tag", value=>"Yes", clear=>false),
-			array(prompt=>"Working Session", type=>"checkbox", name=>"work_tag", value=>"Yes", clear=>true),
-			array(prompt=>"Signifies Sickness", type=>"checkbox", name=>"sick_tag", value=>"Yes", clear=>false),
-			array(prompt=>"Global", type=>"checkbox", name=>"global_tag", value=>"Yes", clear=>false),
-			array(prompt=>"Requires Authorisation", type=>"checkbox", name=>"author_tag", value=>"Yes", clear=>true),
-			array(prompt=>"User can delete", type=>"checkbox", name=>"del_tag", value=>"Yes", clear=>true),
-			array(prompt=>"Select Colour", type=>"colour", name=>"sel_colour", length=>20, value=>"", clear=>true),
-			array(prompt=>"Duration Type", type=>"radio", name=>"duration_type", listarr=>array("Fixed","User definable", "Both"), selected=>"fixed", value=>"", clear=>true),
-			array(prompt=>"Changes Time", type=>"checkbox", name=>"changes_time", value=>"Yes", clear=>false),
-			array(prompt=>"Multi Date Allowed", type=>"checkbox", name=>"multi_date", value=>"Yes", clear=>true),
-			array(prompt=>"Working Event", type=>"checkbox", name=>"work", value=>"Yes", clear=>false),
-			array(prompt=>"Deduct Lunch", type=>"checkbox", name=>"lunch_deduction", value=>"Yes", clear=>true),
-			array(type=>"submit", buttontext=>"Add Event", clear=>true), 
-			array(type=>'endform'));
+		$formArr = array(array("type"=>"intro", "formtitle"=>"Add Event Type", "formintro"=>"Create the Event types"), 
+			array("type"=>"form", "form"=>array("action"=>"index.php?func=saveeventtype","method"=>"post", "formname"=>"types")),	
+			array("prompt"=>"Event Type Name", "type"=>"text", "name"=>"type_name", "length"=>20, "value"=>"Enter a name", "clear"=>true),	
+			array("prompt"=>"Event Short code", "type"=>"text", "name"=>"short_code", "length"=>20, "value"=>"Two character code", "clear"=>true),
+			array("prompt"=>"Event Type Description", "type"=>"textarea", "name"=>"type_description", "rows"=>6, "cols"=>50, "value"=>"", "clear"=>true),
+			array("prompt"=>"Signifies Leave", "type"=>"checkbox", "name"=>"leave_tag", "value"=>"Yes", "clear"=>false),
+			array("prompt"=>"Signifies Flexitime", "type"=>"checkbox", "name"=>"flexi_tag", "value"=>"Yes", "clear"=>false),
+			array("prompt"=>"Working Session", "type"=>"checkbox", "name"=>"work_tag", "value"=>"Yes", "clear"=>true),
+			array("prompt"=>"Signifies Sickness", "type"=>"checkbox", "name"=>"sick_tag", "value"=>"Yes", "clear"=>false),
+			array("prompt"=>"Global", "type"=>"checkbox", "name"=>"global_tag", "value"=>"Yes", "clear"=>false),
+			array("prompt"=>"Requires Authorisation", "type"=>"checkbox", "name"=>"author_tag", "value"=>"Yes", "clear"=>true),
+			array("prompt"=>"User can delete", "type"=>"checkbox", "name"=>"del_tag", "value"=>"Yes", "clear"=>true),
+			array("prompt"=>"Select Colour", "type"=>"colour", "name"=>"sel_colour", "length"=>20, "value"=>"", "clear"=>true),
+			array("prompt"=>"Duration Type", "type"=>"radio", "name"=>"duration_type", "listarr"=>array("Fixed","User definable", "Both"), "selected"=>"fixed", "value"=>"", "clear"=>true),
+			array("prompt"=>"Changes Time", "type"=>"checkbox", "name"=>"changes_time", "value"=>"Yes", "clear"=>false),
+			array("prompt"=>"Multi Date Allowed", "type"=>"checkbox", "name"=>"multi_date", "value"=>"Yes", "clear"=>true),
+			array("prompt"=>"Working Event", "type"=>"checkbox", "name"=>"work", "value"=>"Yes", "clear"=>false),
+			array("prompt"=>"Deduct Lunch", "type"=>"checkbox", "name"=>"lunch_deduction", "value"=>"Yes", "clear"=>true),
+			array("type"=>"submit", "buttontext"=>"Add Event", "clear"=>true), 
+			array("type"=>'endform'));
 			$form = new forms;
 			$form->create_form($formArr);
 		echo "</div>";
@@ -3270,27 +3270,27 @@ function edit_event_types() {
 		$editTypes = $dl->getQuery($sql);
 		echo "<div class='timesheet_workspace'>";
 		foreach($editTypes as $editType) {
-			$formArr = array(array(type=>"intro", formtitle=>"Edit Event Type", formintro=>"Edit the Event types"), 
-				array(type=>"form", form=>array(action=>"index.php?func=saveeventtypeedit&id=".$_GET["id"],method=>"post", formname=>"types")),	
-				array(prompt=>"Event Type Name", type=>"text", name=>"type_name", length=>20, value=>$editType["event_type_name"], clear=>true),	
-				array(prompt=>"Event Short code", type=>"text", name=>"short_code", length=>20, value=>$editType["event_shortcode"], clear=>true),
-				array(prompt=>"Event Type Description", type=>"textarea", name=>"type_description", rows=>6, cols=>50, value=>$editType["event_description"], clear=>true),
-				array(prompt=>"Signifies Leave", type=>"checkbox", name=>"leave_tag", selected=>$editType["event_al"], value=>"Yes", clear=>false),
-				array(prompt=>"Signifies Flexi", type=>"checkbox", name=>"flexi_tag", selected=>$editType["event_flexi"], value=>"Yes", clear=>false),
-				array(prompt=>"Working Session", type=>"checkbox", name=>"work_tag", selected=>$editType["event_work"], value=>"Yes", clear=>true),
-				array(prompt=>"Signifies Sickness", type=>"checkbox", name=>"sick_tag", selected=>$editType["event_sickness"], value=>"Yes", clear=>false),
-				array(prompt=>"Global", type=>"checkbox", name=>"global_tag", selected=>$editType["event_global"], value=>"Yes", clear=>false),
-				array(prompt=>"Requires Authorisation", type=>"checkbox", name=>"author_tag", selected=>$editType["event_authorisation"], value=>"Yes", clear=>true),
-				array(prompt=>"User can delete", type=>"checkbox", name=>"del_tag", selected=>$editType["event_delete"], value=>"Yes", clear=>true),
-				array(prompt=>"Current Colour (select a new colour to change)", type=>"text", name=>"sel_colour", length=>20, value=>$editType["event_colour"], clear=>true),
-				array(prompt=>"Select Colour", type=>"colour", name=>"new_colour", length=>20, value=>$editType["event_colour"], clear=>true),
-				array(prompt=>"Duration Type", type=>"radio", name=>"duration_type", listarr=>array("Fixed","User definable", "Both"), selected=>$editType["duration_type"], value=>"", clear=>true),
-				array(prompt=>"Changes Time", type=>"checkbox", name=>"changes_time", selected=>$editType["changes_time"], value=>"Yes", clear=>false),
-				array(prompt=>"Multi Date Allowed", type=>"checkbox", name=>"multi_date", selected=>$editType["multi_date_allowed"], value=>"Yes", clear=>true),
-				array(prompt=>"Working Event", type=>"checkbox", name=>"work", selected=>$editType["working_event"], value=>"Yes", clear=>false),
-				array(prompt=>"Deduct Lunch", type=>"checkbox", name=>"lunch_deduction", selected=>$editType["lunch_deduction"], value=>"Yes", clear=>true),
-				array(type=>"submit", buttontext=>"Save Event", clear=>true), 
-				array(type=>'endform'));
+			$formArr = array(array("type"=>"intro", "formtitle"=>"Edit Event Type", "formintro"=>"Edit the Event types"), 
+				array("type"=>"form", "form"=>array("action"=>"index.php?func=saveeventtypeedit&id=".$_GET["id"],"method"=>"post", "formname"=>"types")),	
+				array("prompt"=>"Event Type Name", "type"=>"text", "name"=>"type_name", "length"=>20, "value"=>$editType["event_type_name"], "clear"=>true),	
+				array("prompt"=>"Event Short code", "type"=>"text", "name"=>"short_code", "length"=>20, "value"=>$editType["event_shortcode"], "clear"=>true),
+				array("prompt"=>"Event Type Description", "type"=>"textarea", "name"=>"type_description", rows=>6, cols=>50, "value"=>$editType["event_description"], "clear"=>true),
+				array("prompt"=>"Signifies Leave", "type"=>"checkbox", "name"=>"leave_tag", "selected"=>$editType["event_al"], "value"=>"Yes", "clear"=>false),
+				array("prompt"=>"Signifies Flexi", "type"=>"checkbox", "name"=>"flexi_tag", "selected"=>$editType["event_flexi"], "value"=>"Yes", "clear"=>false),
+				array("prompt"=>"Working Session", "type"=>"checkbox", "name"=>"work_tag", "selected"=>$editType["event_work"], "value"=>"Yes", "clear"=>true),
+				array("prompt"=>"Signifies Sickness", "type"=>"checkbox", "name"=>"sick_tag", "selected"=>$editType["event_sickness"], "value"=>"Yes", "clear"=>false),
+				array("prompt"=>"Global", "type"=>"checkbox", "name"=>"global_tag", "selected"=>$editType["event_global"], "value"=>"Yes", "clear"=>false),
+				array("prompt"=>"Requires Authorisation", "type"=>"checkbox", "name"=>"author_tag", "selected"=>$editType["event_authorisation"], "value"=>"Yes", "clear"=>true),
+				array("prompt"=>"User can delete", "type"=>"checkbox", "name"=>"del_tag", "selected"=>$editType["event_delete"], "value"=>"Yes", "clear"=>true),
+				array("prompt"=>"Current Colour (select a new colour to change)", "type"=>"text", "name"=>"sel_colour", "length"=>20, "value"=>$editType["event_colour"], "clear"=>true),
+				array("prompt"=>"Select Colour", "type"=>"colour", "name"=>"new_colour", "length"=>20, "value"=>$editType["event_colour"], "clear"=>true),
+				array("prompt"=>"Duration Type", "type"=>"radio", "name"=>"duration_type", "listarr"=>array("Fixed","User definable", "Both"), "selected"=>$editType["duration_type"], "value"=>"", "clear"=>true),
+				array("prompt"=>"Changes Time", "type"=>"checkbox", "name"=>"changes_time", "selected"=>$editType["changes_time"], "value"=>"Yes", "clear"=>false),
+				array("prompt"=>"Multi Date Allowed", "type"=>"checkbox", "name"=>"multi_date", "selected"=>$editType["multi_date_allowed"], "value"=>"Yes", "clear"=>true),
+				array("prompt"=>"Working Event", "type"=>"checkbox", "name"=>"work", "selected"=>$editType["working_event"], "value"=>"Yes", "clear"=>false),
+				array("prompt"=>"Deduct Lunch", "type"=>"checkbox", "name"=>"lunch_deduction", "selected"=>$editType["lunch_deduction"], "value"=>"Yes", "clear"=>true),
+				array("type"=>"submit", "buttontext"=>"Save Event", "clear"=>true), 
+				array("type"=>'endform'));
 		}
 			$form = new forms;
 			$form->create_form($formArr);
@@ -3362,13 +3362,13 @@ function add_event_duration() {
 			$tNames[]=$names["template_days_name"];
 		}
 		echo "<div class='timesheet_workspace'>";
-		$formArr = array(array(type=>"intro", formtitle=>"Add Event Duration", formintro=>"Create an Event Duration"), 
-			array(type=>"form", form=>array(action=>"index.php?func=saveeventduration",method=>"post")),	
-			array(prompt=>"Name", type=>"text", name=>"name", length=>20, value=>"Enter a name", clear=>true),
-			array(prompt=>"Template", type=>"selection", name=>"choose_template", listarr=>$tNames, value=>"", clear=>true),	
-			array(prompt=>"Duration", type=>"time", name=>"duration", starttime=>"0100", endtime=>"0900", interval=>1, value=>"Enter leave period", clear=>true),
-			array(type=>"submit", buttontext=>"Add New Duration", clear=>true), 
-			array(type=>'endform'));
+		$formArr = array(array("type"=>"intro", "formtitle"=>"Add Event Duration", "formintro"=>"Create an Event Duration"), 
+			array("type"=>"form", "form"=>array("action"=>"index.php?func=saveeventduration","method"=>"post")),	
+			array("prompt"=>"Name", "type"=>"text", "name"=>"name", "length"=>20, "value"=>"Enter a name", "clear"=>true),
+			array("prompt"=>"Template", "type"=>"selection", "name"=>"choose_template", "listarr"=>$tNames, "value"=>"", "clear"=>true),	
+			array("prompt"=>"Duration", "type"=>"time", "name"=>"duration", "starttime"=>"0100", "endtime"=>"0900", "interval"=>1, "value"=>"Enter leave period", "clear"=>true),
+			array("type"=>"submit", "buttontext"=>"Add New Duration", "clear"=>true), 
+			array("type"=>'endform'));
 			$form = new forms;
 			$form->create_form($formArr);
 		echo "</div>";
@@ -3419,13 +3419,13 @@ function edit_event_durations() {
 		$selection = $dl->select("flexi_template_days", "flexi_template_days_id=$link");
 		echo "<div class='timesheet_workspace'>";
 		foreach($edits as $edit) {
-			$formArr = array(array(type=>"intro", formtitle=>"Edit Event Duration", formintro=>"Edit an Event Duration"), 
-			array(type=>"form", form=>array(action=>"index.php?func=saveeventdurationedit&id=".$_GET["id"],method=>"post")),	
-			array(prompt=>"Name", type=>"text", name=>"name", length=>20, value=>$edit["name"], clear=>true),
-			array(prompt=>"Template", type=>"selection", name=>"choose_template", listarr=>$tNames, selected=>$selection[0]["template_days_name"], value=>"", clear=>true),	
-			array(prompt=>"Duration", type=>"time", name=>"duration", starttime=>"0100", endtime=>"0900", interval=>1, selected=>$edit["duration"], clear=>true),
-			array(type=>"submit", buttontext=>"Save Duration", clear=>true), 
-			array(type=>'endform'));
+			$formArr = array(array("type"=>"intro", "formtitle"=>"Edit Event Duration", "formintro"=>"Edit an Event Duration"), 
+			array("type"=>"form", "form"=>array("action"=>"index.php?func=saveeventdurationedit&id=".$_GET["id"],"method"=>"post")),	
+			array("prompt"=>"Name", "type"=>"text", "name"=>"name", "length"=>20, "value"=>$edit["name"], "clear"=>true),
+			array("prompt"=>"Template", "type"=>"selection", "name"=>"choose_template", "listarr"=>$tNames, "selected"=>$selection[0]["template_days_name"], "value"=>"", "clear"=>true),	
+			array("prompt"=>"Duration", "type"=>"time", "name"=>"duration", "starttime"=>"0100", "endtime"=>"0900", "interval"=>1, "selected"=>$edit["duration"], "clear"=>true),
+			array("type"=>"submit", "buttontext"=>"Save Duration", "clear"=>true), 
+			array("type"=>'endform'));
 		}
 		$form = new forms;
 		$form->create_form($formArr);
@@ -3464,32 +3464,32 @@ function add_permissions() {
 	if(check_permission("Templates")) {
 		global $dl;
 		echo "<div class='timesheet_workspace'>";
-		$formArr = array(array(type=>"intro", formtitle=>"Create Permission Template", formintro=>"Fill out the fields below to create the permission template"), 
-			array(type=>"form", form=>array(action=>"index.php?func=savepermissions",method=>"post")),	
-			array(prompt=>"Template Name", type=>"text", name=>"template_name", length=>20, value=>"Enter template name", clear=>true),	
-			array(prompt=>"Template Description", type=>"textarea", name=>"temp_description", rows=>8, cols=>50, value=>"", clear=>true),
-			array(prompt=>"Edit Users", type=>"selection", name=>"edit_users", listarr=>array( "false", "true" ), selected=>"false", value=>"", clear=>false),
-			array(prompt=>"Edit Templates", type=>"selection", name=>"edit_templates", listarr=>array( "false", "true" ), selected=>"false", value=>"", clear=>true),
-			array(prompt=>"Manage Teams", type=>"selection", name=>"edit_teams", listarr=>array( "false", "true" ), selected=>"false", value=>"", clear=>false),
-			array(prompt=>"Edit Team Events", type=>"selection", name=>"edit_teamevents", listarr=>array( "false", "true" ), selected=>"false", value=>"", clear=>true),
-			array(prompt=>"Team Authority", type=>"selection", name=>"team_authority", listarr=>array( "false", "true" ), selected=>"false", value=>"", clear=>false),
-			array(prompt=>"Create Events", type=>"selection", name=>"events", listarr=>array( "false", "true" ), selected=>"false", value=>"", clear=>true),
-			array(prompt=>"Create Event Types", type=>"selection", name=>"event_types", listarr=>array( "false", "true" ), selected=>"false", value=>"", clear=>false),
-			array(prompt=>"Add Time", type=>"selection", name=>"add_time", listarr=>array( "false", "true" ), selected=>"false", value=>"", clear=>true),
-			array(prompt=>"Edit Time", type=>"selection", name=>"edit_time", listarr=>array( "false", "true" ), selected=>"false", value=>"", clear=>false),
-			array(prompt=>"Edit Locked Time", type=>"selection", name=>"edit_locked", listarr=>array( "false", "true" ), selected=>"false", value=>"", clear=>true),
-			array(prompt=>"Add Global Events", type=>"selection", name=>"add_global", listarr=>array( "false", "true" ), selected=>"false", value=>"", clear=>false),
-			array(prompt=>"Override Deletes", type=>"selection", name=>"override", listarr=>array( "false", "true" ), selected=>"false", value=>"", clear=>true),
-			array(prompt=>"Edit Flexipot", type=>"selection", name=>"flexipot", listarr=>array( "false", "true" ), selected=>"false", value=>"", clear=>false),
-			array(prompt=>"View User Leave", type=>"selection", name=>"userleave", listarr=>array( "false", "true" ), selected=>"false", value=>"", clear=>true),
-			array(prompt=>"User Messaging", type=>"selection", name=>"usermessaging", listarr=>array( "false", "true" ), selected=>"false", value=>"", clear=>false),	
-			array(prompt=>"Allow view timesheet", type=>"selection", name=>"usertimesheet", listarr=>array( "false", "true" ), selected=>"false", value=>"", clear=>true),
-			array(prompt=>"View reports", type=>"selection", name=>"viewreports", listarr=>array( "false", "true" ), selected=>"false", value=>"", clear=>false),
-			array(prompt=>"Year End reports", type=>"selection", name=>"yearend", listarr=>array( "false", "true" ), selected=>"false", value=>"", clear=>true),
-			array(prompt=>"Override view timesheet", type=>"selection", name=>"overridetimesheet", listarr=>array( "false", "true" ), selected=>"false", value=>"", clear=>false),
-			array(prompt=>"Override Local Manager constraint", type=>"selection", name=>"overrideLM", listarr=>array( "false", "true" ), selected=>"false", value=>"", clear=>true),
-			array(type=>"submit", buttontext=>"Create Template", clear=>true), 
-			array(type=>'endform'));
+		$formArr = array(array("type"=>"intro", "formtitle"=>"Create Permission Template", "formintro"=>"Fill out the fields below to create the permission template"), 
+			array("type"=>"form", "form"=>array("action"=>"index.php?func=savepermissions","method"=>"post")),	
+			array("prompt"=>"Template Name", "type"=>"text", "name"=>"template_name", "length"=>20, "value"=>"Enter template name", "clear"=>true),	
+			array("prompt"=>"Template Description", "type"=>"textarea", "name"=>"temp_description", "rows"=>8, "cols"=>50, "value"=>"", "clear"=>true),
+			array("prompt"=>"Edit Users", "type"=>"selection", "name"=>"edit_users", "listarr"=>array( "false", "true" ), "selected"=>"false", "value"=>"", "clear"=>false),
+			array("prompt"=>"Edit Templates", "type"=>"selection", "name"=>"edit_templates", "listarr"=>array( "false", "true" ), "selected"=>"false", "value"=>"", "clear"=>true),
+			array("prompt"=>"Manage Teams", "type"=>"selection", "name"=>"edit_teams", "listarr"=>array( "false", "true" ), "selected"=>"false", "value"=>"", "clear"=>false),
+			array("prompt"=>"Edit Team Events", "type"=>"selection", "name"=>"edit_teamevents", "listarr"=>array( "false", "true" ), "selected"=>"false", "value"=>"", "clear"=>true),
+			array("prompt"=>"Team Authority", "type"=>"selection", "name"=>"team_authority", "listarr"=>array( "false", "true" ), "selected"=>"false", "value"=>"", "clear"=>false),
+			array("prompt"=>"Create Events", "type"=>"selection", "name"=>"events", "listarr"=>array( "false", "true" ), "selected"=>"false", "value"=>"", "clear"=>true),
+			array("prompt"=>"Create Event Types", "type"=>"selection", "name"=>"event_types", "listarr"=>array( "false", "true" ), "selected"=>"false", "value"=>"", "clear"=>false),
+			array("prompt"=>"Add Time", "type"=>"selection", "name"=>"add_time", "listarr"=>array( "false", "true" ), "selected"=>"false", "value"=>"", "clear"=>true),
+			array("prompt"=>"Edit Time", "type"=>"selection", "name"=>"edit_time", "listarr"=>array( "false", "true" ), "selected"=>"false", "value"=>"", "clear"=>false),
+			array("prompt"=>"Edit Locked Time", "type"=>"selection", "name"=>"edit_locked", "listarr"=>array( "false", "true" ), "selected"=>"false", "value"=>"", "clear"=>true),
+			array("prompt"=>"Add Global Events", "type"=>"selection", "name"=>"add_global", "listarr"=>array( "false", "true" ), "selected"=>"false", "value"=>"", "clear"=>false),
+			array("prompt"=>"Override Deletes", "type"=>"selection", "name"=>"override", "listarr"=>array( "false", "true" ), "selected"=>"false", "value"=>"", "clear"=>true),
+			array("prompt"=>"Edit Flexipot", "type"=>"selection", "name"=>"flexipot", "listarr"=>array( "false", "true" ), "selected"=>"false", "value"=>"", "clear"=>false),
+			array("prompt"=>"View User Leave", "type"=>"selection", "name"=>"userleave", "listarr"=>array( "false", "true" ), "selected"=>"false", "value"=>"", "clear"=>true),
+			array("prompt"=>"User Messaging", "type"=>"selection", "name"=>"usermessaging", "listarr"=>array( "false", "true" ), "selected"=>"false", "value"=>"", "clear"=>false),	
+			array("prompt"=>"Allow view timesheet", "type"=>"selection", "name"=>"usertimesheet", "listarr"=>array( "false", "true" ), "selected"=>"false", "value"=>"", "clear"=>true),
+			array("prompt"=>"View reports", "type"=>"selection", "name"=>"viewreports", "listarr"=>array( "false", "true" ), "selected"=>"false", "value"=>"", "clear"=>false),
+			array("prompt"=>"Year End reports", "type"=>"selection", "name"=>"yearend", "listarr"=>array( "false", "true" ), "selected"=>"false", "value"=>"", "clear"=>true),
+			array("prompt"=>"Override view timesheet", "type"=>"selection", "name"=>"overridetimesheet", "listarr"=>array( "false", "true" ), "selected"=>"false", "value"=>"", "clear"=>false),
+			array("prompt"=>"Override Local Manager constraint", "type"=>"selection", "name"=>"overrideLM", "listarr"=>array( "false", "true" ), "selected"=>"false", "value"=>"", "clear"=>true),
+			array("type"=>"submit", "buttontext"=>"Create Template", "clear"=>true), 
+			array("type"=>'endform'));
 			$form = new forms;
 			$form->create_form($formArr);
 			$template=$dl->select("flexi_permission_template_name");
@@ -3527,32 +3527,32 @@ function edit_permissions() {
 		$permission_name = $dl->select("flexi_permission_template_name", "permission_id=".$_GET["id"]);
 		$permissions = $dl->select("flexi_permission_template","permission_template_name_id=".$_GET["id"]);
 		echo "<div class='timesheet_workspace'>";
-		$formArr = array(array(type=>"intro", formtitle=>"Create Permission Template", formintro=>"Fill out the fields below to create the permission template"), 
-			array(type=>"form", form=>array(action=>"index.php?func=savepermissiontemplateedit&id=".$_GET["id"],method=>"post")),	
-			array(prompt=>"Template Name", type=>"text", name=>"template_name", length=>20, value=>$permission_name[0]["permission_template_name"], clear=>true),	
-			array(prompt=>"Template Description", type=>"textarea", name=>"temp_description", rows=>8, cols=>50, value=>$permissions[0]["permission_description"], clear=>true),
-			array(prompt=>"Edit Users", type=>"selection", name=>"edit_users", listarr=>array( "false", "true" ), selected=>$permissions[0]["permission_user"], value=>"", clear=>false),
-			array(prompt=>"Edit Templates", type=>"selection", name=>"edit_templates", listarr=>array( "false", "true" ), selected=>$permissions[0]["permission_templates"], value=>"", clear=>true),
-			array(prompt=>"Manage Teams", type=>"selection", name=>"edit_teams", listarr=>array( "false", "true" ), selected=>$permissions[0]["permission_teams"], value=>"", clear=>false),
-			array(prompt=>"Edit Team Events", type=>"selection", name=>"edit_teamevents", listarr=>array( "false", "true" ), selected=>$permissions[0]["permission_team_events"], value=>"", clear=>true),
-			array(prompt=>"Team Authority", type=>"selection", name=>"team_authority", listarr=>array( "false", "true" ), selected=>$permissions[0]["permission_team_authorise"], value=>"", clear=>false),
-			array(prompt=>"Create Events", type=>"selection", name=>"events", listarr=>array( "false", "true" ), selected=>$permissions[0]["permission_events"], value=>"", clear=>true),
-			array(prompt=>"Create Event Types", type=>"selection", name=>"event_types", listarr=>array( "false", "true" ), selected=>$permissions[0]["permission_event_types"], value=>"", clear=>false),
-			array(prompt=>"Add Time", type=>"selection", name=>"add_time", listarr=>array( "false", "true" ), selected=>$permissions[0]["permission_add_time"], value=>"", clear=>true),
-			array(prompt=>"Edit Time", type=>"selection", name=>"edit_time", listarr=>array( "false", "true" ), selected=>$permissions[0]["permission_edit_time"], value=>"", clear=>false),
-			array(prompt=>"Edit Locked Time", type=>"selection", name=>"edit_locked", listarr=>array( "false", "true" ), selected=>$permissions[0]["permission_edit_locked_time"], value=>"", clear=>true),
-			array(prompt=>"Add Global Events", type=>"selection", name=>"add_global", listarr=>array( "false", "true" ), selected=>$permissions[0]["permission_add_global"], value=>"", clear=>false),
-			array(prompt=>"Override Deletes", type=>"selection", name=>"override", listarr=>array( "false", "true" ), selected=>$permissions[0]["permission_override_delete"], value=>"", clear=>true),
-			array(prompt=>"Edit Flexipot", type=>"selection", name=>"flexipot", listarr=>array( "false", "true" ), selected=>$permissions[0]["permission_edit_flexipot"], value=>"", clear=>false),
-			array(prompt=>"View User Leave", type=>"selection", name=>"userleave", listarr=>array( "false", "true" ), selected=>$permissions[0]["permission_view_leave"], value=>"", clear=>true),
-			array(prompt=>"User Messaging", type=>"selection", name=>"usermessaging", listarr=>array( "false", "true" ), selected=>$permissions[0]["permission_messaging"], value=>"", clear=>false),
-			array(prompt=>"Allow view timesheet", type=>"selection", name=>"usertimesheet", listarr=>array( "false", "true" ), selected=>$permissions[0]["permission_view_timesheet"], value=>"", clear=>true),
-			array(prompt=>"View Reports", type=>"selection", name=>"viewreports", listarr=>array( "false", "true" ), selected=>$permissions[0]["permission_view_reports"], value=>"", clear=>false),
-			array(prompt=>"Year End reports", type=>"selection", name=>"yearend", listarr=>array( "false", "true" ), selected=>$permissions[0]["permission_year_end"], value=>"", clear=>true),
-			array(prompt=>"Override view timesheet", type=>"selection", name=>"overridetimesheet", listarr=>array( "false", "true" ), selected=>$permissions[0]["permission_view_override"], value=>"", clear=>false),
-			array(prompt=>"Override Local Manager constraint", type=>"selection", name=>"overrideLM", listarr=>array( "false", "true" ), selected=>$permissions[0]["permission_LM_constraint"], value=>"", clear=>true),
-			array(type=>"submit", buttontext=>"Save Template", clear=>true), 
-			array(type=>'endform'));
+		$formArr = array(array("type"=>"intro", "formtitle"=>"Create Permission Template", "formintro"=>"Fill out the fields below to create the permission template"), 
+			array("type"=>"form", "form"=>array("action"=>"index.php?func=savepermissiontemplateedit&id=".$_GET["id"],"method"=>"post")),	
+			array("prompt"=>"Template Name", "type"=>"text", "name"=>"template_name", "length"=>20, "value"=>$permission_name[0]["permission_template_name"], "clear"=>true),	
+			array("prompt"=>"Template Description", "type"=>"textarea", "name"=>"temp_description", "rows"=>8, "cols"=>50, "value"=>$permissions[0]["permission_description"], "clear"=>true),
+			array("prompt"=>"Edit Users", "type"=>"selection", "name"=>"edit_users", "listarr"=>array( "false", "true" ), "selected"=>$permissions[0]["permission_user"], "value"=>"", "clear"=>false),
+			array("prompt"=>"Edit Templates", "type"=>"selection", "name"=>"edit_templates", "listarr"=>array( "false", "true" ), "selected"=>$permissions[0]["permission_templates"], "value"=>"", "clear"=>true),
+			array("prompt"=>"Manage Teams", "type"=>"selection", "name"=>"edit_teams", "listarr"=>array( "false", "true" ), "selected"=>$permissions[0]["permission_teams"], "value"=>"", "clear"=>false),
+			array("prompt"=>"Edit Team Events", "type"=>"selection", "name"=>"edit_teamevents", "listarr"=>array( "false", "true" ), "selected"=>$permissions[0]["permission_team_events"], "value"=>"", "clear"=>true),
+			array("prompt"=>"Team Authority", "type"=>"selection", "name"=>"team_authority", "listarr"=>array( "false", "true" ), "selected"=>$permissions[0]["permission_team_authorise"], "value"=>"", "clear"=>false),
+			array("prompt"=>"Create Events", "type"=>"selection", "name"=>"events", "listarr"=>array( "false", "true" ), "selected"=>$permissions[0]["permission_events"], "value"=>"", "clear"=>true),
+			array("prompt"=>"Create Event Types", "type"=>"selection", "name"=>"event_types", "listarr"=>array( "false", "true" ), "selected"=>$permissions[0]["permission_event_types"], "value"=>"", "clear"=>false),
+			array("prompt"=>"Add Time", "type"=>"selection", "name"=>"add_time", "listarr"=>array( "false", "true" ), "selected"=>$permissions[0]["permission_add_time"], "value"=>"", "clear"=>true),
+			array("prompt"=>"Edit Time", "type"=>"selection", "name"=>"edit_time", "listarr"=>array( "false", "true" ), "selected"=>$permissions[0]["permission_edit_time"], "value"=>"", "clear"=>false),
+			array("prompt"=>"Edit Locked Time", "type"=>"selection", "name"=>"edit_locked", "listarr"=>array( "false", "true" ), "selected"=>$permissions[0]["permission_edit_locked_time"], "value"=>"", "clear"=>true),
+			array("prompt"=>"Add Global Events", "type"=>"selection", "name"=>"add_global", "listarr"=>array( "false", "true" ), "selected"=>$permissions[0]["permission_add_global"], "value"=>"", "clear"=>false),
+			array("prompt"=>"Override Deletes", "type"=>"selection", "name"=>"override", "listarr"=>array( "false", "true" ), "selected"=>$permissions[0]["permission_override_delete"], "value"=>"", "clear"=>true),
+			array("prompt"=>"Edit Flexipot", "type"=>"selection", "name"=>"flexipot", "listarr"=>array( "false", "true" ), "selected"=>$permissions[0]["permission_edit_flexipot"], "value"=>"", "clear"=>false),
+			array("prompt"=>"View User Leave", "type"=>"selection", "name"=>"userleave", "listarr"=>array( "false", "true" ), "selected"=>$permissions[0]["permission_view_leave"], "value"=>"", "clear"=>true),
+			array("prompt"=>"User Messaging", "type"=>"selection", "name"=>"usermessaging", "listarr"=>array( "false", "true" ), "selected"=>$permissions[0]["permission_messaging"], "value"=>"", "clear"=>false),
+			array("prompt"=>"Allow view timesheet", "type"=>"selection", "name"=>"usertimesheet", "listarr"=>array( "false", "true" ), "selected"=>$permissions[0]["permission_view_timesheet"], "value"=>"", "clear"=>true),
+			array("prompt"=>"View Reports", "type"=>"selection", "name"=>"viewreports", "listarr"=>array( "false", "true" ), "selected"=>$permissions[0]["permission_view_reports"], "value"=>"", "clear"=>false),
+			array("prompt"=>"Year End reports", "type"=>"selection", "name"=>"yearend", "listarr"=>array( "false", "true" ), "selected"=>$permissions[0]["permission_year_end"], "value"=>"", "clear"=>true),
+			array("prompt"=>"Override view timesheet", "type"=>"selection", "name"=>"overridetimesheet", "listarr"=>array( "false", "true" ), "selected"=>$permissions[0]["permission_view_override"], "value"=>"", "clear"=>false),
+			array("prompt"=>"Override Local Manager constraint", "type"=>"selection", "name"=>"overrideLM", "listarr"=>array( "false", "true" ), "selected"=>$permissions[0]["permission_LM_constraint"], "value"=>"", "clear"=>true),
+			array("type"=>"submit", "buttontext"=>"Save Template", "clear"=>true), 
+			array("type"=>'endform'));
 			$form = new forms;
 			$form->create_form($formArr);
 		echo "</div>";
@@ -3587,11 +3587,11 @@ function add_time_template() {
 	if(check_permission("Templates")) {
 		global $dl;
 		echo "<div class='timesheet_workspace'>";
-		$formArr = array(array(type=>"intro", formtitle=>"Create Time Template", formintro=>"Fill out the fields below to create the time template"), 
-			array(type=>"form", form=>array(action=>"index.php?func=savetimetemplate",method=>"post")),	
-			array(prompt=>"Template Name", type=>"text", name=>"template_name", length=>40, value=>"Enter template name", clear=>true),	
-			array(prompt=>"Date Format", type=>"selection", name=>"date_format", listarr=>array( "dd-mm-yyyy", "mm-dd-yyyy" ), selected=>"dd-mm-yyyy", value=>"", clear=>true),
-			array(prompt=>"Timezone", type=>"selection", name=>"timezone", listarr=>array("(GMT-12:00) International Date Line West"
+		$formArr = array(array("type"=>"intro", "formtitle"=>"Create Time Template", "formintro"=>"Fill out the fields below to create the time template"), 
+			array("type"=>"form", "form"=>array("action"=>"index.php?func=savetimetemplate","method"=>"post")),	
+			array("prompt"=>"Template Name", "type"=>"text", "name"=>"template_name", "length"=>40, "value"=>"Enter template name", "clear"=>true),	
+			array("prompt"=>"Date Format", "type"=>"selection", "name"=>"date_format", "listarr"=>array( "dd-mm-yyyy", "mm-dd-yyyy" ), "selected"=>"dd-mm-yyyy", "value"=>"", "clear"=>true),
+			array("prompt"=>"Timezone", "type"=>"selection", "name"=>"timezone", "listarr"=>array("(GMT-12:00) International Date Line West"
 			,"(GMT-11:00) Midway Island, Samoa"
 			,"(GMT-10:00) Hawaii"
 			,"(GMT-09:00) Alaska"
@@ -3666,16 +3666,16 @@ function add_time_template() {
 			,"(GMT+12:00) Fiji, Kamchatka, Marshall Is."
 			,"(GMT+12:00) Auckland, Wellington"
 			,"(GMT+13:00) Nuku'alofa"
-			), selected=>"(GMT) Greenwich Mean Time : Dublin, Edinburgh, Lisbon, London", value=>"", clear=>true),
-			array(prompt=>"Start Adjustment", type=>"selection", name=>"start_adjustment", listarr=>array( "-15","-10","-5","0" ), selected=>"0", value=>"", clear=>true),
-			array(prompt=>"End Adjustment", type=>"selection", name=>"end_adjustment", listarr=>array( "0", "+5","+10","+15" ), selected=>"0", value=>"", clear=>true),
-			array(prompt=>"Enable rounding", type=>"checkbox", name=>"rounding", value=>"Yes", clear=>true),
-			array(prompt=>"Round to", type=>"selection", name=>"roundto", listarr=>array( "5 minutes", "10 minutes", "15 minutes" ), selected=>"5 minutes", value=>"", clear=>true),
-			array(prompt=>"Start Times", type=>"selection", name=>"round_start_time", listarr=>array( "Round to nearest", "Round up", "Round down" ), selected=>"Round to nearest", value=>"", clear=>true),
-			array(prompt=>"End Times", type=>"selection", name=>"round_end_time", listarr=>array( "Round to nearest", "Round up", "Round down" ), selected=>"Round to nearest", value=>"", clear=>true),
-			array(prompt=>"Delete Users", type=>"selection", name=>"delete_users", listarr=>array( "After 1 month", "After 3 months", "After 6 months", "After 1 year", "Never" ), selected=>"Never", value=>"", clear=>true),
-			array(type=>"submit", buttontext=>"Create Template", clear=>true), 
-			array(type=>'endform'));
+			), "selected"=>"(GMT) Greenwich Mean Time : Dublin, Edinburgh, Lisbon, London", "value"=>"", "clear"=>true),
+			array("prompt"=>"Start Adjustment", "type"=>"selection", "name"=>"start_adjustment", "listarr"=>array( "-15","-10","-5","0" ), "selected"=>"0", "value"=>"", "clear"=>true),
+			array("prompt"=>"End Adjustment", "type"=>"selection", "name"=>"end_adjustment", "listarr"=>array( "0", "+5","+10","+15" ), "selected"=>"0", "value"=>"", "clear"=>true),
+			array("prompt"=>"Enable rounding", "type"=>"checkbox", "name"=>"rounding", "value"=>"Yes", "clear"=>true),
+			array("prompt"=>"Round to", "type"=>"selection", "name"=>"roundto", "listarr"=>array( "5 minutes", "10 minutes", "15 minutes" ), "selected"=>"5 minutes", "value"=>"", "clear"=>true),
+			array("prompt"=>"Start Times", "type"=>"selection", "name"=>"round_start_time", "listarr"=>array( "Round to nearest", "Round up", "Round down" ), "selected"=>"Round to nearest", "value"=>"", "clear"=>true),
+			array("prompt"=>"End Times", "type"=>"selection", "name"=>"round_end_time", "listarr"=>array( "Round to nearest", "Round up", "Round down" ), "selected"=>"Round to nearest", "value"=>"", "clear"=>true),
+			array("prompt"=>"Delete Users", "type"=>"selection", "name"=>"delete_users", "listarr"=>array( "After 1 month", "After 3 months", "After 6 months", "After 1 year", "Never" ), "selected"=>"Never", "value"=>"", "clear"=>true),
+			array("type"=>"submit", "buttontext"=>"Create Template", "clear"=>true), 
+			array("type"=>'endform'));
 			$form = new forms;
 			$form->create_form($formArr);
 			$template=$dl->select("flexi_time_template_name");
@@ -3715,11 +3715,11 @@ function edit_time_template() {
 		$edits = $dl->select("flexi_time_template", "time_template_name_id=".$_GET["id"]);
 		echo "<div class='timesheet_workspace'>";
 		foreach($edits as $edit) {
-			$formArr = array(array(type=>"intro", formtitle=>"Edit Time Template", formintro=>"Change the fields below to edit the time template"), 
-				array(type=>"form", form=>array(action=>"index.php?func=savetimetemplateedit&id=".$_GET["id"],method=>"post")),	
-				array(prompt=>"Template Name", type=>"text", name=>"template_name", length=>40, value=>$template_name, clear=>true),
-				array(prompt=>"Date Format", type=>"selection", name=>"date_format", listarr=>array( "dd-mm-yyyy", "mm-dd-yyyy" ), selected=>$edit["time_template_date_format"], value=>$edit["time_template_date_format"], clear=>true),
-				array(prompt=>"Timezone", type=>"selection", name=>"timezone", listarr=>array("(GMT-12:00) International Date Line West"
+			$formArr = array(array("type"=>"intro", "formtitle"=>"Edit Time Template", "formintro"=>"Change the fields below to edit the time template"), 
+				array("type"=>"form", "form"=>array("action"=>"index.php?func=savetimetemplateedit&id=".$_GET["id"],"method"=>"post")),	
+				array("prompt"=>"Template Name", "type"=>"text", "name"=>"template_name", "length"=>40, "value"=>$template_name, "clear"=>true),
+				array("prompt"=>"Date Format", "type"=>"selection", "name"=>"date_format", "listarr"=>array( "dd-mm-yyyy", "mm-dd-yyyy" ), "selected"=>$edit["time_template_date_format"], "value"=>$edit["time_template_date_format"], "clear"=>true),
+				array("prompt"=>"Timezone", "type"=>"selection", "name"=>"timezone", "listarr"=>array("(GMT-12:00) International Date Line West"
 				,"(GMT-11:00) Midway Island, Samoa"
 				,"(GMT-10:00) Hawaii"
 				,"(GMT-09:00) Alaska"
@@ -3794,16 +3794,16 @@ function edit_time_template() {
 				,"(GMT+12:00) Fiji, Kamchatka, Marshall Is."
 				,"(GMT+12:00) Auckland, Wellington"
 				,"(GMT+13:00) Nuku'alofa"
-				), selected=>$edit["time_template_timezone"], value=>$edit["time_template_timezone"], clear=>true),
-				array(prompt=>"Start Adjustment", type=>"selection", name=>"start_adjustment", listarr=>array( "-15","-10","-5","0" ), selected=>$edit["time_template_start_adjustment"], value=>$edit["time_template_start_adjustment"], clear=>true),
-				array(prompt=>"End Adjustment", type=>"selection", name=>"end_adjustment", listarr=>array( "0", "+5","+10","+15" ), selected=>$edit["time_template_end_adjustment"], value=>$edit["time_template_end_adjustment"], clear=>true),
-				array(prompt=>"Enable rounding", type=>"checkbox", name=>"rounding", selected=>$edit["time_template_rounding_enabled"], value=>"Yes", clear=>true),
-				array(prompt=>"Round to", type=>"selection", name=>"roundto", listarr=>array( "5 minutes", "10 minutes", "15 minutes" ), selected=>$edit["time_template_round_to"], value=>$edit["time_template_round_to"], clear=>true),
-				array(prompt=>"Start Times", type=>"selection", name=>"round_start_time", listarr=>array( "Round to nearest", "Round up", "Round down" ), selected=>$edit["time_template_start"], value=>$edit["time_template_start"], clear=>true),
-				array(prompt=>"End Times", type=>"selection", name=>"round_end_time", listarr=>array( "Round to nearest", "Round up", "Round down" ), selected=>$edit["time_template_end"], value=>$edit["time_template_end"], clear=>true),
-				array(prompt=>"Delete Users", type=>"selection", name=>"delete_users", listarr=>array( "After 1 month", "After 3 months", "After 6 months", "After 1 year", "Never" ), selected=>$edit["time_template_delete"], value=>$edit["time_template_delete"], clear=>true),
-				array(type=>"submit", buttontext=>"Save Template", clear=>true), 
-				array(type=>'endform'));
+				), "selected"=>$edit["time_template_timezone"], "value"=>$edit["time_template_timezone"], "clear"=>true),
+				array("prompt"=>"Start Adjustment", "type"=>"selection", "name"=>"start_adjustment", "listarr"=>array( "-15","-10","-5","0" ), "selected"=>$edit["time_template_start_adjustment"], "value"=>$edit["time_template_start_adjustment"], "clear"=>true),
+				array("prompt"=>"End Adjustment", "type"=>"selection", "name"=>"end_adjustment", "listarr"=>array( "0", "+5","+10","+15" ), "selected"=>$edit["time_template_end_adjustment"], "value"=>$edit["time_template_end_adjustment"], "clear"=>true),
+				array("prompt"=>"Enable rounding", "type"=>"checkbox", "name"=>"rounding", "selected"=>$edit["time_template_rounding_enabled"], "value"=>"Yes", "clear"=>true),
+				array("prompt"=>"Round to", "type"=>"selection", "name"=>"roundto", "listarr"=>array( "5 minutes", "10 minutes", "15 minutes" ), "selected"=>$edit["time_template_round_to"], "value"=>$edit["time_template_round_to"], "clear"=>true),
+				array("prompt"=>"Start Times", "type"=>"selection", "name"=>"round_start_time", "listarr"=>array( "Round to nearest", "Round up", "Round down" ), "selected"=>$edit["time_template_start"], "value"=>$edit["time_template_start"], "clear"=>true),
+				array("prompt"=>"End Times", "type"=>"selection", "name"=>"round_end_time", "listarr"=>array( "Round to nearest", "Round up", "Round down" ), "selected"=>$edit["time_template_end"], "value"=>$edit["time_template_end"], "clear"=>true),
+				array("prompt"=>"Delete Users", "type"=>"selection", "name"=>"delete_users", "listarr"=>array( "After 1 month", "After 3 months", "After 6 months", "After 1 year", "Never" ), "selected"=>$edit["time_template_delete"], "value"=>$edit["time_template_delete"], "clear"=>true),
+				array("type"=>"submit", "buttontext"=>"Save Template", "clear"=>true), 
+				array("type"=>'endform'));
 			}
 			$form = new forms;
 			$form->create_form($formArr);
@@ -3838,18 +3838,18 @@ function add_flexi_template() {
 	if(check_permission("Templates")) {
 		global $dl;
 		echo "<div class='timesheet_workspace'>";
-		$formArr = array(array(type=>"intro", formtitle=>"Flexi Template", formintro=>"Fill out the fields below to create the flexi template"), 
-			array(type=>"form", form=>array(action=>"index.php?func=saveflexitemplate",method=>"post")),	
-			array(prompt=>"Template Name", type=>"text", name=>"template_name", length=>20, value=>"Enter template name", clear=>true),	
-			array(prompt=>"Account Period", type=>"selection", name=>"account_period", listarr=>array( "Calendar Month", "4 Weekly" ), selected=>"4 Weekly", value=>"", clear=>true),
-			array(prompt=>"Maximum surplus", type=>"text", name=>"max_surplus", length=>20, value=>"Enter surplus (hrs:mins)", clear=>true),
-			array(prompt=>"Maximum deficit", type=>"text", name=>"max_deficit", length=>20, value=>"Enter deficit (hrs:mins)", clear=>true),
-			array(prompt=>"Maximum leave/period", type=>"text", name=>"leave_days", length=>20, value=>"Enter leave period", clear=>true),
-			array(prompt=>"Leave Expires after", type=>"selection", name=>"leave_period", listarr=>array("Never", "1 Month", "4 Weeks", "2 Months", "8 Weeks", "3 Months", "12 Weeks"), selected=>"4 Weeks", length=>20, value=>"", clear=>true),		
-			array(prompt=>"Period Start Date", type=>"date", name=>"period_start", length=>20, value=>"", clear=>true),
-			array(prompt=>"Period End date", type=>"date", name=>"period_end", length=>20, value=>"", clear=>true),
-			array(type=>"submit", buttontext=>"Create Template", clear=>true), 
-			array(type=>'endform'));
+		$formArr = array(array("type"=>"intro", "formtitle"=>"Flexi Template", "formintro"=>"Fill out the fields below to create the flexi template"), 
+			array("type"=>"form", "form"=>array("action"=>"index.php?func=saveflexitemplate","method"=>"post")),	
+			array("prompt"=>"Template Name", "type"=>"text", "name"=>"template_name", "length"=>20, "value"=>"Enter template name", "clear"=>true),	
+			array("prompt"=>"Account Period", "type"=>"selection", "name"=>"account_period", "listarr"=>array( "Calendar Month", "4 Weekly" ), "selected"=>"4 Weekly", "value"=>"", "clear"=>true),
+			array("prompt"=>"Maximum surplus", "type"=>"text", "name"=>"max_surplus", "length"=>20, "value"=>"Enter surplus (hrs:mins)", "clear"=>true),
+			array("prompt"=>"Maximum deficit", "type"=>"text", "name"=>"max_deficit", "length"=>20, "value"=>"Enter deficit (hrs:mins)", "clear"=>true),
+			array("prompt"=>"Maximum leave/period", "type"=>"text", "name"=>"leave_days", "length"=>20, "value"=>"Enter leave period", "clear"=>true),
+			array("prompt"=>"Leave Expires after", "type"=>"selection", "name"=>"leave_period", "listarr"=>array("Never", "1 Month", "4 Weeks", "2 Months", "8 Weeks", "3 Months", "12 Weeks"), "selected"=>"4 Weeks", "length"=>20, "value"=>"", "clear"=>true),		
+			array("prompt"=>"Period Start Date", "type"=>"date", "name"=>"period_start", "length"=>20, "value"=>"", "clear"=>true),
+			array("prompt"=>"Period End date", "type"=>"date", "name"=>"period_end", "length"=>20, "value"=>"", "clear"=>true),
+			array("type"=>"submit", "buttontext"=>"Create Template", "clear"=>true), 
+			array("type"=>'endform'));
 			$form = new forms;
 			$form->create_form($formArr);
 			$template=$dl->select("flexi_template_name");
@@ -3889,18 +3889,18 @@ function edit_flexi_template() {
 		$edits = $dl->select("flexi_template", "template_name_id=".$_GET["id"]);
 		echo "<div class='timesheet_workspace'>";
 		foreach($edits as $edit) {
-			$formArr = array(array(type=>"intro", formtitle=>"Flexi Template", formintro=>"Fill out the fields below to create the flexi template"), 
-				array(type=>"form", form=>array(action=>"index.php?func=saveflexitemplateedit&id=".$_GET["id"],method=>"post")),	
-				array(prompt=>"Template Name", type=>"text", name=>"template_name", length=>20, value=>$template_name, clear=>true),	
-				array(prompt=>"Account Period", type=>"selection", name=>"account_period", listarr=>array( "Calendar Month", "4 Weekly" ), selected=>"4 Weekly", value=>$edit["account_period"], clear=>true),
-				array(prompt=>"Maximum surplus", type=>"text", name=>"max_surplus", length=>20, value=>$edit["max_surplus"], clear=>true),
-				array(prompt=>"Maximum deficit", type=>"text", name=>"max_deficit", length=>20, value=>$edit["max_deficit"], clear=>true),
-				array(prompt=>"Maximum leave/period", type=>"text", name=>"leave_days", length=>20, value=>$edit["max_holiday"], clear=>true),
-				array(prompt=>"Leave Expires after", type=>"selection", name=>"leave_period", listarr=>array("Never", "1 Month", "4 Weeks", "2 Months", "8 Weeks", "3 Months", "12 Weeks"), selected=>$edit["leave_period"], length=>20, value=>"", clear=>true),		
-				array(prompt=>"Period Start Date", type=>"date", name=>"period_start", length=>20, value=>$edit["start_period"], clear=>true),
-				array(prompt=>"Period End date", type=>"date", name=>"period_end", length=>20, value=>$edit["end_period"], clear=>true),
-				array(type=>"submit", buttontext=>"Save Template", clear=>true), 
-				array(type=>'endform'));
+			$formArr = array(array("type"=>"intro", "formtitle"=>"Flexi Template", "formintro"=>"Fill out the fields below to create the flexi template"), 
+				array("type"=>"form", "form"=>array("action"=>"index.php?func=saveflexitemplateedit&id=".$_GET["id"],"method"=>"post")),	
+				array("prompt"=>"Template Name", "type"=>"text", "name"=>"template_name", "length"=>20, "value"=>$template_name, "clear"=>true),	
+				array("prompt"=>"Account Period", "type"=>"selection", "name"=>"account_period", "listarr"=>array( "Calendar Month", "4 Weekly" ), "selected"=>"4 Weekly", "value"=>$edit["account_period"], "clear"=>true),
+				array("prompt"=>"Maximum surplus", "type"=>"text", "name"=>"max_surplus", "length"=>20, "value"=>$edit["max_surplus"], "clear"=>true),
+				array("prompt"=>"Maximum deficit", "type"=>"text", "name"=>"max_deficit", "length"=>20, "value"=>$edit["max_deficit"], "clear"=>true),
+				array("prompt"=>"Maximum leave/period", "type"=>"text", "name"=>"leave_days", "length"=>20, "value"=>$edit["max_holiday"], "clear"=>true),
+				array("prompt"=>"Leave Expires after", "type"=>"selection", "name"=>"leave_period", "listarr"=>array("Never", "1 Month", "4 Weeks", "2 Months", "8 Weeks", "3 Months", "12 Weeks"), "selected"=>$edit["leave_period"], "length"=>20, "value"=>"", "clear"=>true),		
+				array("prompt"=>"Period Start Date", "type"=>"date", "name"=>"period_start", "length"=>20, "value"=>$edit["start_period"], "clear"=>true),
+				array("prompt"=>"Period End date", "type"=>"date", "name"=>"period_end", "length"=>20, "value"=>$edit["end_period"], "clear"=>true),
+				array("type"=>"submit", "buttontext"=>"Save Template", "clear"=>true), 
+				array("type"=>'endform'));
 			}
 			$form = new forms;
 			$form->create_form($formArr);
@@ -3943,22 +3943,22 @@ function add_flexi_days_template() {
 			$tempArr[] = $ft["description"];
 		}
 		echo "<div style='float: left;'>";
-		$formArr = array(array(type=>"intro", formtitle=>"Flexi Days Template", formintro=>"Fill out the fields below to create the flexi days template"), 	
-			array(prompt=>"Template Name", type=>"text", name=>"template_name", length=>40, value=>"Enter template name", clear=>true),	
-			array(prompt=>"Link To", type=>"selection", name=>"link_to", listarr=>$tempArr, selected=>"", value=>"", clear=>true),
-			array(prompt=>"Template type", type=>"selection", name=>"template_type", listarr=>array("Weekly", "Daily"), selected=>"Weekly",value=>"", clear=>true),
-			array(prompt=>"Earliest Start Time", type=>"time", name=>"earliest_start", starttime=>"0500", endtime=>"0900", interval=>15, value=>"Enter leave period", clear=>true),
-			array(prompt=>"Latest Start Time", type=>"time", name=>"latest_start", starttime=>"0900", endtime=>"1800", interval=>15, value=>"", clear=>true),		
-			array(prompt=>"Minimum Lunch", type=>"checkbox", name=>"minimum_lunch", value=>"Yes", clear=>true),
-			array(prompt=>"Min Lunch Duration", type=>"time", name=>"lunch_duration", starttime=>"0015", endtime=>"0100", interval=>15, value=>"00:30", clear=>true),
-			array(prompt=>"Lunch Earliest Start", type=>"time", name=>"lunch_earliest_start", starttime=>"1030", endtime=>"1200", interval=>15, value=>"Enter leave period", clear=>true),
-			array(prompt=>"Lunch Latest Finish", type=>"time", name=>"lunch_latest_end", starttime=>"1230", endtime=>"1430", interval=>15, value=>"", clear=>true),		
-			array(prompt=>"Earliest End Time", type=>"time", name=>"earliest_end", starttime=>"0745", endtime=>"1700", interval=>15, value=>"Enter leave period", clear=>true),
-			array(prompt=>"Latest End Time", type=>"time", name=>"latest_end", starttime=>"1700", endtime=>"2345", interval=>15, value=>"", clear=>true),
-			array(prompt=>"Days per week", type=>"text", name=>"days_week", length=>10, value=>"", clear=>true));	
+		$formArr = array(array("type"=>"intro", "formtitle"=>"Flexi Days Template", "formintro"=>"Fill out the fields below to create the flexi days template"), 	
+			array("prompt"=>"Template Name", "type"=>"text", "name"=>"template_name", "length"=>40, "value"=>"Enter template name", "clear"=>true),	
+			array("prompt"=>"Link To", "type"=>"selection", "name"=>"link_to", "listarr"=>$tempArr, "selected"=>"", "value"=>"", "clear"=>true),
+			array("prompt"=>"Template type", "type"=>"selection", "name"=>"template_type", "listarr"=>array("Weekly", "Daily"), "selected"=>"Weekly","value"=>"", "clear"=>true),
+			array("prompt"=>"Earliest Start Time", "type"=>"time", "name"=>"earliest_start", "starttime"=>"0500", "endtime"=>"0900", "interval"=>15, "value"=>"Enter leave period", "clear"=>true),
+			array("prompt"=>"Latest Start Time", "type"=>"time", "name"=>"latest_start", "starttime"=>"0900", "endtime"=>"1800", "interval"=>15, "value"=>"", "clear"=>true),		
+			array("prompt"=>"Minimum Lunch", "type"=>"checkbox", "name"=>"minimum_lunch", "value"=>"Yes", "clear"=>true),
+			array("prompt"=>"Min Lunch Duration", "type"=>"time", "name"=>"lunch_duration", "starttime"=>"0015", "endtime"=>"0100", "interval"=>15, "value"=>"00:30", "clear"=>true),
+			array("prompt"=>"Lunch Earliest Start", "type"=>"time", "name"=>"lunch_earliest_start", "starttime"=>"1030", "endtime"=>"1200", "interval"=>15, "value"=>"Enter leave period", "clear"=>true),
+			array("prompt"=>"Lunch Latest Finish", "type"=>"time", "name"=>"lunch_latest_end", "starttime"=>"1230", "endtime"=>"1430", "interval"=>15, "value"=>"", "clear"=>true),		
+			array("prompt"=>"Earliest End Time", "type"=>"time", "name"=>"earliest_end", "starttime"=>"0745", "endtime"=>"1700", "interval"=>15, "value"=>"Enter leave period", "clear"=>true),
+			array("prompt"=>"Latest End Time", "type"=>"time", "name"=>"latest_end", "starttime"=>"1700", "endtime"=>"2345", "interval"=>15, "value"=>"", "clear"=>true),
+			array("prompt"=>"Days per week", "type"=>"text", "name"=>"days_week", "length"=>10, "value"=>"", "clear"=>true));	
 			
 			
-			$formArr[] = array(type=>"submit", name=>"add_template", buttontext=>"Create Template", clear=>true); 
+			$formArr[] = array("type"=>"submit", "name"=>"add_template", "buttontext"=>"Create Template", "clear"=>true); 
 			$form = new forms;
 			$form->create_form($formArr);
 			echo "</div>";
@@ -4059,7 +4059,6 @@ function save_flexi_days_template() {
 			$week_day_array = $_POST["week_day_array"];
 		}else{
 			$week_day_array = (array) json_decode($_POST["week_day_array"]);
-			$week_day_array["timelist"] = (array) $week_day_array["timelist"];
 		}
 		// need to obtain the id of the template to link to
 		$linkto = $dl->select("flexi_template_name", "description='".$_POST["link_to"]."'");
@@ -4131,46 +4130,151 @@ function edit_flexi_days_template() {
 		echo "<div id='timesheet_workspace' class='timesheet_workspace'>";
 		echo "<div style='float: left;'>";
 		foreach($setting as $settings) {
-			$formArr = array(array(type=>"intro", formtitle=>"Flexi Days Template", formintro=>"Fill out the fields below to create the flexi days template"), 	
-				array(prompt=>"Template Name", type=>"text", name=>"template_name", length=>40, value=>$days[0]["template_days_name"], clear=>true),	
-				array(prompt=>"Link To", type=>"selection", name=>"link_to", listarr=>$tempArr, selected=>$name, value=>"", clear=>true),
-				array(prompt=>"Template type", type=>"selection", name=>"template_type", listarr=>array("Weekly", "Daily"), selected=>$settings["template_type"],value=>"", clear=>true),
-				array(prompt=>"Which day (daily)", type=>"selection", name=>"which_day", listarr=>array("n/a", "Mo", "Tu", "We", "Th", "Fr"), selected=>$settings["which_day"],value=>"", clear=>true),
-				array(prompt=>"Earliest Start Time", type=>"time", name=>"earliest_start", starttime=>"0500", endtime=>"0845", interval=>15, selected=>$settings["earliest_starttime"], value=>$settings["earliest_starttime"], clear=>true),
-				array(prompt=>"Latest Start Time", type=>"time", name=>"latest_start", starttime=>"0900", endtime=>"1800", interval=>15, selected=>$settings["latest_starttime"], value=>$settings["latest_starttime"], clear=>true),		
-				array(prompt=>"Minimum Lunch", type=>"checkbox", name=>"minimum_lunch", selected=>$settings["minimum_lunch"], value=>"Yes", clear=>true),
-				array(prompt=>"Min Lunch Duration", type=>"time", name=>"lunch_duration", starttime=>"0015", endtime=>"0100", interval=>15, selected=>$settings["minimum_lunch_duration"], value=>$settings["minimum_lunch_duration"], clear=>true),
-				array(prompt=>"Lunch Earliest Start", type=>"time", name=>"lunch_earliest_start", starttime=>"1030", endtime=>"1200", interval=>15, selected=>$settings["lunch_earliest_start_time"], value=>$settings["lunch_earliest_start_time"], clear=>true),
-				array(prompt=>"Lunch Latest Finish", type=>"time", name=>"lunch_latest_end", starttime=>"1030", endtime=>"1430", interval=>15, selected=>$settings["lunch_latest_end_time"], value=>$settings["lunch_latest_end_time"], clear=>true),		
-				array(prompt=>"Earliest End Time", type=>"time", name=>"earliest_end", starttime=>"0700", endtime=>"1645", interval=>15, selected=>$settings["earliest_endtime"], value=>$settings["earliest_endtime"], clear=>true),
-				array(prompt=>"Latest End Time", type=>"time", name=>"latest_end", starttime=>"1700", endtime=>"2345", interval=>15, selected=>$settings["latest_endtime"], value=>$settings["latest_endtime"], clear=>true),		
-				array(prompt=>"Days per week", type=>"text", name=>"days_week", length=>10, value=>$settings["days_week"], clear=>true),
-				array(type=>"submit", name=>"edit_template", buttontext=>"Save Template", clear=>true));
+			$formArr = array(array("type"=>"intro", "formtitle"=>"Flexi Days Template", "formintro"=>"Fill out the fields below to create the flexi days template"), 	
+				array("prompt"=>"Template Name", "type"=>"text", "name"=>"template_name", "length"=>40, "value"=>$days[0]["template_days_name"], "clear"=>true),	
+				array("prompt"=>"Link To", "type"=>"selection", "name"=>"link_to", "listarr"=>$tempArr, "selected"=>$name, "value"=>"", "clear"=>true),
+				array("prompt"=>"Template type", "type"=>"selection", "name"=>"template_type", "listarr"=>array("Weekly", "Daily"), "selected"=>$settings["template_type"],"value"=>"", "clear"=>true),
+				array("prompt"=>"Earliest Start Time", "type"=>"time", "name"=>"earliest_start", "starttime"=>"0500", "endtime"=>"0845", "interval"=>15, "selected"=>$settings["earliest_starttime"], "value"=>$settings["earliest_starttime"], "clear"=>true),
+				array("prompt"=>"Latest Start Time", "type"=>"time", "name"=>"latest_start", "starttime"=>"0900", "endtime"=>"1800", "interval"=>15, "selected"=>$settings["latest_starttime"], "value"=>$settings["latest_starttime"], "clear"=>true),		
+				array("prompt"=>"Minimum Lunch", "type"=>"checkbox", "name"=>"minimum_lunch", "selected"=>$settings["minimum_lunch"], "value"=>"Yes", "clear"=>true),
+				array("prompt"=>"Min Lunch Duration", "type"=>"time", "name"=>"lunch_duration", "starttime"=>"0015", "endtime"=>"0100", "interval"=>15, "selected"=>$settings["minimum_lunch_duration"], "value"=>$settings["minimum_lunch_duration"], "clear"=>true),
+				array("prompt"=>"Lunch Earliest Start", "type"=>"time", "name"=>"lunch_earliest_start", "starttime"=>"1030", "endtime"=>"1200", "interval"=>15, "selected"=>$settings["lunch_earliest_start_time"], "value"=>$settings["lunch_earliest_start_time"], "clear"=>true),
+				array("prompt"=>"Lunch Latest Finish", "type"=>"time", "name"=>"lunch_latest_end", "starttime"=>"1030", "endtime"=>"1430", "interval"=>15, "selected"=>$settings["lunch_latest_end_time"], "value"=>$settings["lunch_latest_end_time"], "clear"=>true),		
+				array("prompt"=>"Earliest End Time", "type"=>"time", "name"=>"earliest_end", "starttime"=>"0700", "endtime"=>"1645", "interval"=>15, "selected"=>$settings["earliest_endtime"], "value"=>$settings["earliest_endtime"], "clear"=>true),
+				array("prompt"=>"Latest End Time", "type"=>"time", "name"=>"latest_end", "starttime"=>"1700", "endtime"=>"2345", "interval"=>15, "selected"=>$settings["latest_endtime"], "value"=>$settings["latest_endtime"], "clear"=>true),		
+				array("prompt"=>"Days per week", "type"=>"text", "name"=>"days_week", "length"=>10, "value"=>$settings["days_week"], "clear"=>true),
+				array("type"=>"submit", "name"=>"edit_template", "buttontext"=>"Save Template", "clear"=>true));
 				$form = new forms;
 				$form->create_form($formArr);
 		}
 		echo "</div>";
 		echo "<div id='add_daysandtime' style='float: left;'>";
 		$times = $dl->select("flexi_day_times","fdt_flexi_days_id = ".$settingsId, "fdt_weekday_id");
-		$formArr = array(array(type=>"intro", formtitle=>"Additional Time Details", formintro=>"Fill out the fields below to add additional information"));
+		$formArr = array(array("type"=>"intro", "formtitle"=>"Additional Time Details", "formintro"=>"Fill out the fields below to add additional information"));
 		$i=1;
 		$week_dayArr = $dl->select("flexi_weekdays");
 		foreach($week_dayArr as $wda) {
 			$week_days[]= $wda["fw_weekday"];
 		}
-		foreach($times as $time) {
-			$chosen_day = $dl->select("flexi_weekdays", "fw_id = ".$time["fdt_weekday_id"]);
-			$formArr[] = array(prompt=>"Weekday", type=>"selection", name=>"week_day".$i, listarr=>$week_days, selected=>$chosen_day[0]["fw_weekday"], value=>"", clear=>true);
-			$formArr[] = array(prompt=>"Time", type=>"time", name=>"weekday_time".$i, starttime=>"0000", endtime=>"0900", interval=>1, selected=>$time["fdt_working_time"], value=>"Enter leave period", clear=>true);
-			$i++;
+		if(count($times) == 1 ){
+			$chosen_day = $dl->select("flexi_weekdays", "fw_id = ".$times[0]["fdt_weekday_id"]);
+			$formArr[] = array("prompt"=>"Weekday", "type"=>"selection", "name"=>"week_day", "listarr"=>$week_days, "selected"=>$chosen_day[0]["fw_weekday"], "value"=>"", "clear"=>true);
+			$formArr[] = array("prompt"=>"Time", "type"=>"time", "name"=>"weekday_time", "starttime"=>"0000", "endtime"=>"0900", "interval"=>1, "selected"=>$times[0]["fdt_working_time"], "value"=>"Enter leave period", "clear"=>true); 
+		}else{
+			foreach($times as $time) {
+				$chosen_day = $dl->select("flexi_weekdays", "fw_id = ".$time["fdt_weekday_id"]);
+				$formArr[] = array("prompt"=>"Weekday", "type"=>"selection", "name"=>"week_day".$i, "listarr"=>$week_days, "selected"=>$chosen_day[0]["fw_weekday"], "value"=>"", "clear"=>true);
+				$formArr[] = array("prompt"=>"Time", "type"=>"time", "name"=>"weekday_time".$i, "starttime"=>"0000", "endtime"=>"0900", "interval"=>1, "selected"=>$time["fdt_working_time"], "value"=>"Enter leave period", "clear"=>true); 
+				?>
+				<script>
+				$(document).ready(function(){
+					$("#weekday_time<?php echo $i ?>").change(function() { 
+						$("#add_template").removeAttr("disabled");
+						var func = "calc_time";
+						$.post(
+							"ajax.php",
+							{ func: func,
+								days_per_week: $("#days_week").val()
+							},
+							function (data)
+							{
+								$('#show_time_total').html(data);
+						});
+					});
+					$("#weekday_time<?php echo $i ?>_mins").change(function() { 
+						$("#add_template").removeAttr("disabled");
+						var func = "calc_time";
+						$.post(
+							"ajax.php",
+							{ func: func,
+								days_per_week: $("#days_week").val()
+							},
+							function (data)
+							{
+								$('#show_time_total').html(data);
+						});
+					});
+				});
+				</script>
+				<?php
+				$i++;
+			}
 		}
 		$form = new forms;
 		$form->create_form($formArr);
+		echo "<div id='show_time_total'></div>";
 		echo "</div></div>";
 		echo "<div id='dialog' title='Change Days per Week' class='ui-helper-hidden'><p>Are you sure you want to change the no. of Days per Week?<BR><BR>This will delete all of the time details and ask you to recreate them!!!</p></div>";
 ?>
 <script>
 $(document).ready(function(){
+	if($('#week_day').val() == "All") { //check if the option selected is for All the days
+		var func = "calc_time";
+		$.post(
+			"ajax.php",
+			{ func: func,
+				option: "multiply",
+				days_per_week: $("#days_week").val()
+			},
+			function (data)
+			{
+				$('#show_time_total').html(data);
+		});
+		$("#week_day").change(function() { 
+			var func = "calc_hours";
+			$.post(
+				"ajax.php",
+				{ func: func,
+					days_per_week: $("#days_week").val(),
+					hours: $("#weekday_time").val(),
+					weekday: $("#week_day").val(),
+					mins: $("#weekday_time_mins").val()
+				},
+				function (data)
+				{
+					$('#add_daysandtime').html(data);
+			});
+		});
+		$("#weekday_time").change(function() { 
+			var func = "calc_time";
+			$.post(
+				"ajax.php",
+				{ func: func,
+					option: "multiply",
+					days_per_week: $("#days_week").val()
+				},
+				function (data)
+				{
+					$('#show_time_total').html(data);
+			});
+			$("#add_template").removeAttr("disabled");
+		});
+		$("#weekday_time_mins").change(function() { 
+			var func = "calc_time";
+			$.post(
+				"ajax.php",
+				{ func: func,
+					option: "multiply",
+					days_per_week: $("#days_week").val()
+				},
+				function (data)
+				{
+					$('#show_time_total').html(data);
+			});
+			$("#add_template").removeAttr("disabled");
+		});
+	}else{
+		var func = "calc_time";
+		$.post(
+			"ajax.php",
+			{ func: func,
+				days_per_week: $("#days_week").val()
+			},
+			function (data)
+			{
+				$('#show_time_total').html(data);
+		});
+	}
 	var dpw = $("#days_week").val();
 	$("#days_week").on("change", function(event, ui) { 
 		$("#dialog").dialog({
@@ -4198,11 +4302,10 @@ $(document).ready(function(){
 				}
 			}
 		});
-		
 	});
 	$("#edit_template").click(function() {
 		alert("saving edit...");
-		var func = "save_template";
+		var func = "edit_template";
 		var weekday_values = {};
 		if(document.getElementById('week_day')) { //check if the option selected is for All the days
 			weekday_values = {week_day: $("#week_day").val(), weekday_time: $("#weekday_time").val(),weekday_time_mins: $("#weekday_time_mins").val()};
@@ -4248,6 +4351,7 @@ $(document).ready(function(){
 				latest_end_mins: $("#latest_end_mins").val(),
 				templates: <?php echo $tempArr?>,
 				days_per_week: $("#days_week").val(),
+				template_days_id: <?php echo $_GET["id"]?>,
 				week_day_array: weekday_values
 			},
 			function (data)
@@ -4263,18 +4367,42 @@ $(document).ready(function(){
 
 function save_flexi_days_template_edit() {
 	global $dl;
+	//check here if the POST week_day array is an array or if not then it is a json string which needs decoding to an array.
+	if(is_array($_POST["week_day_array"])) {
+		$week_day_array = $_POST["week_day_array"];
+	}else{
+		$week_day_array = (array) json_decode($_POST["week_day_array"]);
+	}
 	// need to obtain the id of the template to link to
 	$linkto = $dl->select("flexi_template_name", "description='".$_POST["link_to"]."'");
-	foreach($linkto as $lnk) {
-		$linkId = $lnk["flexi_template_name_id"];
-	}
+	$linkId = $linkto[0]["flexi_template_name_id"];
 	$fieldarr=array("template_days_name","template_name_id");
 	$save = array_combine($fieldarr, array($_POST['template_name'], $linkId));
-	$dl->update("flexi_template_days", $save, "flexi_template_days_id=".$_GET["id"]);
-	$fieldarr= array("template_type", "which_day","day_duration","normal_day_duration","days_week","earliest_starttime","latest_starttime","minimum_lunch","minimum_lunch_duration","lunch_earliest_start_time", "lunch_latest_end_time","earliest_endtime","latest_endtime");
-	$postarr= array($_POST["template_type"],$_POST["which_day"],$_POST["day_duration"].":".$_POST["day_duration_mins"],$_POST["normal_day_duration"].":".$_POST["normal_day_duration_mins"],$_POST["days_week"],$_POST["earliest_start"].":".$_POST["earliest_start_mins"],$_POST["latest_start"].":".$_POST["latest_start_mins"],$_POST["minimum_lunch"],$_POST["lunch_duration"].":".$_POST["lunch_duration_mins"], $_POST["lunch_earliest_start"].":".$_POST["lunch_earliest_start_mins"], $_POST["lunch_latest_end"].":".$_POST["lunch_latest_end_mins"], $_POST["earliest_end"].":".$_POST["earliest_end_mins"], $_POST["latest_end"].":".$_POST["latest_end_mins"]);
+	$dl->update("flexi_template_days", $save, "flexi_template_days_id=".$_POST["template_days_id"]);
+	$fieldarr= array("template_type", "days_week","earliest_starttime","latest_starttime","minimum_lunch","minimum_lunch_duration","lunch_earliest_start_time", "lunch_latest_end_time","earliest_endtime","latest_endtime");
+	$postarr= array($_POST["template_type"],$_POST["days_per_week"],$_POST["earliest_start"].":".$_POST["earliest_start_mins"],$_POST["latest_start"].":".$_POST["latest_start_mins"],$_POST["minimum_lunch"],$_POST["lunch_duration"].":".$_POST["lunch_duration_mins"], $_POST["lunch_earliest_start"].":".$_POST["lunch_earliest_start_mins"], $_POST["lunch_latest_end"].":".$_POST["lunch_latest_end_mins"], $_POST["earliest_end"].":".$_POST["earliest_end_mins"], $_POST["latest_end"].":".$_POST["latest_end_mins"]);
 	$save=array_combine($fieldarr, $postarr);
-	$dl->update("flexi_template_days_settings", $save, "template_days_id=".$_GET["id"]);
+	$dl->update("flexi_template_days_settings", $save, "template_days_id=".$_POST["template_days_id"]);
+	//get the settings id
+	$settings = $dl->select("flexi_template_days_settings", "template_days_id = ".$_POST["template_days_id"]);
+	//now delete the existing day times and recreate them
+	$dl->delete("flexi_day_times", "fdt_flexi_days_id =".$settings[0]["days_settings_id"]);
+	$fields = array("fdt_weekday_id", "fdt_flexi_days_id", "fdt_working_time");
+	//check to see if the time is for all days or different times for different days
+	if(in_array("All", $week_day_array)){
+		//weekday_id is 6
+		$values = array(6, $settings[0]["days_settings_id"], $week_day_array["weekday_time"].":".$week_day_array["weekday_time_mins"].":00");
+		$writeLine = array_combine($fields, $values);
+		$dl->insert("flexi_day_times", $writeLine);
+	}else{
+		for($i=1; $i<=$_POST["days_per_week"]; $i++) {
+			//get the weekday_id
+			$wd = $dl->select("flexi_weekdays", "fw_weekday = '".$week_day_array["week_day".$i]."'");
+			$values = array($wd[0]["fw_id"], $settings[0]["days_settings_id"], $week_day_array["weekday_time".$i].":".$week_day_array["weekday_time".$i."_mins"].":00");
+			$writeLine = array_combine($fields, $values);
+			$dl->insert("flexi_day_times", $writeLine);
+		}	
+	}
 	echo "<SCRIPT language='javascript'>redirect('index.php?choice=Templates&subchoice=flexidaystemplate')</SCRIPT>" ;
 }
 
@@ -4294,13 +4422,13 @@ function add_leave_template() {
 	if(check_permission("Templates")) {
 		global $dl;
 		echo "<div class='timesheet_workspace'>";
-		$formArr = array(array(type=>"intro", formtitle=>"Create Leave Template", formintro=>"Fill out the fields below to create the Leave template"), 
-			array(type=>"form", form=>array(action=>"index.php?func=saveleavetemplate",method=>"post")),	
-			array(prompt=>"Template Name", type=>"text", name=>"template_name", length=>20, value=>"Enter template name", clear=>true),	
-			array(prompt=>"Leave Entitlement", type=>"text", name=>"leave_entitlement", length=>20, value=>"", clear=>true),
-			array(prompt=>"Start Month", type=>"selection", name=>"start_month", listarr=>array( "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" ), selected=>"October", value=>"", clear=>true),
-			array(type=>"submit", buttontext=>"Create Template", clear=>true), 
-			array(type=>'endform'));
+		$formArr = array(array("type"=>"intro", "formtitle"=>"Create Leave Template", "formintro"=>"Fill out the fields below to create the Leave template"), 
+			array("type"=>"form", "form"=>array("action"=>"index.php?func=saveleavetemplate","method"=>"post")),	
+			array("prompt"=>"Template Name", "type"=>"text", "name"=>"template_name", "length"=>20, "value"=>"Enter template name", "clear"=>true),	
+			array("prompt"=>"Leave Entitlement", "type"=>"text", "name"=>"leave_entitlement", "length"=>20, "value"=>"", "clear"=>true),
+			array("prompt"=>"Start Month", "type"=>"selection", "name"=>"start_month", "listarr"=>array( "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" ), "selected"=>"October", "value"=>"", "clear"=>true),
+			array("type"=>"submit", "buttontext"=>"Create Template", "clear"=>true), 
+			array("type"=>'endform'));
 			$form = new forms;
 			$form->create_form($formArr);
 		$leave=$dl->select("flexi_al_template");
@@ -4329,13 +4457,13 @@ function edit_leave_template() {
 		$leave=$dl->select("flexi_al_template", "al_template_id=".$_GET["id"]);
 		
 		echo "<div class='timesheet_workspace'>";
-		$formArr = array(array(type=>"intro", formtitle=>"Edit Leave Template", formintro=>"Fill out the fields below to edit the Leave template"), 
-			array(type=>"form", form=>array(action=>"index.php?func=saveleavetemplateedit&id=".$_GET["id"],method=>"post")),	
-			array(prompt=>"Template Name", type=>"text", name=>"template_name", length=>20, value=>$leave[0]["al_description"], clear=>true),	
-			array(prompt=>"Leave Entitlement", type=>"text", name=>"leave_entitlement", length=>20, value=>$leave[0]["al_entitlement"], clear=>true),
-			array(prompt=>"Start Month", type=>"selection", name=>"start_month", listarr=>array( "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" ), selected=>$leave[0]["al_start_month"], value=>"", clear=>true),
-			array(type=>"submit", buttontext=>"Save Template", clear=>true), 
-			array(type=>'endform'));
+		$formArr = array(array("type"=>"intro", "formtitle"=>"Edit Leave Template", "formintro"=>"Fill out the fields below to edit the Leave template"), 
+			array("type"=>"form", "form"=>array("action"=>"index.php?func=saveleavetemplateedit&id=".$_GET["id"],"method"=>"post")),	
+			array("prompt"=>"Template Name", "type"=>"text", "name"=>"template_name", "length"=>20, "value"=>$leave[0]["al_description"], "clear"=>true),	
+			array("prompt"=>"Leave Entitlement", "type"=>"text", "name"=>"leave_entitlement", "length"=>20, "value"=>$leave[0]["al_entitlement"], "clear"=>true),
+			array("prompt"=>"Start Month", "type"=>"selection", "name"=>"start_month", "listarr"=>array( "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" ), "selected"=>$leave[0]["al_start_month"], "value"=>"", "clear"=>true),
+			array("type"=>"submit", "buttontext"=>"Save Template", "clear"=>true), 
+			array("type"=>'endform'));
 			$form = new forms;
 			$form->create_form($formArr);
 		echo "</div>";
@@ -4370,12 +4498,12 @@ function add_team() {
 			$aEventTypes[]=$global_event["event_date"]." ".$eventType[0]["event_type_name"];
 		}
 		echo "<div class='timesheet_workspace'>";
-		$formArr = array(array(type=>"intro", formtitle=>"Create a new Team", formintro=>"Create a new team within your company"), 
-			array(type=>"form", form=>array(action=>"index.php?func=saveteam",method=>"post")),	
-			array(prompt=>"Team Name", type=>"text", name=>"team_name", length=>40, value=>"Enter team name", clear=>true),	
-			array(prompt=>"Select Global Events", type=>"selection", name=>"globals[]", listarr=>$aEventTypes, multiple=>true, selected=>"", value=>"", clear=>true),
-			array(type=>"submit", buttontext=>"Create New Team", clear=>true), 
-			array(type=>'endform'));
+		$formArr = array(array("type"=>"intro", "formtitle"=>"Create a new Team", "formintro"=>"Create a new team within your company"), 
+			array("type"=>"form", "form"=>array("action"=>"index.php?func=saveteam","method"=>"post")),	
+			array("prompt"=>"Team Name", "type"=>"text", "name"=>"team_name", "length"=>40, "value"=>"Enter team name", "clear"=>true),	
+			array("prompt"=>"Select Global Events", "type"=>"selection", "name"=>"globals[]", "listarr"=>$aEventTypes, multiple=>true, "selected"=>"", "value"=>"", "clear"=>true),
+			array("type"=>"submit", "buttontext"=>"Create New Team", "clear"=>true), 
+			array("type"=>'endform'));
 			$form = new forms;
 			$form->create_form($formArr);
 		echo "</div>";
@@ -4454,12 +4582,12 @@ function edit_teams() {
 		$teams = $dl->select("flexi_team","team_id=".$_GET["id"]);
 		echo "<div class='timesheet_workspace'>";
 		foreach($teams as $team){
-			$formArr = array(array(type=>"intro", formtitle=>"Edit Team", formintro=>"Edit a team within your company"), 
-			array(type=>"form", form=>array(action=>"index.php?func=saveteamedit&id=".$_GET["id"],method=>"post")),	
-			array(prompt=>"Team Name", type=>"text", name=>"team_name", length=>40, value=>$team["team_name"], clear=>true),
-			array(prompt=>"Select Global Events", type=>"selection", name=>"globals[]", listarr=>$aEventTypes, multiple=>true, selected=>$eventList, value=>"", clear=>true),	
-			array(type=>"submit", buttontext=>"Save Team", clear=>true), 
-			array(type=>'endform'));
+			$formArr = array(array("type"=>"intro", "formtitle"=>"Edit Team", "formintro"=>"Edit a team within your company"), 
+			array("type"=>"form", "form"=>array("action"=>"index.php?func=saveteamedit&id=".$_GET["id"],"method"=>"post")),	
+			array("prompt"=>"Team Name", "type"=>"text", "name"=>"team_name", "length"=>40, "value"=>$team["team_name"], "clear"=>true),
+			array("prompt"=>"Select Global Events", "type"=>"selection", "name"=>"globals[]", "listarr"=>$aEventTypes, multiple=>true, "selected"=>$eventList, "value"=>"", "clear"=>true),	
+			array("type"=>"submit", "buttontext"=>"Save Team", "clear"=>true), 
+			array("type"=>'endform'));
 			$form = new forms;
 			$form->create_form($formArr);
 		}
@@ -4623,12 +4751,12 @@ function show_sickness_report() {
 	$teams = $dl->getQuery( $sql );
 	echo "<div class='report_body'><div class='report_heading_space'><div class='report_heading'>SICKNESS ANALYSIS</div></div><div class='report_space'>";
 	echo "<div width='100%'>";
-	$formArr = array(array(type=>"intro", formtitle=>"Enter Dates", formintro=>"Add date range to display sickness (Default = Current Year)"), 
-			array(type=>"form", form=>array(action=>"reports.php?func=Sickness",method=>"post")),	
-			array(prompt=>"From", type=>"date", name=>"date_name", length=>20, value=>$_POST["date_name"], clear=>false),
-			array(prompt=>"To", type=>"date", name=>"date_name2",length=>20, value=>$_POST["date_name2"], clear=>true),	
-			array(type=>"submit", buttontext=>"New Date Range", clear=>true), 
-			array(type=>'endform'));
+	$formArr = array(array("type"=>"intro", "formtitle"=>"Enter Dates", "formintro"=>"Add date range to display sickness (Default = Current Year)"), 
+			array("type"=>"form", "form"=>array("action"=>"reports.php?func=Sickness","method"=>"post")),	
+			array("prompt"=>"From", "type"=>"date", "name"=>"date_name", "length"=>20, "value"=>$_POST["date_name"], "clear"=>false),
+			array("prompt"=>"To", "type"=>"date", "name"=>"date_name2","length"=>20, "value"=>$_POST["date_name2"], "clear"=>true),	
+			array("type"=>"submit", "buttontext"=>"New Date Range", "clear"=>true), 
+			array("type"=>'endform'));
 			$form = new forms;
 			$form->create_form($formArr, "102px;");
 	echo "</div>";

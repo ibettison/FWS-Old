@@ -203,6 +203,10 @@ if($_POST["func"] == "save_template") {
 	save_flexi_days_template();
 }
 
+if($_POST["func"] == "edit_template") {
+	save_flexi_days_template_edit();
+}
+
 ?>
 
 </body>
