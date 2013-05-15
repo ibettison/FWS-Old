@@ -28,32 +28,32 @@ class forms {
 	function create_form($arrFields, $width="150px"){
 		//process the array
 		foreach( $arrFields as $aField ) {
-			$this->field_type = $aField['type'];
-			$this->field_prompt = $aField['prompt'];
-			$this->field_length = $aField['length'];
-			$this->field_rows = $aField['rows'];
-			$this->field_cols = $aField['cols'];
-			$this->field_value = $aField['value'];
-			$this->field_name = $aField['name'];
-			$this->field_form = $aField['form'];
-			$this->field_clear = $aField['clear'];
-			$this->field_start = $aField['starttime'];
-			$this->field_end = $aField['endtime'];
-			$this->field_interval = $aField["interval"];
-			$this->field_list = $aField["listarr"];
-			$this->field_link = $aField["link"];
-			$this->field_selected = $aField["selected"];
-			$this->field_compare = $aField["field"];
-			$this->field_multiple = $aField["multiple"];
-			$this->field_zindex = $aField["zindex"];
-			$this->message = $aField["message"];
-			$this->button_value = $aField['buttontext'];
-			$this->field_onchange = $aField['onchange'];
+			$this->field_type 			= $aField['type'];
+			$this->field_prompt 		= $aField['prompt'];
+			$this->field_length 			= $aField['length'];
+			$this->field_rows 			= $aField['rows'];
+			$this->field_cols 			= $aField['cols'];
+			$this->field_value 			= $aField['value'];
+			$this->field_name 			= $aField['name'];
+			$this->field_form 			= $aField['form'];
+			$this->field_clear 			= $aField['clear'];
+			$this->field_start 			= $aField['starttime'];
+			$this->field_end 			= $aField['endtime'];
+			$this->field_interval 		= $aField["interval"];
+			$this->field_list 				= $aField["listarr"];
+			$this->field_link 			= $aField["link"];
+			$this->field_selected 		= $aField["selected"];
+			$this->field_compare		= $aField["field"];
+			$this->field_multiple 		= $aField["multiple"];
+			$this->field_zindex 		= $aField["zindex"];
+			$this->message 			= $aField["message"];
+			$this->button_value 		= $aField['buttontext'];
+			$this->field_onchange 	= $aField['onchange'];
 			if(!empty($aField['formtitle'])) {
-				$this->form_title = $aField['formtitle'];
+				$this->form_title 		= $aField['formtitle'];
 			}
 			if(!empty($aField['formintro'])) {
-				$this->form_intro = $aField['formintro'];	
+				$this->form_intro 		= $aField['formintro'];	
 			}
 			$this->form .= $this->show_form($this->field_type, $width);
 			if(is_array($aField['values'])) {
@@ -69,7 +69,7 @@ class forms {
 			case "text":
 			?>
 				<div class="formPrompt" style="width:<?php echo $width?>"><?php echo $this->field_prompt?></div>
-                <span class="fieldForm"><input type="<?php echo $type?>" size="<?php echo $this->field_length?>" name="<?php echo $this->field_name?>" value="<?php echo $this->field_value?>"/></span>
+                <span class="fieldForm"><input type="<?php echo $type?>" size="<?php echo $this->field_length?>" id="<?php echo $this->field_name?>" name="<?php echo $this->field_name?>" value="<?php echo $this->field_value?>"/></span>
             <?php
 			break;
 			case "label":
@@ -80,7 +80,7 @@ class forms {
 			break;
 			case "textcompare":
 			?>
-				<div class="formPrompt" style="width:<?php echo $width?>"><?php echo $this->field_prompt?></div><span class="fieldForm"><span class="inputArea"><input type="<?php echo $type?>" size="<?php echo $this->field_length?>" name="<?php echo $this->field_name?>" value="<?php echo $this->field_value?>" onblur="check_field('$this->field_compare')" /></span></span>
+				<div class="formPrompt" style="width:<?php echo $width?>"><?php echo $this->field_prompt?></div><span class="fieldForm"><span class="inputArea"><input type="<?php echo $type?>" size="<?php echo $this->field_length?>" id="<?php echo $this->field_name?>" name="<?php echo $this->field_name?>" value="<?php echo $this->field_value?>" onblur="check_field('$this->field_compare')" /></span></span>
 			<script language="Javascript" type="text/javascript">
                 <!--
 				function check_field(fld) {
@@ -99,9 +99,9 @@ class forms {
 				echo ("<div class='formPrompt' style='width:$width'>$this->field_prompt</div><span class='fieldForm'>");
 				foreach($this->field_list as $list) {
 					if($this->field_selected == $list) {
-						echo "<input type='$type' name='$this->field_name' value='$list' checked/>$list";
+						echo "<input type='$type' id='$this->field_name' name='$this->field_name' value='$list' checked/>$list";
 					}else{
-						echo "<input type='$type' name='$this->field_name' value='$list' />$list";
+						echo "<input type='$type' id='$this->field_name' name='$this->field_name' value='$list' />$list";
 					}
 				}
 				echo "</span>";
@@ -118,7 +118,7 @@ class forms {
 				$ehour = substr($this->field_end,0,2);
 				$eminutes = substr($this->field_end,2,2);				
 				echo "<div class='formPrompt' style='width:$width'>$this->field_prompt</div><span class='fieldForm'>";
-				echo "<select name='$this->field_name'>";
+				echo "<select id='$this->field_name' name='$this->field_name'>";
 				while($shour <= $ehour) {
 					if($shour == substr($this->field_selected,0,2)) {
 						echo "<option value='".$shour."' selected>";
@@ -133,7 +133,7 @@ class forms {
 				}
 				echo "</select>"; //end of first select
 				echo " : ";
-				echo "<select name='".$this->field_name."_mins'>";
+				echo "<select id='".$this->field_name."_mins' name='".$this->field_name."_mins'>";
 				for($x=0; $x<60; $x+=$this->field_interval){
 					if($x < 10) {
 						$x = "0".$x;	
@@ -149,13 +149,13 @@ class forms {
 				echo "</select></span>";
 			break;
 			case "textarea":
-				echo( "<div class='formPrompt' style='width:$width'>$this->field_prompt</div><span class='fieldForm'><textarea cols='$this->field_cols' rows='$this->field_rows' name='$this->field_name'>$this->field_value</textarea></span>");
+				echo( "<div class='formPrompt' style='width:$width'>$this->field_prompt</div><span class='fieldForm'><textarea cols='$this->field_cols' rows='$this->field_rows' id='$this->field_name' name='$this->field_name'>$this->field_value</textarea></span>");
 				for($x=1; $x<$this->field_rows; $x++) {
 					echo "<br>";
 				}
 			break;
 			case "password":
-				echo( "<div class='formPrompt' style='width:$width'>$this->field_prompt</div><span class='fieldForm'><input type='$type' size='$this->field_length' name='$this->field_name' value='$this->field_value' /></span>");
+				echo( "<div class='formPrompt' style='width:$width'>$this->field_prompt</div><span class='fieldForm'><input type='$type' size='$this->field_length' id='$this->field_name' name='$this->field_name' value='$this->field_value' /></span>");
 			break;
 			case "passwordcompare":
 				echo( "<div class='formPrompt' style='width:$width'>$this->field_prompt</div><span class='fieldForm'><input type='$type' size='$this->field_length' name='$this->field_name' value='$this->field_value' onblur='check_field(\"$this->field_compare\")' onclick='this.value=\"\"'/></span>");
@@ -179,16 +179,16 @@ class forms {
 			case "checkbox":
 				echo( "<div class='formPrompt' style='width:$width'>$this->field_prompt</div><span class='fieldForm'>");
 				if($this->field_selected=="Yes") {
-					echo ("<input type='$type' size='$this->field_length' name='$this->field_name' value='$this->field_value' checked /></span>");
+					echo ("<input type='$type' size='$this->field_length' id='$this->field_name' name='$this->field_name' value='$this->field_value' checked /></span>");
 				}else{
-					echo ("<input type='$type' size='$this->field_length' name='$this->field_name' value='$this->field_value' /></span>");
+					echo ("<input type='$type' size='$this->field_length' id='$this->field_name' name='$this->field_name' value='$this->field_value' /></span>");
 				}
 			break;
 			case "selection":
 				if(!empty($this->field_list)) {
 					echo "<div class='formPrompt' style='width:$width'>$this->field_prompt</div><span class='fieldForm'>";
 					if($this->field_multiple) {
-						echo "<select name='$this->field_name' multiple size='10' style='width:180px;'>";
+						echo "<select id='$this->field_name' name='$this->field_name' multiple size='10' style='width:180px;'>";
 					}else{
 						if(!empty($this->field_onchange)) {
 							?>
@@ -198,10 +198,10 @@ class forms {
 								window.location = 'index.php?choice=Add&subchoice=addevent&type='+fld+'&userid=<?php echo $_GET["userid"]?>&date=<?php echo $_GET["date"]?>';	
 							}
 							</script>
-								<select name="<?php echo $this->field_name?>" onchange="viewChange(<?php echo $this->field_onchange?>)">
+								<select id="<?php echo $this->field_name?>" name="<?php echo $this->field_name?>" onchange="viewChange(<?php echo $this->field_onchange?>)">
 						<?php 
 						}else{
-							echo "<select name='$this->field_name'>";
+							echo "<select id='$this->field_name' name='$this->field_name'>";
 						}
 					}
 					foreach($this->field_list as $list) {
@@ -281,7 +281,7 @@ class forms {
                 echo "</table>";
 			break;
 			case "submit":
-				echo ( "<div class='formSubmit'><input type='submit' value='$this->button_value' /></div>");
+				echo ( "<div class='formSubmit'><input id='$this->field_name'  type='submit' value='$this->button_value' /></div>");
 			break;
 			case "form":
 				$this->form_action = $this->field_form['action'];

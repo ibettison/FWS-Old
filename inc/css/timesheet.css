@@ -134,10 +134,19 @@
 	height:80%;
 }
 
+.timesheet_team_name {
+	font-size: 1.25em;
+	width: 90%;
+	color: #474443;
+}
 .timesheet_team_leave {
 	clear: both;
-	padding: 1em;
-	width: 90%;
+	margin: 0.75em;
+	padding: 0.75em;
+	background-color:#BDD9FD;
+	border: 1px #6593CF solid;
+	width: 95.5%;
+	overflow: hidden;
 }
 
 .timesheet_leave_name {
@@ -145,12 +154,19 @@
 	clear: both;
 	float:left;
 	width: 13em;
-	padding: 1em;
+	padding: 0.85em;
+	font-family: arial;
 	background-color: #ccc;
+	font-size: 1em;
+	border: 1px solid #999;
 }
 
 .timesheet_members {
+	display: inline;
+	float: left;
+	width: 13em;
 	padding: 1em;
+	color: #ff0000;
 }
 
 .timesheet_leave_day {

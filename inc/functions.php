@@ -1268,8 +1268,8 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 				$localTeamMembers = $dl->getQuery($sql);
 			}
 		}
-		echo "<div class='timesheet_team_leave'><div>Team Name : ".$localTeamName[0]["team_name"]."</div>";
-		echo "<div class='timesheet_members'>MEMBERS</div>";
+		echo "<div class='timesheet_team_leave'><div class='timesheet_team_name'>Team Name : ".$localTeamName[0]["team_name"]."</div>";
+		echo "<div class='timesheet_members'>MEMBERS</div><div class='timesheet_members'>LEAVE IN PERIOD</div>";
 		foreach($localTeamMembers as $members) {
 			//get timesheet id of member
 			$timesheet_id = $dl->select("flexi_timesheet", "user_id = ".$members["user_id"]);
@@ -3935,21 +3935,18 @@ function delete_flexi_template($id) {
 function add_flexi_days_template() {
 	if(check_permission("Templates")) {
 		global $dl;
+		
+		echo "<div id='timesheet_workspace' class='timesheet_workspace'>";
 		// get list of flexi templates
 		$flexitemps = $dl->select("flexi_template_name");
 		foreach ($flexitemps as $ft) {
 			$tempArr[] = $ft["description"];
 		}
-		echo "<div class='timesheet_workspace'>";
-		$formArr = array(array(type=>"intro", formtitle=>"Flexi Days Template", formintro=>"Fill out the fields below to create the flexi days template"), 
-			array(type=>"form", form=>array(action=>"index.php?func=saveflexidaystemplate",method=>"post")),	
+		echo "<div style='float: left;'>";
+		$formArr = array(array(type=>"intro", formtitle=>"Flexi Days Template", formintro=>"Fill out the fields below to create the flexi days template"), 	
 			array(prompt=>"Template Name", type=>"text", name=>"template_name", length=>40, value=>"Enter template name", clear=>true),	
 			array(prompt=>"Link To", type=>"selection", name=>"link_to", listarr=>$tempArr, selected=>"", value=>"", clear=>true),
 			array(prompt=>"Template type", type=>"selection", name=>"template_type", listarr=>array("Weekly", "Daily"), selected=>"Weekly",value=>"", clear=>true),
-			array(prompt=>"Which day (daily)", type=>"selection", name=>"which_day", listarr=>array("n/a", "Mo", "Tu", "We", "Th", "Fr"), selected=>"n/a",value=>"", clear=>true),
-			array(prompt=>"Day Duration", type=>"time", name=>"day_duration", starttime=>"0200", endtime=>"1200", interval=>1, value=>"(hrs:mins)", clear=>true),
-			array(prompt=>"Normal Day Duration", type=>"time", name=>"normal_day_duration", starttime=>"0200", endtime=>"1200", interval=>1, value=>"(hrs:mins)", clear=>true),
-			array(prompt=>"Days per week", type=>"text", name=>"days_week", length=>10, value=>"5", clear=>true),
 			array(prompt=>"Earliest Start Time", type=>"time", name=>"earliest_start", starttime=>"0500", endtime=>"0900", interval=>15, value=>"Enter leave period", clear=>true),
 			array(prompt=>"Latest Start Time", type=>"time", name=>"latest_start", starttime=>"0900", endtime=>"1800", interval=>15, value=>"", clear=>true),		
 			array(prompt=>"Minimum Lunch", type=>"checkbox", name=>"minimum_lunch", value=>"Yes", clear=>true),
@@ -3957,12 +3954,16 @@ function add_flexi_days_template() {
 			array(prompt=>"Lunch Earliest Start", type=>"time", name=>"lunch_earliest_start", starttime=>"1030", endtime=>"1200", interval=>15, value=>"Enter leave period", clear=>true),
 			array(prompt=>"Lunch Latest Finish", type=>"time", name=>"lunch_latest_end", starttime=>"1230", endtime=>"1430", interval=>15, value=>"", clear=>true),		
 			array(prompt=>"Earliest End Time", type=>"time", name=>"earliest_end", starttime=>"0745", endtime=>"1700", interval=>15, value=>"Enter leave period", clear=>true),
-			array(prompt=>"Latest End Time", type=>"time", name=>"latest_end", starttime=>"1700", endtime=>"2345", interval=>15, value=>"", clear=>true),		
-			array(type=>"submit", buttontext=>"Create Template", clear=>true), 
-			array(type=>'endform'));
+			array(prompt=>"Latest End Time", type=>"time", name=>"latest_end", starttime=>"1700", endtime=>"2345", interval=>15, value=>"", clear=>true),
+			array(prompt=>"Days per week", type=>"text", name=>"days_week", length=>10, value=>"", clear=>true));	
+			
+			
+			$formArr[] = array(type=>"submit", name=>"add_template", buttontext=>"Create Template", clear=>true); 
 			$form = new forms;
 			$form->create_form($formArr);
+			echo "</div>";
 			$template=$dl->select("flexi_template_days");
+			echo "<div id='add_daysandtime' style='float: left;'></div>";
 			echo "<div style='clear:both'><table class='table_view'>";
 			echo "<tr><th>Template Name</th><th>Delete</th><th>Edit</th></tr>";
 			foreach($template as $temp) {
@@ -3971,30 +3972,146 @@ function add_flexi_days_template() {
 			echo "</table></div>";
 		echo "</div>";
 	}
+?>
+<script>
+$(document).ready(function(){
+	$("#add_template").attr("disabled", "disabled");
+	$("#days_week").on("change", function(event, ui) { 
+		var func = "days_changed";
+		$.post(
+			"ajax.php",
+			{ func: func,
+				templates: <?php echo $tempArr?>,
+				days_per_week: $("#days_week").val()
+			},
+			function (data)
+			{
+				$('#add_daysandtime').html(data);
+		});
+	});
+	$("#add_template").click(function() {
+		alert("saving...");
+		var func = "save_template";
+		var weekday_values = {};
+		if(document.getElementById('week_day')) { //check if the option selected is for All the days
+			weekday_values = {week_day: $("#week_day").val(), weekday_time: $("#weekday_time").val(),weekday_time_mins: $("#weekday_time_mins").val()};
+		}
+		
+		if(document.getElementById('week_day1')) { //check if the option is to have differing times for each day
+			var strArr = "{";
+			for( var i=1; i<=$("#days_week").val(); i++ ) {
+				key = "week_day"+i;
+				value = $("#week_day"+i).val();
+				strArr += "\""+key+"\":\""+value+"\","; 
+				key = "weekday_time"+i;
+				value = $("#weekday_time"+i).val();
+				strArr += "\""+key+"\":\""+value+"\","; 
+				key = "weekday_time"+i+"_mins";
+				value = $("#weekday_time"+i+"_mins").val();
+				strArr += "\""+key+"\":\""+value+"\","; 
+			}
+			strArr = strArr.substring(0, (strArr.length)-2);
+			strArr += "\"}";
+			weekday_values = strArr;
+		}
+		$.post(
+			"ajax.php",
+			{ func: func,
+				template_name: $("#template_name").val(),
+				link_to: $("#link_to").val(),
+				template_type: $("#template_type").val(),
+				earliest_start: $("#earliest_start").val(),
+				earliest_start_mins: $("#earliest_start_mins").val(),
+				latest_start: $("#latest_start").val(),
+				latest_start_mins: $("#latest_start_mins").val(),
+				minimum_lunch: $("#minimum_lunch").is(":checked"),
+				lunch_duration: $("#lunch_duration").val(),
+				lunch_duration_mins: $("#lunch_duration_mins").val(),
+				lunch_earliest_start: $("#lunch_earliest_start").val(),
+				lunch_earliest_start_mins: $("#lunch_earliest_start_mins").val(),
+				lunch_latest_end: $("#lunch_latest_end").val(),
+				lunch_latest_end_mins: $("#lunch_latest_end_mins").val(),
+				earliest_end: $("#earliest_end").val(),
+				earliest_end_mins: $("#earliest_end_mins").val(),
+				latest_end: $("#latest_end").val(),
+				latest_end_mins: $("#latest_end_mins").val(),
+				templates: <?php echo $tempArr?>,
+				days_per_week: $("#days_week").val(),
+				week_day_array: weekday_values
+			},
+			function (data)
+			{
+				$('#add_daysandtime').html(data);
+		});
+	}); 
+});
+</script>
+<?php
 }
 
 function save_flexi_days_template() {
 	global $dl;
-	// need to obtain the id of the template to link to
-	$linkto = $dl->select("flexi_template_name", "description='".$_POST["link_to"]."'");
-	foreach($linkto as $lnk) {
-		$linkId = $lnk["flexi_template_name_id"];
+	//check here if the name has been used for the template name
+	$template_check = $dl->select("flexi_template_days", "template_days_name = '".$_POST["template_name"]."'");
+	if(empty($template_check)) {
+		//check here if the POST week_day array is an array or if not then it is a json string which needs decoding to an array.
+		if(is_array($_POST["week_day_array"])) {
+			$week_day_array = $_POST["week_day_array"];
+		}else{
+			$week_day_array = (array) json_decode($_POST["week_day_array"]);
+			$week_day_array["timelist"] = (array) $week_day_array["timelist"];
+		}
+		// need to obtain the id of the template to link to
+		$linkto = $dl->select("flexi_template_name", "description='".$_POST["link_to"]."'");
+		foreach($linkto as $lnk) {
+			$linkId = $lnk["flexi_template_name_id"];
+		}
+		//now need to save the template days template name and link
+		$fieldarr=array("template_days_name","template_name_id");
+		$save = array_combine($fieldarr, array($_POST['template_name'], $linkId));
+		$dl->insert("flexi_template_days", $save);
+		//saved the template name now need to get the template days id
+		$get_id = $dl->select("flexi_template_days", "template_days_name = '".$_POST['template_name']."'");
+		$fieldId = $get_id[0]["flexi_template_days_id"];
+		if($_POST["minimum_lunch"]== "true") {
+			$min_lunch = "Yes";
+		}else{
+			$min_lunch = "";
+		}
+		$fieldarr= array("template_days_id", "template_type", "days_week","earliest_starttime","latest_starttime","minimum_lunch","minimum_lunch_duration","lunch_earliest_start_time", "lunch_latest_end_time","earliest_endtime","latest_endtime");
+		
+		$postarr= array($fieldId,$_POST["template_type"],$_POST["days_per_week"], $_POST["earliest_start"].":".$_POST["earliest_start_mins"],$_POST["latest_start"].":".$_POST["latest_start_mins"],$min_lunch,$_POST["lunch_duration"].":".$_POST["lunch_duration_mins"], $_POST["lunch_earliest_start"].":".$_POST["lunch_earliest_start_mins"], $_POST["lunch_latest_end"].":".$_POST["lunch_latest_end_mins"], $_POST["earliest_end"].":".$_POST["earliest_end_mins"], $_POST["latest_end"].":".$_POST["latest_end_mins"]);
+		
+		$save=array_combine($fieldarr, $postarr);
+		$dl->insert("flexi_template_days_settings", $save);
+		$sql = "select MAX(days_settings_id) as maxId from flexi_template_days_settings";
+		$max = $dl->getQuery($sql);
+		$fields = array("fdt_weekday_id", "fdt_flexi_days_id", "fdt_working_time");
+		if(in_array("All", $week_day_array)) { //this array only has one element and applies to all of the days_per_week
+			//save the array details ready for writing (id of "All" = 6)
+			$timeVal = $week_day_array["weekday_time"].":".$week_day_array["weekday_time_mins"].":00";
+			$values = array(6, $max[0]["maxId"], $timeVal);
+			$writeLine = array_combine($fields, $values);
+			$dl->insert("flexi_day_times", $writeLine);
+		}else{ //the array has multiple day times to save
+			for( $count=1; $count <= $_POST["days_per_week"]; $count++) {
+				$timeVal = $week_day_array["weekday_time".$count].":".$week_day_array["weekday_time".$count."_mins"].":00";
+				$wkDay = $week_day_array["week_day".$count];
+				//check flexi_weekdays to get the id of the weekday (Mon, Tues, Wed, Thurs, Fri)
+				$dayId = $dl->select("flexi_weekdays", "fw_weekday = '".$wkDay."'");
+				$values = array($dayId[0]["fw_id"], $max[0]["maxId"], $timeVal);
+				$writeLine = array_combine($fields, $values);
+				$dl->insert("flexi_day_times", $writeLine);
+			}
+			$count++;
+		}
+	}else{
+		?>
+		<script>
+		alert("This name already exists.");
+		</script>
+		<?php 
 	}
-	//now need to save the template days template name and link
-	$fieldarr=array("template_days_name","template_name_id");
-	$save = array_combine($fieldarr, array($_POST['template_name'], $linkId));
-	$dl->insert("flexi_template_days", $save);
-	//saved the template name now need to get the template days id
-	$get_id = $dl->select("flexi_template_days", "template_days_name = '".$_POST['template_name']."'");
-	foreach($get_id as $id) {
-		$fieldId = $id["flexi_template_days_id"];
-	}
-	$fieldarr= array("template_days_id", "template_type", "which_day","day_duration", "normal_day_duration", "days_week","earliest_starttime","latest_starttime","minimum_lunch","minimum_lunch_duration","lunch_earliest_start_time", "lunch_latest_end_time","earliest_endtime","latest_endtime");
-	
-	$postarr= array($fieldId,$_POST["template_type"],$_POST["which_day"],$_POST["day_duration"].":".$_POST["day_duration_mins"],$_POST["normal_day_duration"].":".$_POST["normal_day_duration_mins"],$_POST["days_week"], $_POST["earliest_start"].":".$_POST["earliest_start_mins"],$_POST["latest_start"].":".$_POST["latest_start_mins"],$_POST["minimum_lunch"],$_POST["lunch_duration"].":".$_POST["lunch_duration_mins"], $_POST["lunch_earliest_start"].":".$_POST["lunch_earliest_start_mins"], $_POST["lunch_latest_end"].":".$_POST["lunch_latest_end_mins"], $_POST["earliest_end"].":".$_POST["earliest_end_mins"], $_POST["latest_end"].":".$_POST["latest_end_mins"]);
-	
-	$save=array_combine($fieldarr, $postarr);
-	$dl->insert("flexi_template_days_settings", $save);
 	echo "<SCRIPT language='javascript'>redirect('index.php?choice=Templates&subchoice=flexidaystemplate')</SCRIPT>" ;
 }
 
@@ -4010,17 +4127,15 @@ function edit_flexi_days_template() {
 		$names = $dl->select("flexi_template_name", "flexi_template_name_id=".$days[0]["template_name_id"]);
 		$name = $names[0]["description"];
 		$setting = $dl->select("flexi_template_days_settings", "template_days_id=".$_GET["id"]);
-		echo "<div class='timesheet_workspace'>";
+		$settingsId = $setting[0]["days_settings_id"];
+		echo "<div id='timesheet_workspace' class='timesheet_workspace'>";
+		echo "<div style='float: left;'>";
 		foreach($setting as $settings) {
-			$formArr = array(array(type=>"intro", formtitle=>"Flexi Days Template", formintro=>"Fill out the fields below to create the flexi days template"), 
-				array(type=>"form", form=>array(action=>"index.php?func=saveflexidaystemplateedit&id=".$_GET["id"],method=>"post")),	
+			$formArr = array(array(type=>"intro", formtitle=>"Flexi Days Template", formintro=>"Fill out the fields below to create the flexi days template"), 	
 				array(prompt=>"Template Name", type=>"text", name=>"template_name", length=>40, value=>$days[0]["template_days_name"], clear=>true),	
 				array(prompt=>"Link To", type=>"selection", name=>"link_to", listarr=>$tempArr, selected=>$name, value=>"", clear=>true),
 				array(prompt=>"Template type", type=>"selection", name=>"template_type", listarr=>array("Weekly", "Daily"), selected=>$settings["template_type"],value=>"", clear=>true),
 				array(prompt=>"Which day (daily)", type=>"selection", name=>"which_day", listarr=>array("n/a", "Mo", "Tu", "We", "Th", "Fr"), selected=>$settings["which_day"],value=>"", clear=>true),
-				array(prompt=>"Day Duration", type=>"time", name=>"day_duration", starttime=>"0200", endtime=>"1200", interval=>1, selected=>$settings["day_duration"], value=>$settings["day_duration"], clear=>true),
-				array(prompt=>"Normal Day Duration", type=>"time", name=>"normal_day_duration", starttime=>"0200", endtime=>"1200", interval=>1, selected=>$settings["normal_day_duration"], value=>$settings["normal_day_duration"], clear=>true),
-				array(prompt=>"Days per week", type=>"text", name=>"days_week", length=>10, value=>$settings["days_week"], clear=>true),
 				array(prompt=>"Earliest Start Time", type=>"time", name=>"earliest_start", starttime=>"0500", endtime=>"0845", interval=>15, selected=>$settings["earliest_starttime"], value=>$settings["earliest_starttime"], clear=>true),
 				array(prompt=>"Latest Start Time", type=>"time", name=>"latest_start", starttime=>"0900", endtime=>"1800", interval=>15, selected=>$settings["latest_starttime"], value=>$settings["latest_starttime"], clear=>true),		
 				array(prompt=>"Minimum Lunch", type=>"checkbox", name=>"minimum_lunch", selected=>$settings["minimum_lunch"], value=>"Yes", clear=>true),
@@ -4029,12 +4144,120 @@ function edit_flexi_days_template() {
 				array(prompt=>"Lunch Latest Finish", type=>"time", name=>"lunch_latest_end", starttime=>"1030", endtime=>"1430", interval=>15, selected=>$settings["lunch_latest_end_time"], value=>$settings["lunch_latest_end_time"], clear=>true),		
 				array(prompt=>"Earliest End Time", type=>"time", name=>"earliest_end", starttime=>"0700", endtime=>"1645", interval=>15, selected=>$settings["earliest_endtime"], value=>$settings["earliest_endtime"], clear=>true),
 				array(prompt=>"Latest End Time", type=>"time", name=>"latest_end", starttime=>"1700", endtime=>"2345", interval=>15, selected=>$settings["latest_endtime"], value=>$settings["latest_endtime"], clear=>true),		
-				array(type=>"submit", buttontext=>"Save Template", clear=>true), 
-				array(type=>'endform'));
+				array(prompt=>"Days per week", type=>"text", name=>"days_week", length=>10, value=>$settings["days_week"], clear=>true),
+				array(type=>"submit", name=>"edit_template", buttontext=>"Save Template", clear=>true));
 				$form = new forms;
 				$form->create_form($formArr);
 		}
 		echo "</div>";
+		echo "<div id='add_daysandtime' style='float: left;'>";
+		$times = $dl->select("flexi_day_times","fdt_flexi_days_id = ".$settingsId, "fdt_weekday_id");
+		$formArr = array(array(type=>"intro", formtitle=>"Additional Time Details", formintro=>"Fill out the fields below to add additional information"));
+		$i=1;
+		$week_dayArr = $dl->select("flexi_weekdays");
+		foreach($week_dayArr as $wda) {
+			$week_days[]= $wda["fw_weekday"];
+		}
+		foreach($times as $time) {
+			$chosen_day = $dl->select("flexi_weekdays", "fw_id = ".$time["fdt_weekday_id"]);
+			$formArr[] = array(prompt=>"Weekday", type=>"selection", name=>"week_day".$i, listarr=>$week_days, selected=>$chosen_day[0]["fw_weekday"], value=>"", clear=>true);
+			$formArr[] = array(prompt=>"Time", type=>"time", name=>"weekday_time".$i, starttime=>"0000", endtime=>"0900", interval=>1, selected=>$time["fdt_working_time"], value=>"Enter leave period", clear=>true);
+			$i++;
+		}
+		$form = new forms;
+		$form->create_form($formArr);
+		echo "</div></div>";
+		echo "<div id='dialog' title='Change Days per Week' class='ui-helper-hidden'><p>Are you sure you want to change the no. of Days per Week?<BR><BR>This will delete all of the time details and ask you to recreate them!!!</p></div>";
+?>
+<script>
+$(document).ready(function(){
+	var dpw = $("#days_week").val();
+	$("#days_week").on("change", function(event, ui) { 
+		$("#dialog").dialog({
+			resizable: false,
+			height:200,
+			modal: true,
+			buttons: {
+				"Confirm": function() {
+					var func = "days_changed";
+					$.post(
+						"ajax.php",
+						{ func: func,
+							templates: <?php echo $tempArr?>,
+							days_per_week: $("#days_week").val()
+						},
+						function (data)
+						{
+							$('#add_daysandtime').html(data);
+					});
+					$( this ).dialog( "close" );
+				},
+				"Cancel": function() {
+					$("#days_week").val(dpw);
+					$( this ).dialog( "close" );
+				}
+			}
+		});
+		
+	});
+	$("#edit_template").click(function() {
+		alert("saving edit...");
+		var func = "save_template";
+		var weekday_values = {};
+		if(document.getElementById('week_day')) { //check if the option selected is for All the days
+			weekday_values = {week_day: $("#week_day").val(), weekday_time: $("#weekday_time").val(),weekday_time_mins: $("#weekday_time_mins").val()};
+		}
+		
+		if(document.getElementById('week_day1')) { //check if the option is to have differing times for each day
+			var strArr = "{";
+			for( var i=1; i<=$("#days_week").val(); i++ ) {
+				key = "week_day"+i;
+				value = $("#week_day"+i).val();
+				strArr += "\""+key+"\":\""+value+"\","; 
+				key = "weekday_time"+i;
+				value = $("#weekday_time"+i).val();
+				strArr += "\""+key+"\":\""+value+"\","; 
+				key = "weekday_time"+i+"_mins";
+				value = $("#weekday_time"+i+"_mins").val();
+				strArr += "\""+key+"\":\""+value+"\","; 
+			}
+			strArr = strArr.substring(0, (strArr.length)-2);
+			strArr += "\"}";
+			weekday_values = strArr;
+		}
+		$.post(
+			"ajax.php",
+			{ func: func,
+				template_name: $("#template_name").val(),
+				link_to: $("#link_to").val(),
+				template_type: $("#template_type").val(),
+				earliest_start: $("#earliest_start").val(),
+				earliest_start_mins: $("#earliest_start_mins").val(),
+				latest_start: $("#latest_start").val(),
+				latest_start_mins: $("#latest_start_mins").val(),
+				minimum_lunch: $("#minimum_lunch").is(":checked"),
+				lunch_duration: $("#lunch_duration").val(),
+				lunch_duration_mins: $("#lunch_duration_mins").val(),
+				lunch_earliest_start: $("#lunch_earliest_start").val(),
+				lunch_earliest_start_mins: $("#lunch_earliest_start_mins").val(),
+				lunch_latest_end: $("#lunch_latest_end").val(),
+				lunch_latest_end_mins: $("#lunch_latest_end_mins").val(),
+				earliest_end: $("#earliest_end").val(),
+				earliest_end_mins: $("#earliest_end_mins").val(),
+				latest_end: $("#latest_end").val(),
+				latest_end_mins: $("#latest_end_mins").val(),
+				templates: <?php echo $tempArr?>,
+				days_per_week: $("#days_week").val(),
+				week_day_array: weekday_values
+			},
+			function (data)
+			{
+				$('#add_daysandtime').html(data);
+		});
+	});
+});
+</script>
+<?php
 	}
 }
 

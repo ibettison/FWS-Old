@@ -1,7 +1,7 @@
 <?php 
 session_start();
-error_reporting("E_ALL & ~E_NOTICE");
-//error_reporting("~E_NOTICE");
+//error_reporting("E_ALL & ~E_NOTICE");
+error_reporting("~E_NOTICE");
 require('inc/Datalayer.inc');
 require('inc/connection.inc');
 global $dl;
@@ -26,9 +26,12 @@ $cal = new calendars;
 <LINK REL="StyleSheet" HREF="inc/css/form.css" TYPE="text/css" MEDIA="screen">
 <LINK REL="StyleSheet" HREF="inc/css/timesheet.css" TYPE="text/css" MEDIA="screen">
 <LINK REL="StyleSheet" HREF="inc/css/report.css" TYPE="text/css" MEDIA="screen">
+<LINK REL="StyleSheet" HREF="inc/js/jquery-ui-1.10.3.custom/css/redmond/jquery-ui-1.10.3.custom.css" TYPE="text/css" MEDIA="screen">
 <link REL="SHORTCUT ICON" HREF="inc/images/favicon.ico">
 <link href="inc/css/calendar.css" rel="stylesheet" type="text/css" />
 <script language="javascript" src="inc/classes/calendar.js"></script>
+<script language="javascript" src="inc/js/jquery-ui-1.10.3.custom/js/jquery-1.9.1.js"></script>
+<script language="javascript" src="inc/js/jquery-ui-1.10.3.custom/js/jquery-ui-1.10.3.custom.js"></script>
 </head>
 <body>
 <?php
