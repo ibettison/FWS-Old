@@ -1,7 +1,12 @@
+<SCRIPT type="text/javascript">
+function redirect(url) {
+	window.location = url;
+}
+</script>
 <?php 
 session_start();
 error_reporting("E_ALL & ~E_NOTICE");
-error_reporting("~E_NOTICE");
+//error_reporting("~E_NOTICE");
 require('inc/Datalayer.inc');
 require('inc/connection.inc');
 global $dl;
@@ -67,17 +72,36 @@ $cal = new calendars;
 				if(!empty($check_password)) {
 					foreach($check_password as $cp) {
 						if($cp["security_password"] == MD5(SALT.$password)) {
-							//credentials confirmed get all other details
-							$_SESSION["loggedin"]=true;
 							$_SESSION["userSettings"]=$user_settings;
 							//connect to PERMISSION table and retrieve permission settings
 							$getPermissions = $dl->select("flexi_permission_template", $_SESSION["userSettings"]["permissionId"]."=permission_template_name_id");
 							if(!empty($getPermissions)) {
 								foreach($getPermissions as $gp) {
 									//add permissions to session array
-									$_SESSION["userPermissions"]=array(user=>$gp["permission_user"],templates=>$gp["permission_templates"],teams=>$gp["permission_teams"],team_events=>$gp["permission_team_events"],team_authorise=>$gp["permission_team_authorise"],events=>$gp["permission_events"],event_types=>$gp["permission_event_types"],add_time=>$gp["permission_add_time"],edit_time=>$gp["permission_edit_time"],edit_locked_time=>$gp["permission_edit_locked_time"],add_global=>$gp["permission_add_global"], override_delete=>$gp["permission_override_delete"], edit_flexipot=>$gp["permission_edit_flexipot"], view_user_leave=>$gp["permission_view_leave"], user_messaging=>$gp["permission_messaging"], view_user_timesheet=>$gp["permission_view_timesheet"],view_user_override=>$gp["permission_view_override"], view_reports=>$gp["permission_view_reports"], year_end=>$gp["permission_year_end"]);
+									$_SESSION["userPermissions"]=array(user=>$gp["permission_user"],templates=>$gp["permission_templates"],teams=>$gp["permission_teams"],team_events=>$gp["permission_team_events"],team_authorise=>$gp["permission_team_authorise"],events=>$gp["permission_events"],event_types=>$gp["permission_event_types"],add_time=>$gp["permission_add_time"],edit_time=>$gp["permission_edit_time"],edit_locked_time=>$gp["permission_edit_locked_time"],add_global=>$gp["permission_add_global"], override_delete=>$gp["permission_override_delete"], edit_flexipot=>$gp["permission_edit_flexipot"], view_user_leave=>$gp["permission_view_leave"], user_messaging=>$gp["permission_messaging"], view_user_timesheet=>$gp["permission_view_timesheet"],view_user_override=>$gp["permission_view_override"], view_reports=>$gp["permission_view_reports"], year_end=>$gp["permission_year_end"], lock_override=>$gp["permission_lock"]);
 								}
 							}
+							//check to see if the application is locked before setting the loggedin session variable
+							$locked = $dl->select("flexi_locked");
+							if($locked[0]["locked"]=="True" or $locked[0]["locked"]=="true") { //the application is locked
+								if($_SESSION["userPermissions"]["lock_override"]=="false") {
+									echo "<div id='noAccess_dialog' style='display: none;' title='The FWS Application Unavailable'>";
+									echo "The FWS application has been locked for maintenance. You will receive a message when the system becomes available. Sorry for the inconvenience!<BR /><BR />";
+									echo "</div>";
+									
+									?>
+									 <script>
+									$(function() {
+										$("#noAccess_dialog").dialog();
+									});
+									</script>
+									<?php
+									die();
+								}
+							}
+							//credentials confirmed
+							$_SESSION["loggedin"]=true;
+							
 						}
 					}
 				}
@@ -751,6 +775,11 @@ if($_SESSION["showMths"]== 4) {
 					add_flexi_days_template();
 					echo "</div>";
 				}
+				if($_GET["subchoice"] == "lockApplication") {
+					echo "<div class='left_body'>";
+					lock_application();
+					echo "</div>";
+				}
 			}elseif($_GET["choice"] == "Reports") {
 				if($_GET["subchoice"] == "sicknessReport") {
 					echo "<div class='left_body'>";
@@ -783,6 +812,9 @@ if($_SESSION["showMths"]== 4) {
 			}
 			if($_GET["func"] == "reminder" ) {
 				add_reminder();
+			}
+			if($_GET["func"]=="set_leave_count") {
+				set_leave_count();
 			}
 			if($_GET["func"]=="showCFNotes") {
 				show_notes($_GET["timesheet"]);

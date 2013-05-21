@@ -2,7 +2,7 @@
  class DataLayer {
    var $link;  
    var $errors = array();
-   public $debug_report = false;
+   public $debug = false;
    var $database;
  
    function DataLayer( ) {

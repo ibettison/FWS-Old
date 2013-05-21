@@ -1,8 +1,3 @@
-<SCRIPT type="text/javascript">
-function redirect(url) {
-	window.location = url;
-}
-</script>
 <?php
 function additional_leave() {
 	global $dl;
@@ -85,6 +80,45 @@ function correct_globals() {
 		}
 	}
 	die();
+}
+
+function set_leave_count() {
+	global $dl;
+	$sql = "select * from flexi_user as u left outer join flexi_deleted as d on (d.user_id=u.user_id)
+		where date_deleted is NULL order by user_name";
+	$users = $dl->getQuery( $sql );
+	$userNames[] = "";
+	foreach($users as $user) {
+		$userNames[] = $user["user_name"];
+	}
+	echo "<div class='timesheet_workspace' style='min-height: 40em;'>";
+		$formArr = array(array("type"=>"intro", "formtitle"=>"Annual Leave Count", "formintro"=>"Setup the annual leave count for all users"), 	
+			array("prompt"=>"Users", "type"=>"selection", "name"=>"username", "listarr"=>$userNames, "selected"=>"", "value"=>"", "clear"=>true));
+			$form = new forms;
+			$form->create_form($formArr);
+	echo "<div id='leave_view'  style='margin: 0.5em; height: 55em; background-color: #E5EBEF; border: 1px solid #888'>";
+	echo "<div id='display_leave' style='padding:1em;'></div>";
+	echo "</div>";
+	?>
+	<SCRIPT>
+	$(document).ready(function(){
+		$("#username").change(function() { 
+			$('#display_leave').slideDown();
+			var func = "show_user_leave";
+			$.post(
+				"ajax.php",
+				{ func: func,
+					user: $("#username").val()
+				},
+				function (data)
+				{
+					$('#display_leave').html(data);
+			});
+		});
+	});
+	
+	</SCRIPT>
+	<?php 
 }
 
 function check_permission($value) {
@@ -410,6 +444,9 @@ function show_subMenu($button_choice) {
 			echo "<div class='sub_menu_button'>".show_menuLink($_SERVER['PHP_SELF']."?choice=".$_GET["choice"]."&subchoice=permissiontemplate", 'Permission Template')."</div>";
 			echo "<div class='sub_menu_button'>".show_menuLink($_SERVER['PHP_SELF']."?choice=".$_GET["choice"]."&subchoice=leavetemplate", 'Leave Template')."</div>";
 		}
+		if($_SESSION["userPermissions"]["lock_override"]) {
+			echo "<div class='sub_menu_button'>".show_menuLink($_SERVER['PHP_SELF']."?choice=".$_GET["choice"]."&subchoice=lockApplication", 'Application Lock')."</div>";
+		}
 		$view_icon = "<div class='show_icon'><img src='inc/images/template.jpg' title='View' /></div>";
 	}elseif($button_choice=="Reports") {
 		if($_SESSION["userPermissions"]["view_reports"]=="true") {
@@ -430,6 +467,48 @@ function show_subMenu($button_choice) {
 	if(isset($_GET["choice"]) and !isset($_GET["subchoice"])) {
 		echo $view_icon;
 	}
+}
+
+function lock_application() {
+	global $dl;
+	$locked = $dl->select("flexi_locked");
+	echo "<div id='lock_dialog' style='display: none;' title='Lock the FWS Application'>";
+	echo "Click the lock button to lock the application. This will disable the user login function.<BR /><BR />";
+	if($locked[0]["locked"]=="false") {
+		echo "<center><input type='checkbox' id='check' /><label for='check'>Lock</label></center>";
+	}else{
+		echo "<center><input type='checkbox' id='check' checked/><label for='check'>Unlock</label></center>";
+	}
+	echo "</div>";
+	
+	?>
+	 <script>
+	$(function() {
+		$("#lock_dialog").dialog();
+		$("#check").button();
+		
+		$("#check").click(function(){
+			$.post(
+				"ajax.php",
+				{ func: "toggle_lock"
+				},
+				function(data) {
+				var json = $.parseJSON(data);
+				lock = json.lock;
+				$("#check").attr("checked", lock);
+				if(lock == "true") {
+					$("#check").button('option', 'label', 'Unlock');
+				}else{
+					$("#check").button('option', 'label', 'Lock');
+				}
+			});
+			
+			
+		});
+		
+	});
+	</script>
+	<?php
 }
 
 function send_message() {
@@ -1381,77 +1460,21 @@ function checkLeaveEntitlement($userId) {
 	$nextDaysTaken = 0;
 	$nextYrL = $dl->getQuery($sql);
 	foreach($nextYrL as $nYr) {
-		$date = substr($nYr["event_startdate_time"],0,10);
-		$time1 = substr($nYr["event_startdate_time"],11,8);
-		$time2 = substr($nYr["event_enddate_time"],11,8);
-		$startTimeHr = substr($nYr["event_startdate_time"],11,2);
-		$startTimeMin = substr($nYr["event_startdate_time"],14,2);
-		$startTimeSec = substr($nYr["event_startdate_time"],17,2);
-		$endTimeHr = substr($nYr["event_enddate_time"],11,2);
-		$endTimeMin = substr($nYr["event_enddate_time"],14,2);
-		$endTimeSec = substr($nYr["event_enddate_time"],17,2);
-		//now need to create some time and subtract it to work out if the leave is a full or half day
-		$startTime = mktime($startTimeHr,$startTimeMin,$startTimeSec,0,0,0);
-		$endTime = mktime($endTimeHr,$endTimeMin,$endTimeSec,0,0,0);
-		$time = $endTime - $startTime;
-		// Find the day duration for the users leave entitlement calculation
-		$sql = "select * from flexi_user as u 
-		join flexi_template_name as tn on (u.user_flexi_template=tn.flexi_template_name_id) 
-		join flexi_template_days as td on (tn.flexi_template_name_id=td.template_name_id) 
-		join flexi_template_days_settings as tds on (td.flexi_template_days_id=tds.template_days_id) 
-		where user_id = $userId";
-		$dayDuration = $dl->getQuery($sql);
-		$dayHour = substr($dayDuration[0]["day_duration"],0,2);
-		$dayMin = substr($dayDuration[0]["day_duration"],3,2);
-		$daySec = substr($dayDuration[0]["day_duration"],6,2);
-		$fullDayLeave = mktime($dayHour, $dayMin, $daySec,0,0,0);
-		$startOfDay = mktime(0,0,0,0,0,0);
-		$fullDayLeave = $fullDayLeave - $startOfDay;
-		$halfDayLeave = $fullDayLeave/2;
-		if($time <= $halfDayLeave) { //a half day
-			$nextDaysTaken += 0.5;
-		}else{
-			$nextDaysTaken += 1;
+		$checkLeave = $dl->select("flexi_leave_count", "flc_event_id = ".$nYr["event_id"]);
+		if(!empty($checkLeave)) {
+			$nextDaysTaken += $checkLeave[0]["flc_fullorhalf"];
 		}
 	}
 	$nextYrLeave = $nextDaysTaken;
-	$sql = "Select fe.event_startdate_time, fe.event_enddate_time from flexi_event as fe 
+	$sql = "Select fe.event_id, fe.event_startdate_time, fe.event_enddate_time from flexi_event as fe 
 	join flexi_event_type as fet on (fet.event_type_id=fe.event_type_id) 
 	join flexi_timesheet as ft on (fe.timesheet_id=ft.timesheet_id) 
 	where fe.event_type_id = 3 and event_al = 'Yes' and event_startdate_time >= '$datetoCompare' and event_startdate_time <= '$dateNextYr' and user_id =".$userId;
 	$l = $dl->getQuery($sql);
 	foreach($l as $leave) {
-		$date = substr($leave["event_startdate_time"],0,10);
-		$time1 = substr($leave["event_startdate_time"],11,8);
-		$time2 = substr($leave["event_enddate_time"],11,8);
-		$startTimeHr = substr($leave["event_startdate_time"],11,2);
-		$startTimeMin = substr($leave["event_startdate_time"],14,2);
-		$startTimeSec = substr($leave["event_startdate_time"],17,2);
-		$endTimeHr = substr($leave["event_enddate_time"],11,2);
-		$endTimeMin = substr($leave["event_enddate_time"],14,2);
-		$endTimeSec = substr($leave["event_enddate_time"],17,2);
-		//now need to create some time and subtract it to work out if the leave is a full or half day
-		$startTime = mktime($startTimeHr,$startTimeMin,$startTimeSec,0,0,0);
-		$endTime = mktime($endTimeHr,$endTimeMin,$endTimeSec,0,0,0);
-		$time = $endTime - $startTime;
-		// Find the day duration for the users leave entitlement calculation
-		$sql = "select * from flexi_user as u 
-		join flexi_template_name as tn on (u.user_flexi_template=tn.flexi_template_name_id) 
-		join flexi_template_days as td on (tn.flexi_template_name_id=td.template_name_id) 
-		join flexi_template_days_settings as tds on (td.flexi_template_days_id=tds.template_days_id) 
-		where user_id = $userId";
-		$dayDuration = $dl->getQuery($sql);
-		$dayHour = substr($dayDuration[0]["day_duration"],0,2);
-		$dayMin = substr($dayDuration[0]["day_duration"],3,2);
-		$daySec = substr($dayDuration[0]["day_duration"],6,2);
-		$fullDayLeave = mktime($dayHour, $dayMin, $daySec,0,0,0);
-		$startOfDay = mktime(0,0,0,0,0,0);
-		$fullDayLeave = $fullDayLeave - $startOfDay;
-		$halfDayLeave = $fullDayLeave/2;
-		if($time <= $halfDayLeave) { //a half day
-			$daysTaken += 0.5;
-		}else{
-			$daysTaken += 1;
+		$checkLeave = $dl->select("flexi_leave_count", "flc_event_id = ".$leave["event_id"]);
+		if(!empty($checkLeave)) {
+			$daysTaken += $checkLeave[0]["flc_fullorhalf"];
 		}
 	}
 	return($daysTaken);
@@ -2311,12 +2334,8 @@ function add_event($title, $intro, $user="") {
 			$working_session = $event[0]["event_work"];
 		}
 		if($duration_type=="Fixed" or $duration_type=="Both") {
-			$durations = $dl->select("flexi_fixed_durations", "template_link = $template_days_id");
-			$arrDurations[]="";
-			foreach($durations as $duration) {
-				//create an array to use in the radio box selection
-				$arrDurations[]=$duration["name"];
-			}
+			$arrDurations= array("Full day", "Half day");
+			//altered to a Full day or a Half day as the new template flexi_day-times will calculate the event time for the selected Day.
 		}
 		$event_types = $dl->select("flexi_event_type");
 		
@@ -2377,40 +2396,44 @@ function save_event($userId) {
 	global $dl;
 	include("inc/email_messages.inc");
 	//$dl->debug=true;
-	$eventType=$_POST["event_type"];
-	$event = $dl->select("flexi_event_type", "event_type_name='$eventType'");
-	$eventId = $event[0]["event_type_id"];
+	$eventType							= $_POST["event_type"];
+	$leaveDuration						= $_POST["duration"]; // this 'Full day' or 'Half day'
+	$event 									= $dl->select("flexi_event_type", "event_type_name='$eventType'");
+	$eventId 								= $event[0]["event_type_id"];
 	//check the event type to see if an authorisation is required
-	$eventName = $event[0]["event_type_name"];
-	$eventAuthorisation = $event[0]["event_authorisation"];
-	$eventWork = $event[0]["event_work"];
-	$eventGlobal = $event[0]["event_global"];
-	$eventAnnualLeave = $event[0]["event_al"];
-	$eventFlexiLeave = $event[0]["event_flexi"];
-	$eventDelete = $event[0]["event_delete"];
+	$eventName 							= $event[0]["event_type_name"];
+	$eventAuthorisation 				= $event[0]["event_authorisation"];
+	$eventWork 							= $event[0]["event_work"];
+	$eventGlobal 						= $event[0]["event_global"];
+	$eventAnnualLeave 				= $event[0]["event_al"];
+	$eventFlexiLeave 					= $event[0]["event_flexi"];
+	$eventDelete 						= $event[0]["event_delete"];
 	//*******************************************
 	//check the flexi template days settings to make sure the entered times are within the template ranges specified
-	$sql = "select * from flexi_user as u 
+	$sql 										= "select * from flexi_user as u 
 	join flexi_template as t on (u.user_flexi_template=t.template_id) 
 	join flexi_template_days as td on (td.template_name_id=t.template_name_id) 
 	join flexi_template_days_settings as tds on (tds.template_days_id=td.flexi_template_days_id) 
 	where u.user_id =".$userId;
-	$ranges = $dl->getQuery($sql);
-	$earliest_start = $ranges[0]["earliest_starttime"];
-	$latest_start = $ranges[0]["latest_starttime"];
-	$earliest_lunch_start=$ranges[0]["lunch_earliest_start_time"];
-	$latest_lunch_end=$ranges[0]["lunch_latest_end_time"];
-	$earliest_end = $ranges[0]["earliest_endtime"];
-	$latest_end = $ranges[0]["latest_endtime"];
-	$normal_day_duration[0]["normal_day_duration"];
+	$ranges 								= $dl->getQuery($sql);
+	$earliest_start 						= $ranges[0]["earliest_starttime"];
+	$latest_start 							= $ranges[0]["latest_starttime"];
+	$earliest_lunch_start				=$ranges[0]["lunch_earliest_start_time"];
+	$latest_lunch_end					=$ranges[0]["lunch_latest_end_time"];
+	$earliest_end 						= $ranges[0]["earliest_endtime"];
+	$latest_end 							= $ranges[0]["latest_endtime"];
+	$days_settings_id 					= $ranges[0]["days_settings_id"];
+	$minimum_lunch 					= $ranges[0]["minimum_lunch"];
+	$minimum_lunch_duration 		= $ranges[0]["minimum_lunch_duration"];
+	//$normal_day_duration[0]["normal_day_duration"]; the normal day duration is no longer required as the new flexi_day_times template accomodates the times for individual and multiple days
 	//********************************************
-	$eventSettings = $dl->select("flexi_event_settings", "event_typeid=".$eventId);
-	$durationType = $eventSettings[0]["duration_type"];
+	$eventSettings 						= $dl->select("flexi_event_settings", "event_typeid=".$eventId);
+	$durationType 						= $eventSettings[0]["duration_type"];
 	//check to see if the duration is fixed that a value has been entered for event duration
 	if($durationType == "Fixed" and empty($_POST["duration"])) { //need to message the user ?>
 		<SCRIPT language="javascript">
 		alert("The event type you have tried to enter is a fixed type and therefore requires you to select an event duration. \n\nPlease re-enter the times to include the duration time (day, morning, afternoon).");
-		redirect("index.php?choice=Add&subchoice=addevent&type=".<?php echo $_GET["type"]?>");
+		redirect("index.php?choice=Add&subchoice=addevent");
 		</SCRIPT>
     	<?php
 		die();
@@ -2426,7 +2449,7 @@ function save_event($userId) {
 				?>
 				<SCRIPT language="javascript">
 				alert("The dates you have entered are incorrect. \n\nPlease re-enter the dates making sure the `Date To` is the same or later than the `Date From` date.");
-				redirect("index.php?choice=Add&subchoice=addevent&type=".<?php echo $_GET["type"]?>");
+				redirect("index.php?choice=Add&subchoice=addevent");
 				</SCRIPT>
 				<?php
 				die();
@@ -2436,15 +2459,45 @@ function save_event($userId) {
 	// is it fixed duration
 	if($durationType=="Fixed" or $durationType=="Both"){
 		//need to get the times dependant on posted choice
-		$duration_link = $dl->select("flexi_fixed_durations", "name='".$_POST["duration"]."'");	
+		//need to find out which day the posted date is for
+		$dayNo = date("N", strtotime($_POST["date_name"]));
+		//now need to find the flexi_template_days_setting
+		
+		//lets get the day duration for the first day of the event
+		$duration_link = $dl->select("flexi_day_times", "fdt_flexi_days_id = ".$days_settings_id." and fdt_weekday_id = ".$dayNo);
+		if(empty($duration_link)) { //then assume this is a template that applies to all of the days
+			$duration_link = $dl->select("flexi_day_times", "fdt_flexi_days_id = ".$days_settings_id." and fdt_weekday_id = 6");
+		}
+		if(empty($duration_link) and $eventGlobal=="No") { //this is the first day of an event addition. If it lands on a day that is not setup in the days_settings template then a message is displayed and the program execution halted.
+			echo "<SCRIPT language='javascript'>alert('You have tried to add a leave request on a day that is not specified in your settings template. Choose a day that matches a working day in your working week and if you are adding multiple requests then choose any end date in the following days. The system will then check your template and add only the matching days.');" ;
+				echo "redirect('index.php?choice=Add&subchoice=addevent&type=".$_GET["type"]."');</SCRIPT>" ;
+			die();
+		}
+		$add_lunch = 0; //no minimum lunch for this template
+		//need to check if there is a minimum lunch to add to the end time
+		if($minimum_lunch == "Yes") {
+			if($leaveDuration == 'Full day') {
+				if(date("h", strtotime($duration_link[0]["fdt_working_time"])) >= 6) { // check if the time is greater than or equal to 6 hours. This is a EUROPEAN directive....
+					$add_lunch = strtotime($minimum_lunch_duration); // add min lunch as it will be taken off
+				}	
+			}else{
+				if(date("h", strtotime($duration_link[0]["fdt_working_time"]))/2 >= 6) { // check if the time is greater than or equal to 6 hours. This is a EUROPEAN directive....
+					$add_lunch = strtotime($minimum_lunch_duration); // add min lunch as it will be taken off
+				}
+			}
+		}
 	}
 	if(!empty($duration_link)) {
-		$duration = $duration_link[0]["duration"];
+		$duration = $duration_link[0]["fdt_working_time"];
 		$startTime = $_POST["duration_time_start"].":".$_POST["duration_time_start_mins"].":00";
 		$startTimeSecs = $_POST["duration_time_start"] * 60 * 60 + $_POST["duration_time_start_mins"] * 60;
 		$endTimeSecs = substr($duration,0,2) * 60 * 60 + substr($duration,3,2) * 60 + substr($duration,6,2) * 60;
-		$endTime = date("H:i:s", $startTimeSecs + $endTimeSecs);
+		if($leaveDuration == 'Half day') {
+			$endTimeSecs = $endTimeSecs/2;
+		}
+		$endTime = date("H:i:s", $startTimeSecs + $endTimeSecs+ $add_lunch);
 	}else{
+	
 		$startTime = $_POST["time_start"].":".$_POST["time_start_mins"].":00";
 		$endTime = $_POST["time_end"].":".$_POST["time_end_mins"].":00";
 	}
@@ -2455,7 +2508,7 @@ function save_event($userId) {
 		//redirect to message and reenter details ?>
 		<SCRIPT language="javascript">
 		alert("The start/end date you entered lands on a weekend and therefore cannot be added to the flexitime system. \n\nPlease re-enter the times to fall outside of the weekend. Be aware that you are able to enter dates that span a weekend as the system will ignore the weekend dates.");
-		redirect("index.php?choice=Add&subchoice=addevent&type=".<?php echo $_GET["type"]?>");
+		redirect("index.php?choice=Add&subchoice=addevent&type="+<?php echo $_GET["type"]?>);
 		</SCRIPT>
 		<?php die();
 	}
@@ -2510,13 +2563,9 @@ function save_event($userId) {
 		}
 		//add the posted flexitime to the existing flexitime
 		$flexiAdd = $flexiAdd + ( strtotime($endDateTime) - strtotime($startDateTime) );
-		if($firstFlexi and date("H:i:s", strtotime($endDateTime) - strtotime($startDateTime)) == $duration) { //fullday flexi request
-			if($dates[0]["minimum_lunch"]=="Yes" and date("H:i:s", strtotime($endDateTime) - strtotime($startDateTime)) >= "06:00:00") {
-				$flexiAdd = $flexiAdd - strtotime($dates[0]["minimum_lunch_duration"]);
-			}
-		}
+		
 		//now need to get the template information to find out how much flexitime this person is allowed to take within the period.
-		$dayDuration = $dates[0]["day_duration"];
+		$dayDuration = $dates[0]["max_surplus"];
 		if(date("H:i:s", $flexiAdd) > date("H:i:s", strtotime($dayDuration)) ){
 			echo "<SCRIPT language='javascript'>alert('The flexitime request you are trying to create exceeds the flexitime leave you are allowed within this period. Please contact Mandy Jarvis who will be able to review this request. Thank you.');" ;
 			echo "redirect('index.php?choice=View&subchoice=timesheet')</SCRIPT>" ;
@@ -2544,7 +2593,6 @@ function save_event($userId) {
 			}else{
 				$checked=false;
 			}
-			
 		}
 	}
 	if($checked) {
@@ -2554,6 +2602,15 @@ function save_event($userId) {
 		$save = array_combine($fieldarr, $postarr);
 		if($eventGlobal=="No"){ //will write this record lower down.
 			$dl->insert("flexi_event", $save);
+			$sql = "select MAX(event_id) as maxId from flexi_event where timesheet_id = ".$timeSheetId;
+			$lastRec = $dl->getQuery($sql);
+			if($eventType == 'Annual Leave') {
+				if($leaveDuration == "Full day") {
+					$dl->insert("flexi_leave_count", array("flc_fullorhalf"=>1.0, "flc_event_id"=>$lastRec[0]["maxId"]));
+				}else{
+					$dl->insert("flexi_leave_count", array("flc_fullorhalf"=>0.5, "flc_event_id"=>$lastRec[0]["maxId"]));
+				}
+			}
 		}
 		//get the event Id for the event that has just been written
 		$id = $dl->select("flexi_event", "timesheet_id=".$timeSheetId." and event_startdate_time = '".$startDateTime."' and event_type_id=".$eventId);
@@ -2594,33 +2651,71 @@ function save_event($userId) {
 					//certainly shouldn't apply for leave ???
 					if(date('l',$timeStart) !="Saturday" and date('l',$timeStart) !="Sunday") {
 						$startDateTime = date('Y-m-d H:i:s', $timeStart);
-						$endDateTime = date('Y-m-d', $timeStart)." ".$endTimePortion;
-						//check to see if the time has already been entered and does not overlap any other time/leave etc.
-						$checkEntered = $dl->select("flexi_event", "(substr(event_startdate_time,1,10) = '".substr($startDateTime,0,10)."' and substr(event_enddate_time,1,10) = '".substr($startDateTime,0,10)."') and timesheet_id=".$timeSheetId);
-						$checkStartTime = date("H:i:s", strtotime($startDateTime));
-						$checkEndTime = date("H:i:s", strtotime($endDateTime));
-						$checked=true;
-						if(!empty($checkEntered)) {
-							//check to see if the time entered overlaps an existing event
-							foreach($checkEntered as $ce) {
-								$sTime = date("H:i:s", strtotime($ce["event_startdate_time"]));
-								$eTime = date("H:i:s", strtotime($ce["event_enddate_time"]));
-								if($sTime < $checkStartTime and $eTime <= $checkStartTime) {
-									$checked=true;
-								}elseif($sTime >= $checkEndTime and $eTime > $checkEndTime) {
-									$checked=true;
-								}else{
-									$checked=false;
+						//need to check here for the days_setting template to see if the day is valid and can be entered
+						//need to find out which day the posted date is for
+						$dayNo = date("N", $timeStart);
+						//now need to find the flexi_template_days_setting
+						
+						//lets get the day duration for the first day of the event
+						$duration_link = $dl->select("flexi_day_times", "fdt_flexi_days_id = ".$days_settings_id." and fdt_weekday_id = ".$dayNo);
+						if(empty($duration_link)) { //then assume this is a template that applies to all of the days
+							$duration_link = $dl->select("flexi_day_times", "fdt_flexi_days_id = ".$days_settings_id." and fdt_weekday_id = 6");
+						}
+						if(empty($duration_link)) { //this is not a day matched in the template
+							$checked =false;
+						}else{
+							$add_lunch = 0; //no minimum lunch for this template
+							//need to check if there is a minimum lunch to add to the end time
+							if($minimum_lunch == "Yes") {
+								if(date("h", strtotime($duration_link[0]["fdt_working_time"])) >= 6) { // check if the time is greater than or equal to 6 hours. This is a EUROPEAN directive....
+									$add_lunch = strtotime($minimum_lunch_duration); // add min lunch as it will be taken off
+								}			
+							}
+							$duration = $duration_link[0]["fdt_working_time"];
+							$startTime = $_POST["duration_time_start"].":".$_POST["duration_time_start_mins"].":00";
+							$startTimeSecs = $_POST["duration_time_start"] * 60 * 60 + $_POST["duration_time_start_mins"] * 60;
+							$endTimeSecs = substr($duration,0,2) * 60 * 60 + substr($duration,3,2) * 60 + substr($duration,6,2) * 60;
+							$endTime = date("H:i:s", $startTimeSecs + $endTimeSecs+ $add_lunch);
+							
+							
+							$endDateTime = date('Y-m-d', $timeStart)." ".$endTime;
+							//check to see if the time has already been entered and does not overlap any other time/leave etc.
+							$checkEntered = $dl->select("flexi_event", "(substr(event_startdate_time,1,10) = '".substr($startDateTime,0,10)."' and substr(event_enddate_time,1,10) = '".substr($startDateTime,0,10)."') and timesheet_id=".$timeSheetId);
+							$checkStartTime = date("H:i:s", strtotime($startDateTime));
+							$checkEndTime = date("H:i:s", strtotime($endDateTime));
+							$checked=true;
+							if(!empty($checkEntered)) {
+								//check to see if the time entered overlaps an existing event
+								foreach($checkEntered as $ce) {
+									$sTime = date("H:i:s", strtotime($ce["event_startdate_time"]));
+									$eTime = date("H:i:s", strtotime($ce["event_enddate_time"]));
+									if($sTime < $checkStartTime and $eTime <= $checkStartTime) {
+										$checked=true;
+									}elseif($sTime >= $checkEndTime and $eTime > $checkEndTime) {
+										$checked=true;
+									}else{
+										$checked=false;
+									}
+									
 								}
-								
 							}
 						}
+						
 						if($checked) {
 							$emailDayCount++;
 							$fieldarr = array("timesheet_id","event_startdate_time","event_enddate_time","event_type_id");
 							$postarr = array($timeSheetId, $startDateTime, $endDateTime, $eventId);
 							$save = array_combine($fieldarr, $postarr);
 							$dl->insert("flexi_event", $save);
+							$sql = "select MAX(event_id) as maxId from flexi_event where timesheet_id = ".$timeSheetId;
+							$lastRec = $dl->getQuery($sql);
+							if($eventType == 'Annual Leave') {
+								if($leaveDuration == "Full day") {
+									$dl->insert("flexi_leave_count", array("flc_fullorhalf"=>1.0, "flc_event_id"=>$lastRec[0]["maxId"]));
+								}else{
+									$dl->insert("flexi_leave_count", array("flc_fullorhalf"=>0.5, "flc_event_id"=>$lastRec[0]["maxId"]));
+								}
+							}
 							$id = $dl->select("flexi_event", "timesheet_id=".$timeSheetId." and event_startdate_time = '".$startDateTime."'");
 							if($eventFlexiLeave == "Yes") {
 								if(date("h", strtotime($endDateTime) - strtotime($startDateTime)) >=4) {
@@ -2739,7 +2834,7 @@ function save_event($userId) {
 		//if it is then need to add the global event to all timesheet id's
 		//but only those within the selected teams.
 		if($eventGlobal == "Yes") {
-			$dl->debug=true;
+			$dl->debug_report=true;
 			if($_POST["individual"]!=="Yes") { //this means its not an individual amendment
 				//create the record in flexi_global_events to store the global event date
 				//this will be added to each new users timesheet
@@ -2776,35 +2871,59 @@ function save_event($userId) {
 					where user_id = ".$user["user_id"];
 					$teams = $dl->getQuery($sql);
 					if(in_array($teams[0]["team_name"],$_POST["teams"])) {
-						//need to create event 
-						$sql = "select * from flexi_user as u 
-						join flexi_template_name as tn on (u.user_flexi_template = tn.flexi_template_name_id)
-						join flexi_template_days as td on (tn.flexi_template_name_id = td.template_name_id)
-						join flexi_template_days_settings as tds on (td.flexi_template_days_id = tds.template_days_id)
-						where u.user_id = ".$user["user_id"];
-						$duration = $dl->getQuery($sql);
-						$fullDay = $duration[0]["normal_day_duration"];
-						$endTime = $startDateTime;
-						$startTimeSecs = $_POST["duration_time_start"] * 60 * 60 + $_POST["duration_time_start_mins"] * 60;
-						$endTimeSecs = substr($fullDay,0,2) * 60 * 60 + substr($fullDay,3,2) * 60 + substr($fullDay,6,2) * 60;
-						$endTime = date("H:i:s", $startTimeSecs + $endTimeSecs);
-						$endDateTime = substr($endDateTime,0,11).$endTime;
-						$sql = "select * from flexi_user as u join flexi_timesheet as t on (u.user_id=t.user_id) where u.user_id = ".$user["user_id"];
-						$timesheet = $dl->getQuery($sql);
-						$timeSheetId = $timesheet[0]["timesheet_id"];
-						$eventFields = array("timesheet_id","event_startdate_time","event_enddate_time","event_type_id");
-						$eventValues = array($timeSheetId, $startDateTime, $endDateTime, $eventId);
-						$save = array_combine($eventFields, $eventValues);
-						//check if the event already exists and don't add it if it does.
-						$sql = "select * from flexi_event as e 
-						join flexi_timesheet as t 
-						on (e.timesheet_id=t.timesheet_id)
-						where t.user_id = ".$user["user_id"]." and event_startdate_time = '". $startDateTime. "' and event_enddate_time = '".$endDateTime."'";
-						$exists = $dl->getQuery($sql);
-						if(empty($exists)) {
-							$dl->insert("flexi_event", $save);
+						$timeStart = strtotime($startDateTime);
+						$timeEnd = strtotime($endDateTime);
+						//need to check here for the days_setting template to see if the day is valid and can be entered
+						//need to find out which day the posted date is for
+						$dayNo = date("N", $timeStart);
+						//now need to find the flexi_template_days_setting
+						$sql 	= "select * from flexi_user as u 
+						join flexi_template as t on (u.user_flexi_template=t.template_id) 
+						join flexi_template_days as td on (td.template_name_id=t.template_name_id) 
+						join flexi_template_days_settings as tds on (tds.template_days_id=td.flexi_template_days_id) 
+						where u.user_id =".$user["user_id"];
+						$settings = $dl->getQuery($sql);
+						$days_settings_id = $settings[0]["days_settings_id"];
+						//lets get the day duration for the first day of the event
+						$duration_link = $dl->select("flexi_day_times", "fdt_flexi_days_id = ".$days_settings_id." and fdt_weekday_id = ".$dayNo);
+						if(empty($duration_link)) { //then assume this is a template that applies to all of the days
+							$duration_link = $dl->select("flexi_day_times", "fdt_flexi_days_id = ".$days_settings_id." and fdt_weekday_id = 6");
+						}
+						if(empty($duration_link)) { //this is not a day matched in the template
+							$checked =false;
 						}else{
-							echo "<BR>Event already exists... Not Added:<BR>";
+							$add_lunch = 0; //no minimum lunch for this template
+							//need to check if there is a minimum lunch to add to the end time
+							if($minimum_lunch == "Yes") {
+								if(date("h", strtotime($duration_link[0]["fdt_working_time"])) >= 6) { // check if the time is greater than or equal to 6 hours. This is a EUROPEAN directive....
+									$add_lunch = strtotime($minimum_lunch_duration); // add min lunch as it will be taken off
+								}			
+							}
+							$duration = $duration_link[0]["fdt_working_time"];
+							$startTime = $_POST["duration_time_start"].":".$_POST["duration_time_start_mins"].":00";
+							$startTimeSecs = $_POST["duration_time_start"] * 60 * 60 + $_POST["duration_time_start_mins"] * 60;
+							$endTimeSecs = substr($duration,0,2) * 60 * 60 + substr($duration,3,2) * 60 + substr($duration,6,2) * 60;
+							$endTime = date("H:i:s", $startTimeSecs + $endTimeSecs+ $add_lunch);
+							
+							$endDateTime = date('Y-m-d', $timeStart)." ".$endTime;
+							$sql = "select * from flexi_user as u join flexi_timesheet as t on (u.user_id=t.user_id) where u.user_id = ".$user["user_id"];
+							$timesheet = $dl->getQuery($sql);
+							$timeSheetId = $timesheet[0]["timesheet_id"];
+							$eventFields = array("timesheet_id","event_startdate_time","event_enddate_time","event_type_id");
+							$eventValues = array($timeSheetId, $startDateTime, $endDateTime, $eventId);
+							$save = array_combine($eventFields, $eventValues);
+
+							//check if the event already exists and don't add it if it does.
+							$sql = "select * from flexi_event as e 
+							join flexi_timesheet as t 
+							on (e.timesheet_id=t.timesheet_id)
+							where t.user_id = ".$user["user_id"]." and event_startdate_time = '". $startDateTime. "' and event_enddate_time = '".$endDateTime."'";
+							$exists = $dl->getQuery($sql);
+							if(empty($exists)) {
+								$dl->insert("flexi_event", $save);
+							}else{
+								echo "<BR>Event already exists... Not Added:<BR>";
+							}
 						}
 					}
 				}
@@ -3139,6 +3258,8 @@ function delete_events($id, $confirmation="", $deltype="") {
 			}
 			if($allowDelete) {
 				if($eventGlobal=="No") {
+					//delete is going ahead. Check flexi_leave_count table to see if event is in the table and delete it too
+					$dl->delete("flexi_leave_count", "flc_event_id = $id"); // if it doesn't find it no delete happens. This is for Annual Leave
 					$dl->delete("flexi_event", "event_id=$id");
 				}else{
 					if($_SESSION["userPermissions"]["add_global"]=="true"){
@@ -3486,7 +3607,8 @@ function add_permissions() {
 			array("prompt"=>"Allow view timesheet", "type"=>"selection", "name"=>"usertimesheet", "listarr"=>array( "false", "true" ), "selected"=>"false", "value"=>"", "clear"=>true),
 			array("prompt"=>"View reports", "type"=>"selection", "name"=>"viewreports", "listarr"=>array( "false", "true" ), "selected"=>"false", "value"=>"", "clear"=>false),
 			array("prompt"=>"Year End reports", "type"=>"selection", "name"=>"yearend", "listarr"=>array( "false", "true" ), "selected"=>"false", "value"=>"", "clear"=>true),
-			array("prompt"=>"Override view timesheet", "type"=>"selection", "name"=>"overridetimesheet", "listarr"=>array( "false", "true" ), "selected"=>"false", "value"=>"", "clear"=>false),
+			array("prompt"=>"Override App Lock", "type"=>"selection", "name"=>"overrideLock", "listarr"=>array( "false", "true" ), "selected"=>"false", "value"=>"", "clear"=>false),
+			array("prompt"=>"Override view timesheet", "type"=>"selection", "name"=>"overridetimesheet", "listarr"=>array( "false", "true" ), "selected"=>"false", "value"=>"", "clear"=>true),
 			array("prompt"=>"Override Local Manager constraint", "type"=>"selection", "name"=>"overrideLM", "listarr"=>array( "false", "true" ), "selected"=>"false", "value"=>"", "clear"=>true),
 			array("type"=>"submit", "buttontext"=>"Create Template", "clear"=>true), 
 			array("type"=>'endform'));
@@ -3513,8 +3635,8 @@ function save_permissions() {
 	foreach($get_id as $id) {
 		$fieldId = $id["permission_id"];
 	}
-	$fieldarr= array("permission_template_name_id", "permission_description", "permission_user","permission_templates","permission_teams","permission_team_events","permission_team_authorise","permission_events","permission_event_types","permission_add_time","permission_edit_time","permission_edit_locked_time","permission_add_global","permission_override_delete","permission_edit_flexipot","permission_view_leave","permission_messaging", "permission_view_timesheet", "permission_view_override", "permission_LM_constraint","permission_view_reports", "permission_year_end");
-	$postarr= array($fieldId,$_POST["temp_description"],$_POST["edit_users"],$_POST["edit_templates"],$_POST["edit_teams"],$_POST["edit_teamevents"],$_POST["team_authority"],$_POST["events"], $_POST["event_types"],$_POST["add_time"],$_POST["edit_time"],$_POST["edit_locked"], $_POST["add_global"], $_POST["override"], $_POST["flexipot"], $_POST["userleave"], $_POST["usertimesheet"], $_POST["usermessaging"], $_POST["overridetimesheet"], $_POST["overrideLM"], $_POST["viewreports"], $_POST["yearend"]);
+	$fieldarr= array("permission_template_name_id", "permission_description", "permission_user","permission_templates","permission_teams","permission_team_events","permission_team_authorise","permission_events","permission_event_types","permission_add_time","permission_edit_time","permission_edit_locked_time","permission_add_global","permission_override_delete","permission_edit_flexipot","permission_view_leave","permission_messaging", "permission_view_timesheet", "permission_view_override", "permission_LM_constraint","permission_view_reports", "permission_year_end", "permission_lock");
+	$postarr= array($fieldId,$_POST["temp_description"],$_POST["edit_users"],$_POST["edit_templates"],$_POST["edit_teams"],$_POST["edit_teamevents"],$_POST["team_authority"],$_POST["events"], $_POST["event_types"],$_POST["add_time"],$_POST["edit_time"],$_POST["edit_locked"], $_POST["add_global"], $_POST["override"], $_POST["flexipot"], $_POST["userleave"], $_POST["usertimesheet"], $_POST["usermessaging"], $_POST["overridetimesheet"], $_POST["overrideLM"], $_POST["viewreports"], $_POST["yearend"], $_POST["overrideLock"]);
 	$save=array_combine($fieldarr, $postarr);
 	$dl->insert("flexi_permission_template", $save);
 	echo "<SCRIPT language='javascript'>redirect('index.php?choice=Templates&subchoice=permissiontemplate')</SCRIPT>" ;
@@ -3549,7 +3671,8 @@ function edit_permissions() {
 			array("prompt"=>"Allow view timesheet", "type"=>"selection", "name"=>"usertimesheet", "listarr"=>array( "false", "true" ), "selected"=>$permissions[0]["permission_view_timesheet"], "value"=>"", "clear"=>true),
 			array("prompt"=>"View Reports", "type"=>"selection", "name"=>"viewreports", "listarr"=>array( "false", "true" ), "selected"=>$permissions[0]["permission_view_reports"], "value"=>"", "clear"=>false),
 			array("prompt"=>"Year End reports", "type"=>"selection", "name"=>"yearend", "listarr"=>array( "false", "true" ), "selected"=>$permissions[0]["permission_year_end"], "value"=>"", "clear"=>true),
-			array("prompt"=>"Override view timesheet", "type"=>"selection", "name"=>"overridetimesheet", "listarr"=>array( "false", "true" ), "selected"=>$permissions[0]["permission_view_override"], "value"=>"", "clear"=>false),
+			array("prompt"=>"Override App Lock", "type"=>"selection", "name"=>"overrideLock", "listarr"=>array( "false", "true" ), "selected"=>$permissions[0]["permission_lock"], "value"=>"", "clear"=>false),
+			array("prompt"=>"Override view timesheet", "type"=>"selection", "name"=>"overridetimesheet", "listarr"=>array( "false", "true" ), "selected"=>$permissions[0]["permission_view_override"], "value"=>"", "clear"=>true),
 			array("prompt"=>"Override Local Manager constraint", "type"=>"selection", "name"=>"overrideLM", "listarr"=>array( "false", "true" ), "selected"=>$permissions[0]["permission_LM_constraint"], "value"=>"", "clear"=>true),
 			array("type"=>"submit", "buttontext"=>"Save Template", "clear"=>true), 
 			array("type"=>'endform'));
@@ -3563,8 +3686,8 @@ function save_permissions_edit() {
 	$fieldarr=array("permission_template_name");
 	$save = array_combine($fieldarr, array($_POST['template_name']));
 	$dl->update("flexi_permission_template_name", $save, "permission_id=".$_GET["id"]);
-	$fieldarr= array("permission_description", "permission_user","permission_templates","permission_teams","permission_team_events","permission_team_authorise","permission_events","permission_event_types","permission_add_time","permission_edit_time","permission_edit_locked_time", "permission_add_global","permission_override_delete","permission_edit_flexipot","permission_view_leave","permission_view_timesheet","permission_messaging", "permission_view_override", "permission_LM_constraint","permission_view_reports", "permission_year_end");
-	$postarr= array($_POST["temp_description"],$_POST["edit_users"],$_POST["edit_templates"],$_POST["edit_teams"],$_POST["edit_teamevents"],$_POST["team_authority"],$_POST["events"], $_POST["event_types"],$_POST["add_time"],$_POST["edit_time"],$_POST["edit_locked"],$_POST["add_global"],$_POST["override"],$_POST["flexipot"],$_POST["userleave"], $_POST["usertimesheet"], $_POST["usermessaging"], $_POST["overridetimesheet"], $_POST["overrideLM"], $_POST["viewreports"], $_POST["yearend"]);
+	$fieldarr= array("permission_description", "permission_user","permission_templates","permission_teams","permission_team_events","permission_team_authorise","permission_events","permission_event_types","permission_add_time","permission_edit_time","permission_edit_locked_time", "permission_add_global","permission_override_delete","permission_edit_flexipot","permission_view_leave","permission_view_timesheet","permission_messaging", "permission_view_override", "permission_LM_constraint","permission_view_reports", "permission_year_end", "permission_lock");
+	$postarr= array($_POST["temp_description"],$_POST["edit_users"],$_POST["edit_templates"],$_POST["edit_teams"],$_POST["edit_teamevents"],$_POST["team_authority"],$_POST["events"], $_POST["event_types"],$_POST["add_time"],$_POST["edit_time"],$_POST["edit_locked"],$_POST["add_global"],$_POST["override"],$_POST["flexipot"],$_POST["userleave"], $_POST["usertimesheet"], $_POST["usermessaging"], $_POST["overridetimesheet"], $_POST["overrideLM"], $_POST["viewreports"], $_POST["yearend"], $_POST["overrideLock"]);
 	$save=array_combine($fieldarr, $postarr);
 	$dl->update("flexi_permission_template", $save, "permission_template_name_id=".$_GET["id"]);
 	echo "<SCRIPT language='javascript'>redirect('index.php?choice=Templates&subchoice=permissiontemplate')</SCRIPT>" ;
@@ -4373,6 +4496,11 @@ function save_flexi_days_template_edit() {
 	}else{
 		$week_day_array = (array) json_decode($_POST["week_day_array"]);
 	}
+	if($_POST["minimum_lunch"]== "true") {
+		$min_lunch = "Yes";
+	}else{
+		$min_lunch = "";
+	}
 	// need to obtain the id of the template to link to
 	$linkto = $dl->select("flexi_template_name", "description='".$_POST["link_to"]."'");
 	$linkId = $linkto[0]["flexi_template_name_id"];
@@ -4380,7 +4508,7 @@ function save_flexi_days_template_edit() {
 	$save = array_combine($fieldarr, array($_POST['template_name'], $linkId));
 	$dl->update("flexi_template_days", $save, "flexi_template_days_id=".$_POST["template_days_id"]);
 	$fieldarr= array("template_type", "days_week","earliest_starttime","latest_starttime","minimum_lunch","minimum_lunch_duration","lunch_earliest_start_time", "lunch_latest_end_time","earliest_endtime","latest_endtime");
-	$postarr= array($_POST["template_type"],$_POST["days_per_week"],$_POST["earliest_start"].":".$_POST["earliest_start_mins"],$_POST["latest_start"].":".$_POST["latest_start_mins"],$_POST["minimum_lunch"],$_POST["lunch_duration"].":".$_POST["lunch_duration_mins"], $_POST["lunch_earliest_start"].":".$_POST["lunch_earliest_start_mins"], $_POST["lunch_latest_end"].":".$_POST["lunch_latest_end_mins"], $_POST["earliest_end"].":".$_POST["earliest_end_mins"], $_POST["latest_end"].":".$_POST["latest_end_mins"]);
+	$postarr= array($_POST["template_type"],$_POST["days_per_week"],$_POST["earliest_start"].":".$_POST["earliest_start_mins"],$_POST["latest_start"].":".$_POST["latest_start_mins"],$min_lunch,$_POST["lunch_duration"].":".$_POST["lunch_duration_mins"], $_POST["lunch_earliest_start"].":".$_POST["lunch_earliest_start_mins"], $_POST["lunch_latest_end"].":".$_POST["lunch_latest_end_mins"], $_POST["earliest_end"].":".$_POST["earliest_end_mins"], $_POST["latest_end"].":".$_POST["latest_end_mins"]);
 	$save=array_combine($fieldarr, $postarr);
 	$dl->update("flexi_template_days_settings", $save, "template_days_id=".$_POST["template_days_id"]);
 	//get the settings id
@@ -4658,41 +4786,21 @@ function leave_dates($user_id, $year="") {
 	$leaveEvent = $dl->select("flexi_event_type", "event_al='Yes'");
 	$leaveId = $leaveEvent[0]["event_type_id"];
 	echo "<div class='timesheet_header'>Listed taken/planned leave for $userName</div>";
-	$sql = "Select fe.event_startdate_time, fe.event_enddate_time from flexi_event as fe 
+	$sql = "Select fe.event_id, fe.event_startdate_time, fe.event_enddate_time from flexi_event as fe 
 	join flexi_event_type as fet on (fet.event_type_id=fe.event_type_id) 
 	join flexi_timesheet as ft on (fe.timesheet_id=ft.timesheet_id) 
 	where fe.event_type_id = 3 and event_al = 'Yes' and event_startdate_time >= '$datetoCompare' and event_startdate_time < '$lastdate' and user_id =".$user_id." order by event_startdate_time";
 	$l = $dl->getQuery($sql);
 	echo "<table class='table_view'>";
 	echo "<tr><th>Date</th><th>Start Time</th><th>End Time</th><th>Accumulative<br>Days taken</th></tr>";
-	$sql = "select * from flexi_template_days as td 
-		join flexi_template_days_settings as tds  
-		on (tds.template_days_id=td.flexi_template_days_id) 
-		where template_name_id = ".$user[0]["user_flexi_template"];
-	$duration = $dl->getQuery($sql);
-	$sql = "select MIN(duration) as halfday from flexi_fixed_durations where template_link = ".$duration[0]["flexi_template_days_id"];
-	// 4 hours signifies a half days holiday which is 14400 seconds
-	$halfDay = $dl->getQuery($sql);
-	$halfDayTime = substr($halfDay[0]["halfday"],0,2)*60*60;
-	$halfDayTime += substr($halfDay[0]["halfday"],3,2)*60;
+	
 	foreach($l as $leave) {
 		$date = substr($leave["event_startdate_time"],0,10);
 		$time1 = substr($leave["event_startdate_time"],11,8);
 		$time2 = substr($leave["event_enddate_time"],11,8);
-		$startTimeHr = substr($leave["event_startdate_time"],11,2);
-		$startTimeMin = substr($leave["event_startdate_time"],14,2);
-		$startTimeSec = substr($leave["event_startdate_time"],17,2);
-		$endTimeHr = substr($leave["event_enddate_time"],11,2);
-		$endTimeMin = substr($leave["event_enddate_time"],14,2);
-		$endTimeSec = substr($leave["event_enddate_time"],17,2);
-		//now need to create some time and subtract it to work out if the leave is a full or half day
-		$startTime = mktime($startTimeHr,$startTimeMin,$startTimeSec,0,0,0);
-		$endTime = mktime($endTimeHr,$endTimeMin,$endTimeSec,0,0,0);
-		$time = $endTime - $startTime;
-		if($time <= $halfDayTime) { //a half day
-			$daysTaken += 0.5;
-		}else{
-			$daysTaken += 1;
+		$checkLeave = $dl->select("flexi_leave_count", "flc_event_id = ".$leave["event_id"]);
+		if(!empty($checkLeave)) {
+			$daysTaken += $checkLeave[0]["flc_fullorhalf"];
 		}
 		echo "<tr><td>".$date."</td><td>$time1</td><td>$time2</td><td>$daysTaken</td></tr>";
 	}

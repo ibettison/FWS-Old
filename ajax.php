@@ -16,25 +16,7 @@ $cal = new calendars;
 
 
 
-?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>Newcastle Biomedicine CRP Flexible Working Application</title>
-<LINK REL="StyleSheet" HREF="inc/css/css.css" TYPE="text/css" MEDIA="screen">
-<LINK REL="StyleSheet" HREF="inc/css/form.css" TYPE="text/css" MEDIA="screen">
-<LINK REL="StyleSheet" HREF="inc/css/timesheet.css" TYPE="text/css" MEDIA="screen">
-<LINK REL="StyleSheet" HREF="inc/css/report.css" TYPE="text/css" MEDIA="screen">
-<LINK REL="StyleSheet" HREF="inc/js/jquery-ui-1.10.3.custom/css/redmond/jquery-ui-1.10.3.custom.css" TYPE="text/css" MEDIA="screen">
-<link REL="SHORTCUT ICON" HREF="inc/images/favicon.ico">
-<link href="inc/css/calendar.css" rel="stylesheet" type="text/css" />
-<script language="javascript" src="inc/classes/calendar.js"></script>
-<script language="javascript" src="inc/js/jquery-ui-1.10.3.custom/js/jquery-1.9.1.js"></script>
-<script language="javascript" src="inc/js/jquery-ui-1.10.3.custom/js/jquery-ui-1.10.3.custom.js"></script>
-</head>
-<body>
-<?php
+
 if($_POST["func"]=="days_changed") {
 	$days = $dl->select("flexi_weekdays");
 	foreach($days as $day){
@@ -99,6 +81,100 @@ if($_POST["func"]=="days_changed") {
 <?php
 }
 
+if($_POST["func"] == "show_user_leave") {
+	$leaveType = array("Full", "Half");
+	$sql = "select * from flexi_user as u join flexi_timesheet as t on (u.user_id=t.user_id)
+			join flexi_event as e on (t.timesheet_id=e.timesheet_id) where u.user_name = '".$_POST["user"]."' 
+			and event_type_id = 3 order by event_startdate_time ASC"; //all of the users leave
+	$users_leave = $dl->getQuery($sql);
+	echo "SELECTED USER : ".$_POST["user"]."<BR><BR>";
+	echo "<div style='margin-left: 2em; width: 10em; float: left; font-size: 1.25em'>Event ID</div><div style='width: 15em;  float: left;  font-size: 1.25em'>Start Time</div><div style='width: 15em;  float: left;  font-size: 1.25em'>End Time</div><div style='width: 7em;  float: left;  font-size: 1.25em'>Time</div><div style='width: 11em;  text-align: center; float: left;  font-size: 1.25em'>Half\Full</div><BR><BR>";
+	echo "<div style='padding:1em; height: 40em; overflow: auto; '>"; //background-color:#E5EBCC;
+	$colorCount = 0;
+	foreach($users_leave as $ul) {
+		//check if eventID is already in the leave count table
+		$leave_count = $dl->select("flexi_leave_count", "flc_event_id =".$ul["event_id"]);
+		if( $colorCount == 0) {
+			$bgColor = "#E5EBCC";
+			$colorCount++;
+		}elseif($colorCount == 1 ) {
+			$bgColor = "#CCC";
+			$colorCount--;
+		}
+		if(empty($leave_count)) {
+			$start = strtotime($ul["event_startdate_time"]);
+			$end = strtotime($ul["event_enddate_time"]);
+			$time = $end - $start;
+			if($time !== $lastTime and !empty($lastTime)) {
+				$color = "#999";
+			}else{
+				$color = "#333";
+			}
+			$lastTime = $time;
+			echo "<div style='margin-left: 2em; width: 10em; float: left; font-size: 1em; color: ".$color."; padding: 4px; height: 2.5em; background-color: ".$bgColor.";'>".$ul["event_id"]."</div><div style='width: 18em;  float: left;  font-size: 1em; color: ".$color."; padding: 4px; height: 2.5em; background-color: ".$bgColor.";'>".$ul["event_startdate_time"]."</div><div style='width: 19em;  float: left;  font-size: 1em; color: ".$color."; padding: 4px; height: 2.5em; background-color: ".$bgColor.";'>".$ul["event_enddate_time"]."</div><div style='width: 11em;  float: left;  font-size: 1em; color: ".$color."; padding: 4px; height: 2.5em; background-color: ".$bgColor.";'>".date("h:i:s", $time)."</div>";
+			echo "<div style='width: 10em;  float: left;  font-size: 1em; padding: 4px; height: 2.5em; background-color: ".$bgColor.";'>";
+				echo "<div id='fullorhalf".$ul["event_id"]."' style='float: left;'>";
+					echo "<input class='leave' type='radio' name='button".$ul["event_id"]."' id='halfbutton".$ul["event_id"]."' value='half".$ul["event_id"]."'><label for='halfbutton".$ul["event_id"]."'>Half</label>";
+					echo "<input class='leave' type='radio' name='button".$ul["event_id"]."' id='fullbutton".$ul["event_id"]."' value='full".$ul["event_id"]."' checked><label for='fullbutton".$ul["event_id"]."'>Full</label>";
+				echo "</div>";
+			echo "</div><BR><BR>";
+			?>
+			<script>
+			 $(function() {
+				$( "#fullorhalf<?php echo $ul["event_id"]?>" ).buttonset();
+			});
+			</script>
+			<?php
+		}
+	}
+	
+	echo "</div>";
+	echo "<input type='button' id='save_count' value='Save Count'>";
+	echo "<div id='count_saved'></div>";
+	?>
+			<script>
+			 $(function() {
+				$( "#save_count" ).click(function(){
+					
+					var btnActive = [];
+					$(".leave:checked").each(function(){
+						btnActive.push($(this).val());
+					})
+					var func = "save_user_leave";
+					$.post(
+						"ajax.php",
+						{ func: func,
+							leave: btnActive
+						},
+						function (data)
+						{
+							$('#count_saved').html(data);
+							$("#count_saved").fadeOut("slow");
+							$("#count_saved").show();
+							$("#display_leave").delay(1000).slideUp("slow");
+							$("#display_leave").show();
+					});
+				});
+			});
+			</script>
+			<?php
+}
+
+if($_POST["func"] == "save_user_leave") {
+	global $dl;
+	foreach($_POST["leave"] as $leave) {
+		switch(substr($leave,0,4)) {
+			case "full":
+				$dl->insert("flexi_leave_count", array("flc_fullorhalf"=>1, "flc_event_id"=>substr($leave,4, strlen($leave))));
+			break;
+			case "half":
+				$dl->insert("flexi_leave_count", array("flc_fullorhalf"=>0.5, "flc_event_id"=>substr($leave,4, strlen($leave))));
+			break;
+		}
+	}
+	echo "Updated Leave";
+}
+
 if($_POST["func"] == "calc_hours") {
 	$days = $dl->select("flexi_weekdays");
 	$continue = false;
@@ -149,6 +225,17 @@ if($_POST["func"] == "calc_hours") {
 	$form->create_form($formArr);
 	echo "<div id='show_time_total'></div>";
 	
+}
+
+if($_POST["func"]=="toggle_lock") {
+	$locked = $dl->select("flexi_locked");
+	if($locked[0]["locked"] == "true") {
+		$dl->update("flexi_locked", array("locked"=>"false"));
+	}elseif($locked[0]["locked"]== "false"){
+		$dl->update("flexi_locked", array("locked"=>"true"));
+	}
+	$locked = $dl->select("flexi_locked");
+	echo json_encode(array("lock"=>$locked[0]["locked"]));
 }
 
 if($_POST["func"] == "calc_time") {
@@ -208,5 +295,3 @@ if($_POST["func"] == "edit_template") {
 }
 
 ?>
-
-</body>
