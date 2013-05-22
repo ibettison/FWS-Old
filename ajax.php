@@ -98,7 +98,7 @@ if($_POST["func"] == "show_user_leave") {
 			$bgColor = "#E5EBCC";
 			$colorCount++;
 		}elseif($colorCount == 1 ) {
-			$bgColor = "#CCC";
+			$bgColor = "#D5D8AB";
 			$colorCount--;
 		}
 		if(empty($leave_count)) {

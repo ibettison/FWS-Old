@@ -1906,22 +1906,45 @@ function save_user() {
 				join flexi_template_name as tn on (t.template_name_id=tn.flexi_template_name_id)
 				join flexi_template_days as td on (td.template_name_id=tn.flexi_template_name_id) 
 				join flexi_template_days_settings as tds on (td.flexi_template_days_id=tds.template_days_id) where u.user_id = ".$fieldId;
-				$dayDuration = $dl->getQuery($sql);
-				$fullDay = $dayDuration[0]["normal_day_duration"]; //format HH:MM:SS
-				$startTime = "09:00:00";
-				$startTimeSecs = substr($startTime,0,2) * 60 * 60 + substr($startTime,3,2) * 60 + substr($startTime,6,2) * 60;
-				$endTimeSecs = substr($fullDay,0,2) * 60 * 60 + substr($fullDay,3,2) * 60 + substr($fullDay,6,2) * 60;
-				$endTime = date("H:i:s", $startTimeSecs + $endTimeSecs);
-				$startDateTime = $date." ".$startTime;
-				$endDateTime = $date." ".$endTime;
-				//check to see if the event has already been entered and does not overlap any other time/leave etc.
-				$checkEntered = $dl->select("flexi_event", "(substr(event_startdate_time,1,10) = '".substr($startDateTime,0,10)."' and substr(event_enddate_time,1,10) = '".substr($startDateTime,0,10)."') and timesheet_id=".$timesheetId[0]["timesheet_id"]);
-				if(empty($checkEntered)) {
-					//all information extracted and record doesn't already exist just write the record
-					$fieldArr = array("timesheet_id", "event_startdate_time", "event_enddate_time", "event_type_id");
-					$valuesArr = array($timesheetId[0]["timesheet_id"], $startDateTime, $endDateTime, $eventType);
-					$writeArr = array_combine($fieldArr, $valuesArr);
-					$dl->insert("flexi_event",$writeArr);	
+				$templates = $dl->getQuery($sql);
+				//now check flexi_day_times for the user
+				//get day_settings template id
+				$settingsID = $templates[0]["days_settings_id"];
+				$dayNumber = date("N", strtotime($date)); //this returns the day number 1=Monday 5=Friday
+				//check the flexi_day_times table for the users template settings
+				$matchTemplate = $dl->select("flexi_day_times", "fdt_flexi_days_id = ".$settingsID, "fdt_weekday_id ASC");
+				$fullDay = "";
+				if($matchTemplate[0]["fdt_weekday_id"] == 6 ) { //then the template applies to every day
+					$fullDay = $matchTemplate[0]["fdt_working_time"];
+				}else{
+					foreach($matchTemplate as $mt){ //check all of the returned times to see if the user template matches the date of the global event
+						if( $mt["fdt_weekday_id"] == $dayNumber ) { //day has been matched
+							$fullDay = $mt["fdt_working_time"];
+						}
+					}
+				}
+				if(!empty($fullDay)) { //if matched then add the day else skip to the next global event
+					$startTime = "09:00:00";
+					$startTimeSecs = substr($startTime,0,2) * 60 * 60 + substr($startTime,3,2) * 60 + substr($startTime,6,2) * 60;
+					$endTimeSecs = substr($fullDay,0,2) * 60 * 60 + substr($fullDay,3,2) * 60 + substr($fullDay,6,2) * 60;
+					if($templates[0]["minimum_lunch"] == "Yes"){
+						$lunch = $templates[0]["minimum_lunch_duration"];
+						$minLunchSecs = substr($lunch,0,2) * 60 * 60 + substr($lunch,3,2) * 60 + substr($lunch,6,2) * 60;
+					}else{
+						$minLunchSecs = 0;
+					}
+					$endTime = date("H:i:s", $startTimeSecs + $endTimeSecs+$minLunchSecs);
+					$startDateTime = $date." ".$startTime;
+					$endDateTime = $date." ".$endTime;
+					//check to see if the event has already been entered and does not overlap any other time/leave etc.
+					$checkEntered = $dl->select("flexi_event", "(substr(event_startdate_time,1,10) = '".substr($startDateTime,0,10)."' and substr(event_enddate_time,1,10) = '".substr($startDateTime,0,10)."') and timesheet_id=".$timesheetId[0]["timesheet_id"]);
+					if(empty($checkEntered)) {
+						//all information extracted and record doesn't already exist just write the record
+						$fieldArr = array("timesheet_id", "event_startdate_time", "event_enddate_time", "event_type_id");
+						$valuesArr = array($timesheetId[0]["timesheet_id"], $startDateTime, $endDateTime, $eventType);
+						$writeArr = array_combine($fieldArr, $valuesArr);
+						$dl->insert("flexi_event",$writeArr);	
+					}
 				}
 			}
 		}
