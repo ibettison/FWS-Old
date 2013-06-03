@@ -100,7 +100,7 @@
     }
     
    function debug( $msg ) {
-    if ( $this->debug_report )
+    if ( $this->debug )
        echo "<br>$msg";
    }
  

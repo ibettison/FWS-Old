@@ -1,12 +1,13 @@
 .form {
 	float:left;
+	padding: 5px;
 	margin:5px;
 	font-family:Verdana, Geneva, sans-serif;
 	font-size:12px;
 	color:#003366;
 	background-color:#BDD9FD;
 	border: 1px #6593CF solid;
-
+	box-shadow: 1px 1px 5px #888888;
 }
 .formPrompt {
 	float:left;
@@ -47,6 +48,10 @@
 	float:left;
 }
 
+.table_view {
+	margin: 0.4em;
+}
+
 .table_view table {
 	border:1px #6593CF solid;
 }
@@ -54,7 +59,7 @@
 .table_view th {
 	background-color:#CCC;
 	font-family:Verdana, Geneva, sans-serif;
-	font-size:14px;
+	font-size:11px;
 	border:1px #6593CF solid;
 }
 

@@ -1,15 +1,58 @@
 body {
+	padding-top: 8px;
+	padding-left: 8px;
 	background-color: #BDD9FD;
 	font-family:Arial, Helvetica, sans-serif;
-	font-size: 11px;
+	font-size: 0.8em;
 	color:#003366;
 	/*padding:3px;*/
+}
+
+#poof {
+	background: transparent url(../images/poofing.png) 0 0 no-repeat;
+	position: absolute;
+	right: 25px;
+	top: 310px;
+	z-index: 2000;
+	cursor: pointer;
+	display: none;
+	height: 32px;
+	width: 32px;
+}
+
+#sortable-deleted {
+height: 41px;
+width: 41px;
+overflow: hidden;
+background: url('../images/bin.png') 0 50% no-repeat;
+float: right;
+z-index:1000;
+}
+
+.report-line {
+	float: left;
+	font-size: 1em;
+	line-height: 1.5em;
+	padding: 0.25em;
+	width: 20em;
+	text-align: right;
+}
+
+.report-header {
+	position: absolute;
+	width: 92.5%;
+	height: 2em;
+	padding: 1.5em;
+	left:  10px;
+	top: 62px;
+	background-color: #A9B9C9;
+	box-shadow: 0 5px 5px #888888;
 }
 
 .calendar_main{
 	float:left;
 	width:300px;
-	height:820px;;
+	height:750px;
 	background-color:#FFFFFF;
 	border-left:1px #6593CF solid;
 	border-right:1px #6593CF solid;
@@ -27,10 +70,13 @@ body {
 }
 
 .working_space {
-	float:left;
+	position: absolute;
+	left: 310px;
+	top: 8px;
 	margin-left:2px;
-	width:935px;
-	height:820px;
+	width:75%;
+	height:750px;
+	min-width: 620px;
 	background: transparent url('images/flexitimeclocks.gif') no-repeat bottom right;
 	background-color:#FFFFFF;
 	padding-bottom:3px;
@@ -41,6 +87,7 @@ body {
 
 .top_menu_space, .sub_menu_space {
 	border-bottom: 1px #6593CF solid;
+	box-shadow: 0 2px 3px #888888;
 }
 
 .top_menu_space {
@@ -59,7 +106,6 @@ body {
 	float:left;
 	padding-top:3px;
 	padding-left:5px;
-	font-size:13px;
 	padding-right:10px;
 }
 
@@ -94,9 +140,7 @@ body {
 	height:21px;
 	padding-top:3px;
 	font-family:Geneva, Arial, Helvetica, sans-serif;
-	font-size:14px;
 	text-align:center;
-	width:80px;
 	border-right: 1px #6593CF solid;
 }
 

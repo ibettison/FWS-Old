@@ -18,15 +18,13 @@ require('inc/classes/libmail.inc');
 require('inc/classes/tc_calendar.php');
 date_default_timezone_set('UTC');
 $cal = new calendars;
-
-
-
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <title>Newcastle Biomedicine CRP Flexible Working Application</title>
+<LINK REL="StyleSheet" HREF="inc/css/normalise.css" TYPE="text/css" MEDIA="screen">
 <LINK REL="StyleSheet" HREF="inc/css/css.css" TYPE="text/css" MEDIA="screen">
 <LINK REL="StyleSheet" HREF="inc/css/form.css" TYPE="text/css" MEDIA="screen">
 <LINK REL="StyleSheet" HREF="inc/css/timesheet.css" TYPE="text/css" MEDIA="screen">
@@ -37,6 +35,7 @@ $cal = new calendars;
 <script language="javascript" src="inc/classes/calendar.js"></script>
 <script language="javascript" src="inc/js/jquery-ui-1.10.3.custom/js/jquery-1.9.1.js"></script>
 <script language="javascript" src="inc/js/jquery-ui-1.10.3.custom/js/jquery-ui-1.10.3.custom.js"></script>
+<SCRIPT language	="JavaScript" src="inc/js/jquery.spritely.js"></SCRIPT>
 </head>
 <body>
 <?php
@@ -815,6 +814,9 @@ if($_SESSION["showMths"]== 4) {
 			}
 			if($_GET["func"]=="set_leave_count") {
 				set_leave_count();
+			}
+			if($_GET["func"]=="view_users_templates") {
+				view_users_templates();
 			}
 			if($_GET["func"]=="showCFNotes") {
 				show_notes($_GET["timesheet"]);

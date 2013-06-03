@@ -227,6 +227,171 @@ if($_POST["func"] == "calc_hours") {
 	
 }
 
+if($_POST["func"]=="check_delete") {
+	$id = substr($_POST["dropped"],4, strlen($_POST["dropped"]));
+	if(check_permission("Events")) {
+		global $dl;
+		include("inc/email_messages.inc");
+		//get Team id
+		$sql = "select * from flexi_team as ft 
+			join flexi_team_user as ftu on (ftu.team_id=ft.team_id)
+			join flexi_team_local as tl on (ftu.team_user_id=tl.team_user_id) 
+			join flexi_timesheet as t on (t.user_id=ftu.user_id) 
+			join flexi_event as e on (e.timesheet_id=t.timesheet_id) 
+			join flexi_event_type as et on (et.event_type_id=e.event_type_id) 
+			where e.event_id=$id";
+		$team = $dl->getQuery($sql);
+		$teamId=$team[0]["team_id"];
+		$userId = $team[0]["user_id"];
+		$u_name=$dl->select("flexi_user", "user_id=".$userId);
+		$user_name=$u_name[0]["user_name"];
+		$eventDate = substr($team[0]["event_startdate_time"],0,10);
+		$eventStartTime = substr($team[0]["event_startdate_time"],11,5);
+		$eventEndTime = substr($team[0]["event_enddate_time"],11,5);
+		$eventTypeName = $team[0]["event_type_name"];
+		$eventTypeId = $team[0]["event_type_id"];
+		$eventAuthorisation = $team[0]["event_authorisation"];
+		$eventWork = $team[0]["event_work"];
+		$eventGlobal = $team[0]["event_global"];
+		$eventAnnualLeave = $team[0]["event_al"];
+		$eventFlexiLeave = $team[0]["event_flexi"];
+		$eventDelete = $team[0]["event_delete"];
+		// need to check the event type and inform the team manager if needs be.
+		if($eventDelete == "Yes" or $_SESSION["userPermissions"]["override_delete"]=="true") {
+			$allowDelete = true; //user can delete the event or the override permission is possessed
+		}else{
+			$allowDelete = false;
+		}
+		$highLevel=false;
+		//now need to see if this user is a manager/approver within this team
+		//this determines if the manager in this team receives the approval request or the none local team member approver/manager
+		$sql = "select fu.user_id, fu.user_email, fu.user_name from flexi_permission_template as fpt 
+		join flexi_user as fu on (fu.user_permission_id=fpt.permission_template_name_id) 
+		join flexi_team_user as ftu on (ftu.user_id=fu.user_id)
+		left outer join flexi_team_local as tl on (ftu.team_user_id=tl.team_user_id)
+		left outer join flexi_deleted as d on (fu.user_id=d.user_id) 
+		join flexi_team as ft on (ft.team_id=ftu.team_id) 
+		where ft.team_id = ".$teamId." and fpt.permission_team_authorise = 'true' and date_deleted IS NULL and tl.team_user_id IS NOT NULL";
+		$localManager = $dl->getQuery($sql);
+		foreach($localManager as $lm) {
+			if($lm["user_id"] == $userId) {
+				//this is a local manager request therefore needs to be authorised at a higher level
+				$highLevel = true;	
+			}
+			//create an array of the managers who can approve the event
+			$recipients[]=$lm["user_email"];
+			$names[]=$lm["user_name"];
+		}
+		if($highLevel == false) {
+			foreach($localManager as $lm) {
+				if($_SESSION["userSettings"]["userId"] == $lm["user_id"]) { //local user trying to delete another user or manager in the team
+					$allowDelete = true;
+				}
+			}
+		}
+		if($highLevel or empty($localManager)) { 
+			// this is a request from the local team manager so the request should go to the non-local manager or there is no local manager in this group	
+			$sql = "select fu.user_id, user_name, user_email from flexi_permission_template as fpt 
+			join flexi_user as fu on (fu.user_permission_id=fpt.permission_template_name_id) 
+			join flexi_team_user as ftu on (ftu.user_id=fu.user_id)
+			left outer join flexi_team_local as tl on (ftu.team_user_id=tl.team_user_id)
+			left outer join flexi_deleted as d on (fu.user_id=d.user_id) 
+			join flexi_team as ft on (ft.team_id=ftu.team_id) 
+			where ft.team_id = ".$teamId." and fpt.permission_team_authorise = 'true' and date_deleted IS NULL and tl.team_user_id IS NULL";
+			$manager = $dl->getQuery($sql);
+			foreach($manager as $m) {
+				//create an array of the managers who can approve the event
+				$recipients[]=$m["user_email"];
+				$names[]=$m["user_name"];
+				if($_SESSION["userSettings"]["userId"] == $m["user_id"]) { //none local user trying to delete another user or manager in the team
+					$allowDelete = true;
+				}
+			}
+		}
+		if($eventGlobal=="Yes"){ 
+			?>
+			<script type="text/javascript">
+			<!--
+			var choice = prompt ("Type GLOBAL (uppercase) to delete the global event from all user timesheets, leave blank to delete from the individual, 'Cancel' will not carry out the request.")
+			if (choice=='GLOBAL') {
+				redirect ("index.php?func=deleteevent&id=<?php echo $id?>&confirmation=true&deltype=global");
+			}
+			else if (choice == '') {
+				redirect ("index.php?func=deleteevent&id=<?php echo $id?>&confirmation=true&deltype=individual");
+			}
+			else {
+				redirect ("index.php?func=edituserevents&userid=<?php echo $userId?>&page=0");
+			}
+			// -->
+			</script> 
+			<?php
+		}
+		if($eventWork == "No") {
+			//check event type
+			$names = implode(", ",$names); 
+			$userName=$_SESSION["userSettings"]["name"];
+			$userEmail=$_SESSION["userSettings"]["email"];
+			$bodyText = $email_7_content;
+			$bodyText = str_replace("%%whoto%%", $names, $bodyText);
+			$bodyText = str_replace("%%user%%", $userName, $bodyText);
+			$bodyText = str_replace("%%eventowner%%", $user_name, $bodyText);
+			$bodyText = str_replace("%%eventtype%%", $eventTypeName, $bodyText);
+			$bodyText = str_replace("%%EVENTDATE%%", $eventDate, $bodyText);
+			$bodyText = str_replace("%%START%%", $eventStartTime, $bodyText);
+			$bodyText = str_replace("%%END%%", $eventEndTime, $bodyText);
+			
+			if($allowDelete) {
+				$subject = $email_7_subject;
+				$bodyText = str_replace("%%delete%%", "deleted", $bodyText);
+				$bodyText = str_replace("%%HAS/HASNOT%%", "HAS", $bodyText);
+			}else{
+				$subject = $email_7_subject1;
+				$bodyText = str_replace("%%delete%%", "attempted to delete", $bodyText);
+				$bodyText = str_replace("%%HAS/HASNOT%%", "HAS NOT", $bodyText);
+			}
+			//send email dependant on the type of event
+			$m = new Mail();	
+			//send the email confirmation
+			$m->From( "fws@ncl.ac.uk" ); // the first address in the recipients list is used as the from email contact and will receive emails in response to the registration request.
+			$m->autoCheck(false);
+			$m->To( $recipients );
+			$m->Subject( $subject );
+			$m->Body( $bodyText );
+			$m->CC( $userEmail );
+			$m->Priority(3);
+			$m->Send();
+		}
+		if($allowDelete) {
+			if($eventGlobal=="No") {
+				//delete is going ahead. Check flexi_leave_count table to see if event is in the table and delete it too
+				$dl->delete("flexi_leave_count", "flc_event_id = $id"); // if it doesn't find it no delete happens. This is for Annual Leave
+				$dl->delete("flexi_event", "event_id=$id");
+			}else{
+				if($_SESSION["userPermissions"]["add_global"]=="true"){
+					if($deltype == "individual") {
+						$dl->delete("flexi_event", "event_id=$id");
+					}elseif($deltype == "global") {
+						$dl->delete("flexi_event", "event_startdate_time = '".$eventDate." ".$eventStartTime."' and event_type_id = ".$eventTypeId);
+						$global_events = $dl->select("flexi_global_events", "event_date = '".$eventDate."' and event_type_id = ".$eventTypeId);
+						foreach($global_events as $ge) {
+							$dl->delete("flexi_global_teams", "global_id = ".$ge["global_id"]);
+						}
+						$dl->delete("flexi_global_events", "event_date = '".$eventDate."' and event_type_id = ".$eventTypeId);
+					}
+					
+				}
+			}
+		}
+		if($_POST["pagelocation"] == "nextperiod" or $_POST["pagelocation"] == "previousperiod") {
+			echo "<SCRIPT language='javascript'>redirect('index.php?func=".$_POST["pagelocation"]."&start=".$_POST["start"]."&end=".$_POST["end"]."&userid=".$_POST["user"]."')</SCRIPT>" ;
+		}elseif($_POST["pagelocation"] == "viewuserstimesheet") {
+			echo "<SCRIPT language='javascript'>redirect('index.php?func=".$_POST["pagelocation"]."&userid=".$_POST["user"]."')</SCRIPT>" ;
+		}else{
+			echo "<SCRIPT language='javascript'>redirect('index.php?choice=View&subchoice=timesheet')</SCRIPT>" ;
+		}
+	}
+}
+
 if($_POST["func"]=="toggle_lock") {
 	$locked = $dl->select("flexi_locked");
 	if($locked[0]["locked"] == "true") {
