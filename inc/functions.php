@@ -701,6 +701,9 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 			$_SESSION["startPeriod"] 			= $_GET["start"];
 			$_SESSION["endPeriod"] 			= $_GET["end"];
 			$_SESSION["user"]					= $_GET["userid"];
+		}elseif($_GET["choice"]="View") {//adding to your own spreadsheet
+			$_SESSION["pageLocation"]		= "viewuserstimesheet";
+			$_SESSION["user"]					= $_SESSION["userSettings"]["userId"];
 		}else{
 			$_SESSION["pageLocation"]		= "";
 			$_SESSION["startPeriod"] 			= "";
@@ -2441,20 +2444,6 @@ function add_event($title, $intro, $user="") {
 		if(empty($user)) {
 			$userId = $_SESSION["userSettings"]["userId"];
 		}else{
-			if($_GET["func"]=="nextperiod" or $_GET["func"] == "previousperiod" or $_GET["func"] == "viewuserstimesheet") { // this is for the redirection after a draggable deletion
-				$_SESSION["pageLocation"] 		= $_GET["func"];
-				$_SESSION["startPeriod"] 			= $_GET["start"];
-				$_SESSION["endPeriod"] 			= $_GET["end"];
-				$_SESSION["user"]					= $_GET["userid"];
-			}elseif( $_GET["choice"] =="Add" ) {
-				$_SESSION["pageLocation"]		= "viewuserstimesheet";
-				$_SESSION["user"]					= $_GET["userid"];
-			}else{
-				$_SESSION["pageLocation"]		= "";
-				$_SESSION["startPeriod"] 			= "";
-				$_SESSION["endPeriod"] 			= "";
-				$_SESSION["user"]					= "";
-			}
 			$userId = $user;
 			$_SESSION["otherUser"]=$user;
 		}

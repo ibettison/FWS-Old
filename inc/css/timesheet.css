@@ -74,26 +74,26 @@
 		width: 70%;
 	}
 	.timesheet_table_header, .timesheet_table_header_we, .timesheet_table_header_blank, .timesheet_table_header_white, .timesheet_table_header_white_we, .timesheet_table_header_time {
-		font-size:10px;
+		font-size:11px;
 	}
 	.timesheet_table_header {
-	font-size: 10px;
+	font-size: 11px;
 		width: 11%;
 	}
 	.timesheet_table_header_white {
-		font-size: 10px;
+		font-size: 11px;
 		width: 11%;
 	}
 	.timesheet_table_header_we {
 		width:7.5%;
-		font-size:10px;
+		font-size:11px;
 	}
 	.timesheet_table_header_blank {
 		width:10.5%;
-		font-size:9px;
+		font-size:11px;
 	}
 	.timesheet_table_header_white_we, .timesheet_table_header_time {
-		font-size: 9px;
+		font-size: 11px;
 		width:7.5%;
 		min-width: 60px;
 	}
@@ -115,7 +115,52 @@
 	font-size: 11px;
 	}
 }
-
+@media only screen and (max-width: 1144px) {
+	.working_space {
+		width: 70%;
+	}
+	.timesheet_table_header, .timesheet_table_header_we, .timesheet_table_header_blank, .timesheet_table_header_white, .timesheet_table_header_white_we, .timesheet_table_header_time {
+		font-size:11px;
+	}
+	.timesheet_table_header {
+		font-size: 11px;
+		width: 11%;
+	}
+	.timesheet_table_header_white {
+		font-size: 11px;
+		width: 11%;
+	}
+	.timesheet_table_header_we {
+		width:7.5%;
+		font-size:11px;
+	}
+	.timesheet_table_header_blank {
+		width:10.5%;
+		font-size:11px;
+	}
+	.timesheet_table_header_white_we, .timesheet_table_header_time {
+		font-size: 11px;
+		width:7.5%;
+		min-width: 60px;
+	}
+	.timesheet_workspace {
+		width:99%;
+		min-width: 600px;
+	}
+	.timesheet_team_leave {
+		width:85%;
+	}
+	.button_choice, .button_top {
+		font-size: 14px;
+		width: 80px;
+	}
+	.sub_menu_button {
+		font-size: 13px;
+	}
+	.timesheet_footer {
+	font-size: 11px;
+	}
+}
 @media only screen and (max-width: 1080px) {
 	.working_space {
 		width: 65%;
@@ -124,24 +169,24 @@
 
 @media only screen and (max-width: 1024px) {
 	.timesheet_table_header, .timesheet_table_header_we, .timesheet_table_header_blank, .timesheet_table_header_white, .timesheet_table_header_white_we, .timesheet_table_header_time {
-		font-size:10px;
+		font-size:11px;
 	}
 	.timesheet_table_header {
 		width: 11.5%;
-		font-size: 10px;
+		font-size: 11px;
 	}
 	.timesheet_table_header_white {
 		width: 11.5%;
-		font-size: 10px;
+		font-size: 11px;
 	}
 	.timesheet_table_header_we {
 		min-width:60px;
 		width: 9.5%;
-		font-size:9px;
+		font-size:11px;
 	}
 	
 	.timesheet_table_header_white_we, .timesheet_table_header_time {
-	font-size: 9px;
+	font-size: 11px;
 	width: 9.5%;
 	min-width: 60px;
 	}
@@ -181,24 +226,24 @@
 		display: none;
 	}
 	.timesheet_table_header, .timesheet_table_header_we, .timesheet_table_header_blank, .timesheet_table_header_white, .timesheet_table_header_white_we, .timesheet_table_header_time {
-		font-size:10px;
+		font-size:11px;
 	}
 	.timesheet_table_header {
 		width: 11.5%;
-		font-size: 10px;
+		font-size: 11px;
 	}
 	.timesheet_table_header_white {
 		width: 11.5%;
-		font-size: 10px;
+		font-size: 11px;
 	}
 	.timesheet_table_header_we {
 		min-width:60px;
 		width: 9.5%;
-		font-size:9px;
+		font-size:11px;
 	}
 	
 	.timesheet_table_header_white_we, .timesheet_table_header_time {
-	font-size: 9px;
+	font-size: 11px;
 	width: 9.5%;
 	min-width: 60px;
 	}
@@ -218,6 +263,62 @@
 	}
 	.sub_menu_button {
 		font-size: 12px;
+	}
+	.timesheet_footer {
+	font-size: 10px;
+	}
+}
+@media only screen and (max-width: 568px) {
+	.working_space {
+		position: absolute;
+		left: 4px;
+		top: 4px;
+		min-width: 550px;
+	}
+	.header_left {
+		display: none;
+	}
+	.calendar_main{
+		display: none;
+	}
+	.timesheet_table_header, .timesheet_table_header_we, .timesheet_table_header_blank, .timesheet_table_header_white, .timesheet_table_header_white_we, .timesheet_table_header_time {
+		font-size:8px;
+	}
+	.timesheet_table_header {
+		width: 11.5%;
+		font-size: 8px;
+	}
+	.timesheet_table_header_white {
+		width: 11.5%;
+		font-size: 8px;
+	}
+	.timesheet_table_header_we {
+		min-width:40px;
+		width: 6.5%;
+		font-size:8px;
+	}
+	
+	.timesheet_table_header_white_we, .timesheet_table_header_time {
+	font-size: 8px;
+	width: 6.5%;
+	min-width: 40px;
+	}
+	.timesheet_table_header_blank {
+		display: none;
+	}
+	.timesheet_workspace {
+		width:98.5%;
+		min-width: 540px;
+	}
+	.timesheet_team_leave {
+		width:95%;
+	}
+	.button_choice, .button_top {
+		font-size: 11px;
+		width: 60px;
+	}
+	.sub_menu_button {
+		font-size: 11px;
 	}
 	.timesheet_footer {
 	font-size: 10px;
