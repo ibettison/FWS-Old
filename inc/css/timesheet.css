@@ -340,6 +340,7 @@
 	color:#003366;
 	background-color:#FFF;
 	border: 1px #6593CF solid;
+	box-shadow: 0 2px 3px #888888;
 }
 
 .timesheet_name {
@@ -352,6 +353,7 @@
 	margin-left:2px;
 	padding-bottom:10px;
 	float:left;
+	box-shadow: 0 2px 3px #888888;
 }
 
 .timesheet_workspace_times {
@@ -468,6 +470,7 @@
 	border: 1px #6593CF solid;
 	max-height: 32em;
 	overflow-y: scroll;
+	box-shadow: 0 2px 3px #888888;
 }
 
 .timesheet_leave_name {

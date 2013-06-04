@@ -206,7 +206,6 @@ z-index:1000;
 	margin-top:1px;
 	margin-left:2px;
 	margin-bottom:1px;
-	
 }
 
 .calendar_day, .calendar_day_name, .calendar_today{
@@ -231,10 +230,12 @@ z-index:1000;
 }
 
 .calendar_today {
-	width:15px;
-	margin-left:3px;
-	background-color:#FF9900;
-	border:1px #FF6600 solid;
+	width:10px;
+	margin-left:8px;
+	background-color:#BDD9FD;
+	border: 1px #6593CF solid;
+	opacity: 0.8;
+	color: #900;
 }
 
 .calendar_view {

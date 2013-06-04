@@ -270,7 +270,7 @@ function display_cal_days($month, $firstDay) {
 		echo "<div class='calendar_day'>&nbsp;</div>";
 	}
 	for($x=1; $x<=$daysinMonth; $x++) {
-		if($x == $cal->get_todays_day() && $month == $cal->get_todays_month_num() && $_SESSION["Year"]==$cal->get_todays_year() ) {
+		if($x == $cal->get_todays_day() && $month == $cal->get_todays_month_num() && date("Y")==$cal->get_todays_year() ) {
 			echo "<div class='calendar_today'>$x</div>";
 		}else{
 			echo "<div class='calendar_day'>$x</div>";

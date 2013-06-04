@@ -61,11 +61,12 @@
 	font-family:Verdana, Geneva, sans-serif;
 	font-size:11px;
 	border:1px #6593CF solid;
+	padding: 2px;
 }
 
 .table_view td {
-	margin:1px;
 	font-size:11px;
 	background-color:#EEE;
 	border:1px #6593CF solid;
+	padding: 2px;
 }
