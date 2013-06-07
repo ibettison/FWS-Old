@@ -282,21 +282,26 @@ z-index:1000;
 }
 
 .main_left {
-	margin-left:220px;
+	margin-left:35%;
 	float:left;
-	background: transparent url('images/flexitimeJuggler.gif') no-repeat;
-	padding-left:20px;
-	width:450px;
-	height:442px;
-	border: 1px #6593CF solid;
+	width:30%;
+	height:auto;
+	overflow:hidden;
+}
+
+.main_left img {
+	height: auto;
+	width: 80%;
+	min-width: 40%;
 }
 
 .main_right {
-	margin-top:100px;
-	margin-left:220px;
-	padding-left:20px;
-	padding-right:20px;
-	padding-top:5px;
+	clear:both;
+	padding:20px;
+	background-color:#FEDBBC;
+	border-top: 1px #900 solid;
+	border-bottom: 1px #900 solid;
+	margin: 20% 20%;
 }
 
 .show_icon {

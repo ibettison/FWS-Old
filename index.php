@@ -7,9 +7,8 @@ function redirect(url) {
 session_start();
 error_reporting("E_ALL & ~E_NOTICE");
 //error_reporting("~E_NOTICE");
-require('inc/Datalayer.inc');
+require('inc/mysqli_datalayer.php');
 require('inc/connection.inc');
-global $dl;
 include('inc/functions.php');
 include('inc/email_messages.inc');
 require('inc/classes/calendar_class.php');
@@ -58,22 +57,22 @@ $cal = new calendars;
 	if($_GET["func"] == "login") { // attempt to login
 		$email= strtolower(addslashes($_POST["email_address"]));
 		$password=$_POST["password"];
-		$check_email = $dl->select("flexi_user", "user_email='$email'");
-		$check_deleted = $dl->select("flexi_deleted", "user_id=".$check_email[0]["user_id"]);
+		$check_email = dl::select("flexi_user", "user_email='$email'");
+		$check_deleted = dl::select("flexi_deleted", "user_id=".$check_email[0]["user_id"]);
 		if(empty($check_deleted)) {
-			$check_timesheet = $dl->select("flexi_timesheet", "user_id=".$check_email[0]["user_id"]);
+			$check_timesheet = dl::select("flexi_timesheet", "user_id=".$check_email[0]["user_id"]);
 			if(!empty($check_email)) {
 				foreach($check_email as $ce) {
 					//create array listing all user settings when login confirmed transfer to a session variable
 					$user_settings=array(secId=>$ce["user_security"],userId=>$ce["user_id"],permissionId=>$ce["user_permission_id"],email=>$ce["user_email"],name=>$ce["user_name"],al=>$ce["user_al_template"],timeTemplate=>$ce["user_time_template"],flexiTemplate=>$ce["user_flexi_template"],timesheet=>$check_timesheet[0]["timesheet_id"]);
 				}
-				$check_password = $dl->select("flexi_security", "security_id=".$user_settings['secId']);
+				$check_password = dl::select("flexi_security", "security_id=".$user_settings['secId']);
 				if(!empty($check_password)) {
 					foreach($check_password as $cp) {
 						if($cp["security_password"] == MD5(SALT.$password)) {
 							$_SESSION["userSettings"]=$user_settings;
 							//connect to PERMISSION table and retrieve permission settings
-							$getPermissions = $dl->select("flexi_permission_template", $_SESSION["userSettings"]["permissionId"]."=permission_template_name_id");
+							$getPermissions = dl::select("flexi_permission_template", $_SESSION["userSettings"]["permissionId"]."=permission_template_name_id");
 							if(!empty($getPermissions)) {
 								foreach($getPermissions as $gp) {
 									//add permissions to session array
@@ -81,7 +80,7 @@ $cal = new calendars;
 								}
 							}
 							//check to see if the application is locked before setting the loggedin session variable
-							$locked = $dl->select("flexi_locked");
+							$locked = dl::select("flexi_locked");
 							if($locked[0]["locked"]=="True" or $locked[0]["locked"]=="true") { //the application is locked
 								if($_SESSION["userPermissions"]["lock_override"]=="false") {
 									echo "<div id='noAccess_dialog' style='display: none;' title='The FWS Application Unavailable'>";
@@ -142,9 +141,10 @@ $cal = new calendars;
 		$used = checkLeaveEntitlement($_SESSION["userSettings"]["userId"]);
 		global $entitledTo;
 		global $nextYrLeave;
+		global $hoursLeave;
 		//now lets check if they have any additional holidays
 		$additional=0;
-		$additionalHols=$dl->select("flexi_carried_forward_live", "timesheet_id=".$_SESSION["userSettings"]["timesheet"]);
+		$additionalHols=dl::select("flexi_carried_forward_live", "timesheet_id=".$_SESSION["userSettings"]["timesheet"]);
 		$additional = $additionalHols[0]["additional_leave"]; 
 		?>
 		<div class='header_left'>
@@ -163,7 +163,7 @@ $cal = new calendars;
 		</div> 
 		<div class='left_body'><div class='left_body_spacer'>
 		<?php
-		$reminderTime = $dl->select("flexi_time_reminder", "timesheet_id = ".$_SESSION["userSettings"]["timesheet"]);
+		$reminderTime = dl::select("flexi_time_reminder", "timesheet_id = ".$_SESSION["userSettings"]["timesheet"]);
         $formArr = array(array(type=>"intro", formtitle=>"", formintro=>"Enter your start time reminder."), 
 			array(type=>"form", form=>array(action=>"index.php?func=reminder",method=>"post")),
 			array(prompt=>"Start Time", type=>"time", name=>"rem_time",starttime=>"0000", endtime=>"2300", interval=>1, selected=>$reminderTime[0]["reminder"], clear=>true),
@@ -185,14 +185,14 @@ $cal = new calendars;
 		$sql = "select * from flexi_user as u 
 		join flexi_permission_template as p on (u.user_permission_id=p.permission_template_name_id) 
 		where u.user_id = ".$userId." and permission_team_authorise = 'true'";
-		$manager = $dl->getQuery($sql);
+		$manager = dl::getQuery($sql);
 		//loop here for multiple teams
 		$teamWhere = "";
-		$team = $dl->select("flexi_team_user", "user_id=".$userId);
+		$team = dl::select("flexi_team_user", "user_id=".$userId);
 		foreach($team as $t) {
 			$teamWhere .= "tu.team_id = ".$t["team_id"]. " or ";
 			//get current users home team
-			$homeTeam = $dl->select("flexi_team_local", "team_user_id=".$t["team_user_id"]);
+			$homeTeam = dl::select("flexi_team_local", "team_user_id=".$t["team_user_id"]);
 			if(!empty($homeTeam)) {
 				$homeTeamId = $homeTeam[0]["team_user_id"];
 			}
@@ -206,7 +206,7 @@ $cal = new calendars;
 			join flexi_user as u on (t.user_id=u.user_id) 
 			join flexi_team_user as tu on (tu.user_id=u.user_id) 
 			where u.user_id <> ".$_SESSION["userSettings"]["userId"]." and r.request_approved = '' and ".$teamWhere;
-			$count = $dl->getQuery($sql);
+			$count = dl::getQuery($sql);
 			$requests=0;
 			foreach($count as $c) {
 				//has returned all of the request in the member teams and not returned your own requests
@@ -216,11 +216,11 @@ $cal = new calendars;
 				join flexi_user as u on (t.user_id=u.user_id) 
 				join flexi_permission_template as pt on (u.user_permission_id=pt.permission_template_name_id) 
 				where event_id = ".$c["event_id"];
-				$check_permission = $dl->getQuery($sql);
+				$check_permission = dl::getQuery($sql);
 				//now need to find out the users home team
-				$user_teams = $dl->select("flexi_team_user", "user_id=".$c["user_id"]);
+				$user_teams = dl::select("flexi_team_user", "user_id=".$c["user_id"]);
 				foreach($user_teams as $ut) {
-					$user_homeTeam = $dl->select("flexi_team_local", "team_user_id=".$ut["team_user_id"]);
+					$user_homeTeam = dl::select("flexi_team_local", "team_user_id=".$ut["team_user_id"]);
 					if(!empty($user_homeTeam)){
 						$user_homeTeamId = $user_homeTeam[0]["team_user_id"];
 					}
@@ -229,10 +229,10 @@ $cal = new calendars;
 					$requests++;	
 				}else{ //the requestor is a manager
 					//need to check if the current user is in the requestors home team
-					$inTeam = $dl->select("flexi_team_user", "user_id = ".$c["user_id"]." and team_user_id = ".$user_homeTeamId);
+					$inTeam = dl::select("flexi_team_user", "user_id = ".$c["user_id"]." and team_user_id = ".$user_homeTeamId);
 					if(!empty($inTeam)) { //confirmed that the manager is responsible for the approval
 						//check that the users team is managed by the manager
-						$managed = $dl->select("flexi_team_user", "user_id = ".$_SESSION["userSettings"]["userId"]." and team_id = ".$inTeam[0]["team_id"]);
+						$managed = dl::select("flexi_team_user", "user_id = ".$_SESSION["userSettings"]["userId"]." and team_id = ".$inTeam[0]["team_id"]);
 						if(!empty($managed)){
 							if($user_homeTeamId <> $homeTeamId) {
 								$requests++;
@@ -247,7 +247,7 @@ $cal = new calendars;
 		join flexi_timesheet as t on (t.timesheet_id=e.timesheet_id) 
 		join flexi_user as u on (t.user_id=u.user_id) 
 		where r.request_approved = '' and u.user_id =".$userId;
-		$count = $dl->getQuery($sql);
+		$count = dl::getQuery($sql);
 		if($count[0]["cRequest"]>0) {
 			$css = "request_message";
 			if($message == "<span class='request_pad'>There are currently no outstanding requests</span>"){
@@ -273,23 +273,23 @@ $cal = new calendars;
 		<div class='left_body'><div class='left_body_spacer'>
 		<?php
 		$sql = "select COUNT(user_id) as cTeams from flexi_team_user where user_id = ".$userId;
-		$teams=$dl->getQuery($sql);
+		$teams=dl::getQuery($sql);
 		$cTeams = $teams[0]["cTeams"];
 		if(!empty($manager)) { //An approver
 			//get team names and add to drop down list if count is > 1
-			echo "You're responsible for the requests from ".$cTeams." team(s)<BR><BR>";
+			echo "You're responsible for the requests from ".$cTeams." team(s)<BR>";
 		}else{
 			echo "You're a member of ".$cTeams." team(s)<BR><BR>";
 		}
 		$sql = "select * from flexi_team_user as u join flexi_team as t on (u.team_id=t.team_id) where u.user_id = ".$userId." order by t.team_name";
-		$teams = $dl->getQuery($sql);
+		$teams = dl::getQuery($sql);
 		if($cTeams > 1) {
 			foreach($teams as $tm) {
 				$teamNames[] = $tm["team_name"];
 			}
 			$formArr = array(array(type=>"form", form=>array(action=>"index.php?func=viewteam",method=>"post")),	
 				array(prompt=>"Membership:", type=>"selection", name=>"team_name", listarr=>$teamNames, selected=>"", value=>"", clear=>true),
-				array(type=>"submit", buttontext=>"View Team", clear=>true), 
+				array(type=>"submit", buttontext=>"View Team", clear=>false), 
 				array(type=>'endform'));
 				$form = new forms;
 				$form->create_form($formArr, "90px");
@@ -364,6 +364,22 @@ $cal = new calendars;
 			echo $remaining;
 			?> day(s)
 			</div>
+			<div class='left_header'>
+			Hours:
+			</div>
+			<div class='left_text'>
+			<?php 
+			echo $hoursLeave;
+			?> hrs
+			</div>
+			<div class='left_header'>
+			Used Hours:
+			</div>
+			<div class='left_text'>
+			<?php 
+			echo $hoursTaken;
+			?> hrs
+			</div>
 		</div></div>
 		<?php
 
@@ -384,23 +400,23 @@ $cal = new calendars;
 				// check passcode and email address
 				if($_GET["passcode"]==MD5(SALT.$_POST["email_address"])) { //everything confirmed
 					// now need to locate user account and add password to security table and update user table
-					$user = $dl->select("flexi_user", "user_email='".addslashes($_POST["email_address"])."'");
+					$user = dl::select("flexi_user", "user_email='".addslashes($_POST["email_address"])."'");
 					$user_id=$user[0]["user_id"];
-					$security = $dl->insert("flexi_security", array(security_password=>MD5(SALT.$_POST["password"]), user_id=>$user_id));
-					$sec = $dl->select("flexi_security", "user_id=".$user_id);
+					$security = dl::insert("flexi_security", array(security_password=>MD5(SALT.$_POST["password"]), user_id=>$user_id));
+					$sec = dl::select("flexi_security", "user_id=".$user_id);
 					$sec_id = $sec[0]["security_id"];
-					$dl->update("flexi_user", array(user_security=>$sec_id), "user_id=".$user_id);
+					dl::update("flexi_user", array(user_security=>$sec_id), "user_id=".$user_id);
 					//all updates completed might as well sign the user into the system.
 					$password=$_POST["password"];
 					$email = $_POST["email_address"];
-					$check_email = $dl->select("flexi_user", "user_email='".addslashes($email)."'");
-					$check_timesheet = $dl->select("flexi_timesheet", "user_id=".$check_email[0]["user_id"]);
+					$check_email = dl::select("flexi_user", "user_email='".addslashes($email)."'");
+					$check_timesheet = dl::select("flexi_timesheet", "user_id=".$check_email[0]["user_id"]);
 					if(!empty($check_email)) {
 						foreach($check_email as $ce) {
 							//create array listing all user settings when login confirmed transfer to a session variable
 							$user_settings=array(secId=>$ce["user_security"],userId=>$ce["user_id"],permissionId=>$ce["user_permission_id"],email=>$ce["user_email"],name=>$ce["user_name"],al=>$ce["user_al_template"],timeTemplate=>$ce["user_time_template"],flexiTemplate=>$ce["user_flexi_template"],timesheet=>$check_timesheet[0]["timesheet_id"]);
 						}
-						$check_password = $dl->select("flexi_security", "security_id=".$user_settings['secId']);
+						$check_password = dl::select("flexi_security", "security_id=".$user_settings['secId']);
 						if(!empty($check_password)) {
 							foreach($check_password as $cp) {
 								if($cp["security_password"] == MD5(SALT.$password)) {
@@ -408,7 +424,7 @@ $cal = new calendars;
 									$_SESSION["loggedin"]=true;
 									$_SESSION["userSettings"]=$user_settings;
 									//connect to PERMISSION table and retrieve permission settings
-									$getPermissions = $dl->select("flexi_permission_template", $_SESSION["userSettings"]["permissionId"]."=permission_template_name_id");
+									$getPermissions = dl::select("flexi_permission_template", $_SESSION["userSettings"]["permissionId"]."=permission_template_name_id");
 									if(!empty($getPermissions)) {
 										foreach($getPermissions as $gp) {
 											//add permissions to session array
@@ -464,20 +480,20 @@ if($_SESSION["showMths"]== 4) {
     		show_topMenu($button_choice);
 			show_subMenu($button_choice);
 			//update the templates period if over the period end date
-			$flexi_template = $dl->select("flexi_template");
+			$flexi_template = dl::select("flexi_template");
 			foreach($flexi_template as $ft) {
 				if(date("Y-m-d") > date("Y-m-d", strtotime($ft["end_period"]))) { //todays date is after the period end so need to update the period
 					$endPeriod = date("Y-m-d", strtotime($ft["end_period"]));
 					$period_start_date = add_date(strtotime($ft["end_period"]),1);
 					$period_end_date = add_date(strtotime($ft["end_period"]),28);
 					//now update the templates
-					$dl->update("flexi_template", array(start_period=>date("Y-m-d", strtotime($period_start_date)), end_period=>date("Y-m-d", strtotime($period_end_date))), "template_id=".$ft["template_id"]);
+					dl::update("flexi_template", array(start_period=>date("Y-m-d", strtotime($period_start_date)), end_period=>date("Y-m-d", strtotime($period_end_date))), "template_id=".$ft["template_id"]);
 					//end of period so need to move over the flexi to the pot
 					$sql = "select * from flexi_user as u join 
 					flexi_timesheet as t on (u.user_id=t.user_id) 
 					left outer join flexi_deleted as d on (u.user_id=d.user_id)					
 					where user_flexi_template=".$ft["template_id"]." and date_deleted IS NULL";
-					$users = $dl->getQuery($sql);
+					$users = dl::getQuery($sql);
 					foreach($users as $user) {
 						//need to get the managers' email address
 						//get approvers email and name
@@ -486,7 +502,7 @@ if($_SESSION["showMths"]== 4) {
 						join flexi_team_user as ftu on (ftu.team_id=ft.team_id)
 						join flexi_team_local as tl on (ftu.team_user_id=tl.team_user_id) 
 						where ftu.user_id=".$user["user_id"];
-						$teams = $dl->getQuery($sql);
+						$teams = dl::getQuery($sql);
 						$team_id = $teams[0]["team_id"];
 						//now need to see if this user is a manager/approver within this team
 						//this determines if the manager in this team receives the approval request or the none local team member approver/manager
@@ -497,7 +513,7 @@ if($_SESSION["showMths"]== 4) {
 						left outer join flexi_deleted as d on (fu.user_id=d.user_id) 
 						join flexi_team as ft on (ft.team_id=ftu.team_id) 
 						where ft.team_id = ".$team_id." and fpt.permission_team_authorise = 'true' and date_deleted IS NULL and tl.team_user_id IS NOT NULL";
-						$localManager = $dl->getQuery($sql);
+						$localManager = dl::getQuery($sql);
 						if($localManager["user_id"] == $user["user_id"]) { // this is a request from the local team manager so the request should go to the non-local manager	
 							$sql = "select * from flexi_permission_template as fpt 
 							join flexi_user as fu on (fu.user_permission_id=fpt.permission_template_name_id) 
@@ -506,7 +522,7 @@ if($_SESSION["showMths"]== 4) {
 							left outer join flexi_deleted as d on (fu.user_id=d.user_id) 
 							join flexi_team as ft on (ft.team_id=ftu.team_id) 
 							where ft.team_id = ".$team_id." and fpt.permission_team_authorise = 'true' and date_deleted IS NULL and tl.team_user_id IS NULL";
-							$manager = $dl->getQuery($sql);
+							$manager = dl::getQuery($sql);
 							foreach($manager as $m) {
 								//create an array of the managers who can approve the event
 								$recipients[]=$m["user_email"];
@@ -517,18 +533,18 @@ if($_SESSION["showMths"]== 4) {
 								$recipients[]=$lm["user_email"];
 							}
 						}
-						$cf = $dl->select("flexi_carried_forward_live", "timesheet_id=".$user["timesheet_id"]);
+						$cf = dl::select("flexi_carried_forward_live", "timesheet_id=".$user["timesheet_id"]);
 						if(!empty($cf)) { //need to move the flexi
 							if($cf[0]["current_flexi"] > $ft["max_deficit"]) { 
 								//need to get the managers' email address
 								//get approvers email and name
-								//$dl->debug=true;
+								//dl::debug=true;
 								//find the team the user is a local member of
 								$sql = "select * from flexi_team as ft 
 								join flexi_team_user as ftu on (ftu.team_id=ft.team_id)
 								join flexi_team_local as tl on (ftu.team_user_id=tl.team_user_id) 
 								where ftu.user_id=".$user["user_id"];
-								$teams = $dl->getQuery($sql);
+								$teams = dl::getQuery($sql);
 								$team_id = $teams[0]["team_id"];
 								//now need to see if this user is a manager/approver within this team
 								//this determines if the manager in this team receives the approval request or the none local team member approver/manager
@@ -539,7 +555,7 @@ if($_SESSION["showMths"]== 4) {
 								left outer join flexi_deleted as d on (fu.user_id=d.user_id) 
 								join flexi_team as ft on (ft.team_id=ftu.team_id) 
 								where ft.team_id = ".$team_id." and fpt.permission_team_authorise = 'true' and date_deleted IS NULL and tl.team_user_id IS NOT NULL";
-								$localManager = $dl->getQuery($sql);
+								$localManager = dl::getQuery($sql);
 								if($localManager["user_id"] == $user["user_id"]) { // this is a request from the local team manager so the request should go to the non-local manager	
 									$sql = "select * from flexi_permission_template as fpt 
 									join flexi_user as fu on (fu.user_permission_id=fpt.permission_template_name_id) 
@@ -548,7 +564,7 @@ if($_SESSION["showMths"]== 4) {
 									left outer join flexi_deleted as d on (fu.user_id=d.user_id) 
 									join flexi_team as ft on (ft.team_id=ftu.team_id) 
 									where ft.team_id = ".$team_id." and fpt.permission_team_authorise = 'true' and date_deleted IS NULL and tl.team_user_id IS NULL";
-									$manager = $dl->getQuery($sql);
+									$manager = dl::getQuery($sql);
 									foreach($manager as $m) {
 										//create an array of the managers who can approve the event
 										$recipients[]=$m["user_email"];
@@ -580,7 +596,7 @@ if($_SESSION["showMths"]== 4) {
 								$fieldList = array("timesheet_id", "sign", "flexitime","period_date");
 								$valuesArr = array($user["timesheet_id"], $cf[0]["sign"], $cf[0]["flexi_time_carried_forward"], date("Y-m-d", strtotime($endPeriod)));
 								$writeArr = array_combine($fieldList,$valuesArr);
-								$dl->insert("flexi_carried_forward",$writeArr); //this has recorded the flexitime for the user for the current period. Will be used when examining the timesheet in each period.
+								dl::insert("flexi_carried_forward",$writeArr); //this has recorded the flexitime for the user for the current period. Will be used when examining the timesheet in each period.
 								if($timeCarried > $max_surplus) {
 									$lostTime = $timeCarried - $max_surplus;
 									$lostTime = $lostTime * 60 * 60;
@@ -602,9 +618,9 @@ if($_SESSION["showMths"]== 4) {
 									$m->Priority(3);
 									$m->Send();
 									//update the flexipot
-									$dl->update("flexi_carried_forward_live", array(sign=>$carriedSign, flexi_time_carried_forward=>$timeSaved), "timesheet_id=".$user["timesheet_id"]);
+									dl::update("flexi_carried_forward_live", array(sign=>$carriedSign, flexi_time_carried_forward=>$timeSaved), "timesheet_id=".$user["timesheet_id"]);
 								}else{
-									$dl->update("flexi_carried_forward_live", array(sign=>$carriedSign, flexi_time_carried_forward=>$timeSaved), "timesheet_id=".$user["timesheet_id"]);
+									dl::update("flexi_carried_forward_live", array(sign=>$carriedSign, flexi_time_carried_forward=>$timeSaved), "timesheet_id=".$user["timesheet_id"]);
 								}
 							}else{
 								//the current flexi calculation
@@ -628,7 +644,7 @@ if($_SESSION["showMths"]== 4) {
 								$fieldList = array("timesheet_id", "sign", "flexitime","period_date");
 								$valuesArr = array($user["timesheet_id"], $carriedSign, $timeSaved, date("Y-m-d", strtotime($endPeriod)));
 								$writeArr = array_combine($fieldList,$valuesArr);
-								$dl->insert("flexi_carried_forward",$writeArr); //this has recorded the flexitime for the user for the current period. Will be used when examining the timesheet in each period.
+								dl::insert("flexi_carried_forward",$writeArr); //this has recorded the flexitime for the user for the current period. Will be used when examining the timesheet in each period.
 								//send email to manager copy superAdmin
 								$subject = $email_3_subject;
 								$bodyText = $email_3_content;
@@ -646,7 +662,7 @@ if($_SESSION["showMths"]== 4) {
 								$m->Priority(3);
 								$m->Send();
 								//update the flexipot
-								$dl->update("flexi_carried_forward_live", array(sign=>$carriedSign, flexi_time_carried_forward=>$timeSaved), "timesheet_id=".$user["timesheet_id"]);
+								dl::update("flexi_carried_forward_live", array(sign=>$carriedSign, flexi_time_carried_forward=>$timeSaved), "timesheet_id=".$user["timesheet_id"]);
 							}
 						}
 					}
@@ -659,10 +675,10 @@ if($_SESSION["showMths"]== 4) {
 											flexi_team_user
 											flexi_security
 											flexi_timesheet */
-							$dl->delete("flexi_user", "user_id=".$del);
-							$dl->delete("flexi_team_user", "user_id=".$del);
-							$dl->delete("flexi_security", "user_id=".$del);
-							$dl->delete("flexi_timesheet", "user_id=".$del);
+							dl::delete("flexi_user", "user_id=".$del);
+							dl::delete("flexi_team_user", "user_id=".$del);
+							dl::delete("flexi_security", "user_id=".$del);
+							dl::delete("flexi_timesheet", "user_id=".$del);
 						}
 					}
 				}
@@ -1001,12 +1017,34 @@ if($_SESSION["showMths"]== 4) {
 			
 	}else{ //show main screen
 			echo "<div class='main_header'>CRP Flexible Working Application</div>";
-			echo "<div class='main_left'><div class='main_right'>";
+			echo "<div class='main_left'><img src='inc/css/images/flexitimeJuggler.gif'></div><div class='main_right'>";
 			echo "<p>Welcome to the CRP Flexible Working Application</p>";
 			echo "Your ID should have already been created, so type your email and password to enter the CRP Flexible Working system.";
 			echo "If your email address is not recognised please contact ";
-			echo "<a href='mailto:mandy.jarvis@ncl.ac.uk'>Mandy Jarvis</a> or CRP IT to add your email address to the system.</div></div>";
+			echo "<a href='mailto:mandy.jarvis@ncl.ac.uk'>Mandy Jarvis</a> or CRP IT to add your email address to the system.</div>";
 	}?>
+	<script>
+	$(document).ready(function(){
+		checkWidth();
+	})
+	
+function checkWidth(){
+	var width = $(window).width();
+	$.post(
+		"ajax.php",
+		{ 
+			func: 'check_width',
+			width: width
+		},
+		function (data)
+			{
+				var json = $.parseJSON(data);
+			}
+	);
+	setTimeout(checkWidth, 5000);
+}
+		
+</script>
 </div>
 </body>
 </html>

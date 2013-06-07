@@ -2,9 +2,8 @@
 session_start();
 error_reporting("E_ALL & ~E_NOTICE");
 //error_reporting("~E_NOTICE");
-require('inc/Datalayer.inc');
+require('inc/mysqli_datalayer.php');
 require('inc/connection.inc');
-global $dl;
 include('inc/functions.php');
 include('inc/email_messages.inc');
 require('inc/classes/calendar_class.php');
@@ -15,10 +14,14 @@ date_default_timezone_set('UTC');
 $cal = new calendars;
 
 
-
+if($_POST["func"] == "check_width") {
+	$_SESSION["screenResolution"] = $_POST["width"];
+	$width = array("width"=>$_POST["width"]);
+	echo json_encode($width);
+}
 
 if($_POST["func"]=="days_changed") {
-	$days = $dl->select("flexi_weekdays");
+	$days = dl::select("flexi_weekdays");
 	foreach($days as $day){
 		$week_days[] = $day["fw_weekday"];
 	}
@@ -86,14 +89,14 @@ if($_POST["func"] == "show_user_leave") {
 	$sql = "select * from flexi_user as u join flexi_timesheet as t on (u.user_id=t.user_id)
 			join flexi_event as e on (t.timesheet_id=e.timesheet_id) where u.user_name = '".$_POST["user"]."' 
 			and event_type_id = 3 order by event_startdate_time ASC"; //all of the users leave
-	$users_leave = $dl->getQuery($sql);
+	$users_leave = dl::getQuery($sql);
 	echo "SELECTED USER : ".$_POST["user"]."<BR><BR>";
 	echo "<div style='margin-left: 2em; width: 10em; float: left; font-size: 1.25em'>Event ID</div><div style='width: 15em;  float: left;  font-size: 1.25em'>Start Time</div><div style='width: 15em;  float: left;  font-size: 1.25em'>End Time</div><div style='width: 7em;  float: left;  font-size: 1.25em'>Time</div><div style='width: 11em;  text-align: center; float: left;  font-size: 1.25em'>Half\Full</div><BR><BR>";
 	echo "<div style='padding:1em; height: 40em; overflow: auto; '>"; //background-color:#E5EBCC;
 	$colorCount = 0;
 	foreach($users_leave as $ul) {
 		//check if eventID is already in the leave count table
-		$leave_count = $dl->select("flexi_leave_count", "flc_event_id =".$ul["event_id"]);
+		$leave_count = dl::select("flexi_leave_count", "flc_event_id =".$ul["event_id"]);
 		if( $colorCount == 0) {
 			$bgColor = "#E5EBCC";
 			$colorCount++;
@@ -165,10 +168,10 @@ if($_POST["func"] == "save_user_leave") {
 	foreach($_POST["leave"] as $leave) {
 		switch(substr($leave,0,4)) {
 			case "full":
-				$dl->insert("flexi_leave_count", array("flc_fullorhalf"=>1, "flc_event_id"=>substr($leave,4, strlen($leave))));
+				dl::insert("flexi_leave_count", array("flc_fullorhalf"=>1, "flc_event_id"=>substr($leave,4, strlen($leave))));
 			break;
 			case "half":
-				$dl->insert("flexi_leave_count", array("flc_fullorhalf"=>0.5, "flc_event_id"=>substr($leave,4, strlen($leave))));
+				dl::insert("flexi_leave_count", array("flc_fullorhalf"=>0.5, "flc_event_id"=>substr($leave,4, strlen($leave))));
 			break;
 		}
 	}
@@ -176,7 +179,7 @@ if($_POST["func"] == "save_user_leave") {
 }
 
 if($_POST["func"] == "calc_hours") {
-	$days = $dl->select("flexi_weekdays");
+	$days = dl::select("flexi_weekdays");
 	$continue = false;
 	foreach($days as $day){
 		if($_POST["weekday"] == $day["fw_weekday"] or $continue) {
@@ -240,10 +243,10 @@ if($_POST["func"]=="check_delete") {
 			join flexi_event as e on (e.timesheet_id=t.timesheet_id) 
 			join flexi_event_type as et on (et.event_type_id=e.event_type_id) 
 			where e.event_id=$id";
-		$team = $dl->getQuery($sql);
+		$team = dl::getQuery($sql);
 		$teamId=$team[0]["team_id"];
 		$userId = $team[0]["user_id"];
-		$u_name=$dl->select("flexi_user", "user_id=".$userId);
+		$u_name=dl::select("flexi_user", "user_id=".$userId);
 		$user_name=$u_name[0]["user_name"];
 		$eventDate = substr($team[0]["event_startdate_time"],0,10);
 		$eventStartTime = substr($team[0]["event_startdate_time"],11,5);
@@ -272,7 +275,7 @@ if($_POST["func"]=="check_delete") {
 		left outer join flexi_deleted as d on (fu.user_id=d.user_id) 
 		join flexi_team as ft on (ft.team_id=ftu.team_id) 
 		where ft.team_id = ".$teamId." and fpt.permission_team_authorise = 'true' and date_deleted IS NULL and tl.team_user_id IS NOT NULL";
-		$localManager = $dl->getQuery($sql);
+		$localManager = dl::getQuery($sql);
 		foreach($localManager as $lm) {
 			if($lm["user_id"] == $userId) {
 				//this is a local manager request therefore needs to be authorised at a higher level
@@ -298,7 +301,7 @@ if($_POST["func"]=="check_delete") {
 			left outer join flexi_deleted as d on (fu.user_id=d.user_id) 
 			join flexi_team as ft on (ft.team_id=ftu.team_id) 
 			where ft.team_id = ".$teamId." and fpt.permission_team_authorise = 'true' and date_deleted IS NULL and tl.team_user_id IS NULL";
-			$manager = $dl->getQuery($sql);
+			$manager = dl::getQuery($sql);
 			foreach($manager as $m) {
 				//create an array of the managers who can approve the event
 				$recipients[]=$m["user_email"];
@@ -364,19 +367,19 @@ if($_POST["func"]=="check_delete") {
 		if($allowDelete) {
 			if($eventGlobal=="No") {
 				//delete is going ahead. Check flexi_leave_count table to see if event is in the table and delete it too
-				$dl->delete("flexi_leave_count", "flc_event_id = $id"); // if it doesn't find it no delete happens. This is for Annual Leave
-				$dl->delete("flexi_event", "event_id=$id");
+				dl::delete("flexi_leave_count", "flc_event_id = $id"); // if it doesn't find it no delete happens. This is for Annual Leave
+				dl::delete("flexi_event", "event_id=$id");
 			}else{
 				if($_SESSION["userPermissions"]["add_global"]=="true"){
 					if($deltype == "individual") {
-						$dl->delete("flexi_event", "event_id=$id");
+						dl::delete("flexi_event", "event_id=$id");
 					}elseif($deltype == "global") {
-						$dl->delete("flexi_event", "event_startdate_time = '".$eventDate." ".$eventStartTime."' and event_type_id = ".$eventTypeId);
-						$global_events = $dl->select("flexi_global_events", "event_date = '".$eventDate."' and event_type_id = ".$eventTypeId);
+						dl::delete("flexi_event", "event_startdate_time = '".$eventDate." ".$eventStartTime."' and event_type_id = ".$eventTypeId);
+						$global_events = dl::select("flexi_global_events", "event_date = '".$eventDate."' and event_type_id = ".$eventTypeId);
 						foreach($global_events as $ge) {
-							$dl->delete("flexi_global_teams", "global_id = ".$ge["global_id"]);
+							dl::delete("flexi_global_teams", "global_id = ".$ge["global_id"]);
 						}
-						$dl->delete("flexi_global_events", "event_date = '".$eventDate."' and event_type_id = ".$eventTypeId);
+						dl::delete("flexi_global_events", "event_date = '".$eventDate."' and event_type_id = ".$eventTypeId);
 					}
 					
 				}
@@ -393,13 +396,13 @@ if($_POST["func"]=="check_delete") {
 }
 
 if($_POST["func"]=="toggle_lock") {
-	$locked = $dl->select("flexi_locked");
+	$locked = dl::select("flexi_locked");
 	if($locked[0]["locked"] == "true") {
-		$dl->update("flexi_locked", array("locked"=>"false"));
+		dl::update("flexi_locked", array("locked"=>"false"));
 	}elseif($locked[0]["locked"]== "false"){
-		$dl->update("flexi_locked", array("locked"=>"true"));
+		dl::update("flexi_locked", array("locked"=>"true"));
 	}
-	$locked = $dl->select("flexi_locked");
+	$locked = dl::select("flexi_locked");
 	echo json_encode(array("lock"=>$locked[0]["locked"]));
 }
 

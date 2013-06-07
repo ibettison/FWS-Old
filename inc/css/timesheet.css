@@ -1,5 +1,5 @@
 
-@media only screen and (max-width: 1920px) {
+@media only screen and (max-width: 2880px) {
 	.timesheet_table_header, .timesheet_table_header_we, .timesheet_table_header_blank, .timesheet_table_header_white, .timesheet_table_header_white_we, .timesheet_table_header_time {
 		font-size:11px;
 	}
@@ -85,16 +85,16 @@
 		width: 11%;
 	}
 	.timesheet_table_header_we {
-		width:7.5%;
+		width:8.5%;
 		font-size:11px;
 	}
 	.timesheet_table_header_blank {
-		width:10.5%;
-		font-size:11px;
+		width:7.5%;
+		font-size:9px;
 	}
 	.timesheet_table_header_white_we, .timesheet_table_header_time {
 		font-size: 11px;
-		width:7.5%;
+		width:8.5%;
 		min-width: 60px;
 	}
 	.timesheet_workspace {
@@ -131,16 +131,16 @@
 		width: 11%;
 	}
 	.timesheet_table_header_we {
-		width:7.5%;
+		width:8.5%;
 		font-size:11px;
 	}
 	.timesheet_table_header_blank {
-		width:10.5%;
-		font-size:11px;
+		width:8.5%;
+		font-size:9px;
 	}
 	.timesheet_table_header_white_we, .timesheet_table_header_time {
 		font-size: 11px;
-		width:7.5%;
+		width:8.5%;
 		min-width: 60px;
 	}
 	.timesheet_workspace {
@@ -161,13 +161,11 @@
 	font-size: 11px;
 	}
 }
+
 @media only screen and (max-width: 1080px) {
 	.working_space {
-		width: 65%;
+		width: 67%;
 	}
-}
-
-@media only screen and (max-width: 1024px) {
 	.timesheet_table_header, .timesheet_table_header_we, .timesheet_table_header_blank, .timesheet_table_header_white, .timesheet_table_header_white_we, .timesheet_table_header_time {
 		font-size:11px;
 	}
@@ -182,11 +180,11 @@
 	.timesheet_table_header_we {
 		min-width:60px;
 		width: 9.5%;
-		font-size:11px;
+		font-size:10px;
 	}
 	
 	.timesheet_table_header_white_we, .timesheet_table_header_time {
-	font-size: 11px;
+	font-size: 10px;
 	width: 9.5%;
 	min-width: 60px;
 	}
@@ -217,7 +215,7 @@
 		position: absolute;
 		left: 15px;
 		top: 8px;
-		min-width: 700px;
+		min-width: 710px;
 	}
 	.header_left {
 		display: none;
@@ -353,7 +351,6 @@
 	margin-left:2px;
 	padding-bottom:10px;
 	float:left;
-	box-shadow: 0 2px 3px #888888;
 }
 
 .timesheet_workspace_times {
