@@ -467,6 +467,7 @@
 	border: 1px #6593CF solid;
 	max-height: 32em;
 	overflow-y: scroll;
+	opacity: 0.9;
 	box-shadow: 0 2px 3px #888888;
 }
 

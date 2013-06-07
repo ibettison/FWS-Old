@@ -291,6 +291,8 @@ z-index:1000;
 
 .main_left img {
 	height: auto;
+	max-height: 400px;
+	max-width: 250px;
 	width: 80%;
 	min-width: 40%;
 }
