@@ -92,7 +92,7 @@ function set_leave_count() {
 			array("prompt"=>"Users", "type"=>"selection", "name"=>"username", "listarr"=>$userNames, "selected"=>"", "value"=>"", "clear"=>true));
 			$form = new forms;
 			$form->create_form($formArr);
-	echo "<div id='leave_view'  style='margin: 0.5em; height: 53em; background-color: #E5EBEF; border: 1px solid #888'>";
+	echo "<div id='leave_view'  style=' width: 80em; margin: 0.5em; height: 53em; background-color: #E5EBEF; border: 1px solid #888'>";
 	echo "<div id='display_leave' style='padding:1em;'></div>";
 	echo "</div>";
 	?>
@@ -104,7 +104,7 @@ function set_leave_count() {
 			$.post(
 				"ajax.php",
 				{ func: func,
-					user: $("#username").val()
+					user: { "name" : $("#username").val() }
 				},
 				function (data)
 				{
@@ -1089,37 +1089,35 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 							$timeTo = date('H:i:s', strtotime($events[$loopCount]["event_enddate_time"]));
 							$alt = date('H:i', strtotime($events[$loopCount]["event_startdate_time"]))." - ".date('H:i', strtotime($events[$loopCount]["event_enddate_time"]));
 							$timediff = date('H:i:s',strtotime($timeTo) - strtotime($timeFrom));
-							//find out if the event has a lunch_deduction
-							$lunchDeduction = dl::select("flexi_event_settings", "event_typeid = ".$events[$loopCount]["event_type_id"]);
-							if($lunchDeduction[0]["lunch_deduction"] == "Yes") { //the event requires a lunch deduction to be taken off but only if equal or over 6 hours
-								$workingEvent += strtotime($timediff);
-							}
-							//check if an extended lunch was taken
-							if($event["event_lunch"] != "00:00:00") { //extended lunch has been taken
-							//check if the extended lunch is greater than minimum lunch
-								if (strtotime($event["event_lunch"]) > strtotime($daysMinimumLunchDuration)) { //minimum lunch in seconds
-									$timediff = date('H:i:s',strtotime($timediff) - strtotime($event["event_lunch"]));
-									$extended_lunch=true;
-								}else{
-									$extended_lunch=false;
-									//need to check if have to take lunch off
-									if($daysMinimumLunch=="Yes") {
-										if(date("G", strtotime($timediff)) > 6 ) { //if the time worked is greater than 6 hours then take off lunch
-											$timediff = date('H:i:s',strtotime($timediff) - strtotime($daysMinimumLunchDuration));
+
+							//check if lunch has already been deducted
+							if($lunchDeducted) {
+								//check if an extended lunch was taken
+								if($events[$loopCount]["event_lunch"] != "00:00:00") { //extended lunch has been taken
+								//check if the extended lunch is greater than minimum lunch
+									if (strtotime($events[$loopCount]["event_lunch"]) > strtotime($daysMinimumLunchDuration)) { //minimum lunch in seconds
+										$timediff = date('H:i:s',strtotime($timediff) - strtotime($event["event_lunch"]));
+										$extended_lunch=true;
+									}else{
+										$extended_lunch=false;
+										//need to check if have to take lunch off
+										if($daysMinimumLunch=="Yes") {
+											if(date("G", strtotime($timediff)) > 6 ) { //if the time worked is greater than 6 hours then take off lunch
+												$timediff = date('H:i:s',strtotime($timediff) - strtotime($daysMinimumLunchDuration));
+											}
 										}
 									}
+								}else{
+									//need to check if have to take lunch off
+									if($daysMinimumLunch=="Yes") {
+										// capture the time for this event as there may be multiple events on the one day (eg: working session then a training session followed by a working session
+										//*************************************************
+										if(date("G", strtotime($timediff)) >= 6 ) { //if the time worked is only 4 hours then don't take off lunch
+											$timediff = date('H:i:s',strtotime($timediff) - strtotime($daysMinimumLunchDuration));
+											$lunchDeducted = true;
+										}
+									}								
 								}
-							}else{
-								//need to check if have to take lunch off
-								$extended_lunch=false;
-								if($daysMinimumLunch=="Yes") {
-									// capture the time for this event as there may be multiple events on the one day (eg: working session then a training session followed by a working session
-									//*************************************************
-									if(date("G", strtotime($timediff)) >= 6 ) { //if the time worked is only 4 hours then don't take off lunch
-										$timediff = date('H:i:s',strtotime($timediff) - strtotime($daysMinimumLunchDuration));
-										$lunchDeducted = true;
-									}
-								}								
 							}
 							//check if the event Type is Flexi Leave if so then don't add the time but capture the flexi Leave
 							$eventType = dl::select("flexi_event_type", "event_type_id = ".$events[$loopCount]["event_type_id"]);
@@ -1179,7 +1177,6 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 							}else{
 								if( substr($events[$loopCount]["event_startdate_time"],0,10) > $flexiStartPeriod) {
 									if($eventType[0]["event_global"] == "No") {
-										echo $events[$loopCount]["event_id"];
 										echo "<div class='connected' id='time".$events[$loopCount]["event_id"]."'style='cursor: move; float:left; background-color:".$eventColour."; width:".$pxWidth."px '>";
 									}else{
 										echo "<div style='float:left; background-color:".$eventColour."; width:".$pxWidth."px '>";

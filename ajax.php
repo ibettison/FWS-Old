@@ -87,10 +87,11 @@ if($_POST["func"]=="days_changed") {
 if($_POST["func"] == "show_user_leave") {
 	$leaveType = array("Full", "Half");
 	$sql = "select * from flexi_user as u join flexi_timesheet as t on (u.user_id=t.user_id)
-			join flexi_event as e on (t.timesheet_id=e.timesheet_id) where u.user_name = '".$_POST["user"]."' 
+			join flexi_event as e on (t.timesheet_id=e.timesheet_id) where u.user_name = \"".$_POST["user"]["name"]."\"
 			and event_type_id = 3 order by event_startdate_time ASC"; //all of the users leave
+	echo $sql;
 	$users_leave = dl::getQuery($sql);
-	echo "SELECTED USER : ".$_POST["user"]."<BR><BR>";
+	echo "SELECTED USER : ".$_POST["user"]["name"]."<BR><BR>";
 	echo "<div style='margin-left: 2em; width: 10em; float: left; font-size: 1.25em'>Event ID</div><div style='width: 15em;  float: left;  font-size: 1.25em'>Start Time</div><div style='width: 15em;  float: left;  font-size: 1.25em'>End Time</div><div style='width: 7em;  float: left;  font-size: 1.25em'>Time</div><div style='width: 11em;  text-align: center; float: left;  font-size: 1.25em'>Half\Full</div><BR><BR>";
 	echo "<div style='padding:1em; height: 40em; overflow: auto; '>"; //background-color:#E5EBCC;
 	$colorCount = 0;
