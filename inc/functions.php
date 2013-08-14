@@ -1243,14 +1243,6 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 							echo "<div class='timesheet_table_header_time'><div class='timesheet_padding'>".number_format($hoursPerWeek, 1)." hrs</div></div>";
 							echo "<div class='timesheet_table_header_time'><div class='timesheet_padding'>".number_format($workBalance,1)." hrs</div></div>";
 							echo "<div class='timesheet_table_header_time' style='$style'><div class='timesheet_padding'>".number_format($flexiPotTotal,1)." hrs</div></div>";
-						}else{
-							echo "<div class='timesheet_table_header_time'><div class='timesheet_padding'>-</div></div>";
-							echo "<div class='timesheet_table_header_time'><div class='timesheet_padding'>-</div></div>";
-							echo "<div class='timesheet_table_header_time'><div class='timesheet_padding'>-</div></div>";
-							echo "<div class='timesheet_table_header_time'><div class='timesheet_padding'>-</div></div>";
-						}
-						// check the carried forward table and sdd the flexi details to it only if within the current period
-						if($_GET["choice"]=="View" and $_GET["subchoice"] == "timesheet") {
 							$fieldList=array("timesheet_id","current_flexi");
 							$flexiMinutes = number_format($flexiPotTotal,1);
 							$valueArr = array($timesheetId, $flexiMinutes);
@@ -1261,6 +1253,11 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 							}else{ //update the flexi time in the existing records
 								$rec = dl::update("flexi_carried_forward_live", $writeArr, "timesheet_id = ".$timesheetId);
 							}
+						}else{
+							echo "<div class='timesheet_table_header_time'><div class='timesheet_padding'>-</div></div>";
+							echo "<div class='timesheet_table_header_time'><div class='timesheet_padding'>-</div></div>";
+							echo "<div class='timesheet_table_header_time'><div class='timesheet_padding'>-</div></div>";
+							echo "<div class='timesheet_table_header_time'><div class='timesheet_padding'>-</div></div>";
 						}
 						$date = add_date(strtotime($date),2);//add 2 to skip weekend
 						$weekTimeHrs=0;
@@ -1370,14 +1367,6 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 					echo "<div class='timesheet_table_header_time'><div class='timesheet_padding'>".number_format($hoursPerWeek, 1)." hrs</div></div>";
 					echo "<div class='timesheet_table_header_time'><div class='timesheet_padding'>".number_format($workBalance,1)." hrs</div></div>";
 					echo "<div class='timesheet_table_header_time' style='$style'><div class='timesheet_padding'>".number_format($flexiPotTotal,1)." hrs</div></div>";
-				}else{
-					echo "<div class='timesheet_table_header_time'><div class='timesheet_padding'>-</div></div>";
-					echo "<div class='timesheet_table_header_time'><div class='timesheet_padding'>-</div></div>";
-					echo "<div class='timesheet_table_header_time'><div class='timesheet_padding'>-</div></div>";
-					echo "<div class='timesheet_table_header_time'><div class='timesheet_padding'>-</div></div>";
-				}
-				// check the carried forward table and sdd the flexi details to it only if within the current period
-				if($_GET["choice"]=="View" and $_GET["subchoice"] == "timesheet") {
 					$fieldList=array("timesheet_id","current_flexi");
 					$flexiMinutes = number_format($flexiPotTotal,1);
 					$valueArr = array($timesheetId, $flexiMinutes);
@@ -1388,6 +1377,11 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 					}else{ //update the flexi time in the existing records
 						$rec = dl::update("flexi_carried_forward_live", $writeArr, "timesheet_id = ".$timesheetId);
 					}
+				}else{
+					echo "<div class='timesheet_table_header_time'><div class='timesheet_padding'>-</div></div>";
+					echo "<div class='timesheet_table_header_time'><div class='timesheet_padding'>-</div></div>";
+					echo "<div class='timesheet_table_header_time'><div class='timesheet_padding'>-</div></div>";
+					echo "<div class='timesheet_table_header_time'><div class='timesheet_padding'>-</div></div>";
 				}
 				$date = add_date(strtotime($date),2);//add 2 to skip weekend
 				$weekTimeHrs=0;
@@ -1543,26 +1537,64 @@ function view_team_members() {
 	echo "</table>";
 }
 
+function checkWeeklyHours($userId) {
+	$userSettings = dl::select("flexi_user", "user_id=".$userId);
+	$sql = "select * from flexi_template as t join flexi_template_name  as tn on (t.template_name_id=tn.flexi_template_name_id)
+	join flexi_template_days as td on (tn.flexi_template_name_id=td.template_name_id)
+	join flexi_template_days_settings as tds on (tds.template_days_id=td.flexi_template_days_id)
+	where  t.template_id = ".$userSettings[0]["user_flexi_template"];
+	$flexi = dl::getQuery($sql);
+	$times = dl::select("flexi_day_times", "fdt_flexi_days_id = ".$flexi[0]["days_settings_id"]);
+	//now need to loop through the times
+	foreach($times as $time) {
+		$hours = substr($time["fdt_working_time"],0,2);
+		$mins = substr($time["fdt_working_time"],3,2);
+		if($time["fdt_weekday_id"] == 6) { // this highlights that all 5 days are this value so need to loop through 5 times and add up the mins and hours
+			for($n=1; $n<6; $n++) {
+				$weekTimeHrs+= $hours; 
+				$weekTimeMins+=$mins;
+			}
+		}else{ // count the hours and minutes for each day.
+			$weekTimeHrs+= $hours;
+			$weekTimeMins+=$mins;
+		}
+	}
+	while($weekTimeMins >= 60) {
+		$weekTimeMins-=60;
+		$weekTimeHrs++;
+	}
+	return(array("hours"=>$weekTimeHrs, "mins"=>$weekTimeMins));
+}
+
 function checkLeaveEntitlement($userId) {
 	global $entitledTo;
 	global $nextYrLeave;
 	global $hoursLeave;
 	global $hoursTaken;
-	$userSettings 		= dl::select("flexi_user", "user_id=".$userId);
-	$al 						= dl::select("flexi_al_template", "al_template_id=".$userSettings[0]["user_al_template"]);
-	$hours 					= dl::select("flexi_al_hours", "template_id=".$al[0]["al_template_id"]);
-	$entitledTo 			= $al[0]["al_entitlement"];
+	global $leaveAccountType;
+	$userSettings 				= dl::select("flexi_user", "user_id=".$userId);
+	$al 								= dl::select("flexi_al_template", "al_template_id=".$userSettings[0]["user_al_template"]);
+	$hours 							= dl::select("flexi_al_hours", "template_id=".$al[0]["al_template_id"]);
+	$leaveAccountType		= $al[0]["al_type"];
+	if($leaveAccountType 	== "Fulltime") {
+		$entitledTo 				= $al[0]["al_entitlement"];
+	}else{
+		$entitledTo				=	$hours[0]["h_hours"];	
+	}
+	
 	$leavestart 			= $al[0]["al_start_month"];
 	$hoursLeave 			= $hours[0]["h_hours"];
+	
 	//get used leave
 	if(date("n") 			>= date("n", strtotime($leavestart))){
 		//year is this year
 		$year 				= date("Y");
-		$datetoCompare = date("Y-m-d", mktime(0,0,0,date("n",strtotime($leavestart)),1,$year));
+		$datetoCompare= date("Y-m-d", mktime(0,0,0,date("n",strtotime($leavestart)),1,$year));
 		$dateNextYr  	= date("Y-m-d", mktime(0,0,0,date("n",strtotime($leavestart)),1,date("Y")+1));
+		
 	}else{
 		//the year is last year
-		$year 				= date("Y")-1	;
+		$year 				= date("Y")-1;
 		$datetoCompare = date("Y-m-d", mktime(0,0,0,date("n",strtotime($leavestart)),1,$year));
 		//must also check for leave in the following year eg october to december
 		$dateNextYr 		= date("Y-m-d", mktime(0,0,0,date("n",strtotime($leavestart)),1,date("Y")));
@@ -1571,7 +1603,7 @@ function checkLeaveEntitlement($userId) {
 	$sql 						= "select * from flexi_event as e
 	join flexi_event_type as fet on (fet.event_type_id=e.event_type_id) 
 	join flexi_timesheet as ft on (e.timesheet_id=ft.timesheet_id)
-	where event_startdate_time >= '$dateNextYr' and event_type_id = 3 and event_al = 'Yes' and user_id = ".$userId;
+	where event_startdate_time >= '$dateNextYr' and e.event_type_id = 3 and event_al = 'Yes' and user_id = ".$userId;
 	$nextDaysTaken 	= 0;
 	$nextYrL 				= dl::getQuery($sql);
 	foreach($nextYrL as $nYr) {
@@ -2231,6 +2263,7 @@ function save_user_edit() {
 				}else{ //this means we have to find the day and time for the particular day
 					//find out what day the event is on
 					$dayNumber = date("N", strtotime($dchange["event_startdate_time"]));
+					echo "<BR>Day Number = ".$dayNumber;
 					$findTime = dl::select("flexi_day_times", "fdt_flexi_days_id = ".$settings[0]["days_settings_id"]." and fdt_weekday_id =".$dayNumber);
 					if(!empty($findTime)) {
 						$dayDuration = $findTime[0]["fdt_working_time"];
@@ -2239,10 +2272,13 @@ function save_user_edit() {
 						$dayFound = false; //this is an event that has not been matched within the new template therefore it should be removed
 					}
 				}
-				echo "<BR>day duration 1 = $dayDuration<BR>";
+				echo "<BR>day duration = $dayDuration<BR>";
 				$fullorhalf =  dl::select("flexi_leave_count", "flc_event_id = ". $dchange["event_id"]);
-
-				echo "<BR>day duration 2 = $dayDuration<BR>";
+				if(empty($fullorhalf)) { //some other leave than annual leave which still needs to be changed
+					$forh = 1;
+				}else{
+					$forh = $fullorhalf[0]["flc_fullorhalf"];
+				}
 				if($dayFound) { // all is good update the event
 					$endHour = substr($dayDuration,0,2);
 					$endMin = substr($dayDuration,3,2);
@@ -2259,7 +2295,7 @@ function save_user_edit() {
 						}
 					}
 					if(!empty($endHour)) { //looks like all is well make the change
-						$endDateTime = strtotime($dchange["event_startdate_time"]) + ($endHour*60*60+$endMin*60+$endSec) * $fullorhalf[0]["flc_fullorhalf"] + $lunch_secs;
+						$endDateTime = strtotime($dchange["event_startdate_time"]) + ($endHour*60*60+$endMin*60+$endSec) * $forh + $lunch_secs;
 						$endDateTime = date("Y-m-d H:i:s",$endDateTime);
 						$updArr = array("event_enddate_time");
 						$valueArr = array($endDateTime);
@@ -2692,7 +2728,7 @@ function save_event($userId) {
 		}
 		if($eventWork == "Yes" and empty($earlyFlex)) {
 			if($endTime < $earliest_end or $endTime > $latest_end) {
-				echo $eventWork;
+				//echo $eventWork;
 				echo "<SCRIPT language='javascript'>alert('The start/end time you entered is not within the range specified for the Clinical Research Platforms flexitime scheme. Please re-enter the times to fall between the ranges of (Earliest End Time : $earliest_end & Latest End Time : $latest_end). If you have legitimately worked outside of these ranges please speak with Mandy Jarvis who will alter your times to reflect this.');" ;
 				echo "redirect('index.php?choice=Add&subchoice=addevent&type=".$_GET["type"]."');</SCRIPT>" ;
 				die();
@@ -2723,8 +2759,16 @@ function save_event($userId) {
 		}
 		//add the posted flexitime to the existing flexitime
 		$flexiAdd = $flexiAdd + ( strtotime($endDateTime) - strtotime( $startDateTime ) );
+		//work out the minimum lunch
+		$hours = date("H", strtotime($minimum_lunch_duration));
+		$mins = date("i", strtotime($minimum_lunch_duration));
+		$hours = $hours * 60 * 60;
+		$mins = $mins *60;
+		//subtract the minimum lunch
+		$flexiAdd = $flexiAdd - $hours - $mins;
 		//now need to get the template information to find out how much flexitime this person is allowed to take within the period.
 		$surplus = $dates[0]["max_surplus"]*60*60;
+		$surplus = $surplus * $dates[0]["max_holiday"]; //max_holiday is the maximum flexi-leave the person is allowed within a 4 week period.
 		if(date("H:i:s", $flexiAdd) > date("H:i:s", $surplus) ){
 			echo "<SCRIPT language='javascript'>alert('The flexitime request you are trying to create exceeds the flexitime leave you are allowed within this period. Please contact Mandy Jarvis who will be able to review this request. Thank you.');" ;
 			echo "redirect('index.php?choice=View&subchoice=timesheet')</SCRIPT>" ;
@@ -4171,7 +4215,7 @@ function add_flexi_template() {
 			array("prompt"=>"Account Period", "type"=>"selection", "name"=>"account_period", "listarr"=>array( "Calendar Month", "4 Weekly" ), "selected"=>"4 Weekly", "value"=>"", "clear"=>true),
 			array("prompt"=>"Maximum surplus", "type"=>"text", "name"=>"max_surplus", "length"=>20, "value"=>"Enter surplus (hrs:mins)", "clear"=>true),
 			array("prompt"=>"Maximum deficit", "type"=>"text", "name"=>"max_deficit", "length"=>20, "value"=>"Enter deficit (hrs:mins)", "clear"=>true),
-			array("prompt"=>"Maximum leave/period", "type"=>"text", "name"=>"leave_days", "length"=>20, "value"=>"Enter leave period", "clear"=>true),
+			array("prompt"=>"Maximum flexi/period", "type"=>"text", "name"=>"leave_days", "length"=>20, "value"=>"Enter leave period", "clear"=>true),
 			array("prompt"=>"Leave Expires after", "type"=>"selection", "name"=>"leave_period", "listarr"=>array("Never", "1 Month", "4 Weeks", "2 Months", "8 Weeks", "3 Months", "12 Weeks"), "selected"=>"4 Weeks", "length"=>20, "value"=>"", "clear"=>true),		
 			array("prompt"=>"Period Start Date", "type"=>"date", "name"=>"period_start", "length"=>20, "value"=>"", "clear"=>true),
 			array("prompt"=>"Period End date", "type"=>"date", "name"=>"period_end", "length"=>20, "value"=>"", "clear"=>true),
@@ -4220,7 +4264,7 @@ function edit_flexi_template() {
 				array("prompt"=>"Account Period", "type"=>"selection", "name"=>"account_period", "listarr"=>array( "Calendar Month", "4 Weekly" ), "selected"=>"4 Weekly", "value"=>$edit["account_period"], "clear"=>true),
 				array("prompt"=>"Maximum surplus", "type"=>"text", "name"=>"max_surplus", "length"=>20, "value"=>$edit["max_surplus"], "clear"=>true),
 				array("prompt"=>"Maximum deficit", "type"=>"text", "name"=>"max_deficit", "length"=>20, "value"=>$edit["max_deficit"], "clear"=>true),
-				array("prompt"=>"Maximum leave/period", "type"=>"text", "name"=>"leave_days", "length"=>20, "value"=>$edit["max_holiday"], "clear"=>true),
+				array("prompt"=>"Maximum flexi/period", "type"=>"text", "name"=>"leave_days", "length"=>20, "value"=>$edit["max_holiday"], "clear"=>true),
 				array("prompt"=>"Leave Expires after", "type"=>"selection", "name"=>"leave_period", "listarr"=>array("Never", "1 Month", "4 Weeks", "2 Months", "8 Weeks", "3 Months", "12 Weeks"), "selected"=>$edit["leave_period"], "length"=>20, "value"=>"", "clear"=>true),		
 				array("prompt"=>"Period Start Date", "type"=>"date", "name"=>"period_start", "length"=>20, "value"=>$edit["start_period"], "clear"=>true),
 				array("prompt"=>"Period End date", "type"=>"date", "name"=>"period_end", "length"=>20, "value"=>$edit["end_period"], "clear"=>true),
@@ -4779,6 +4823,7 @@ function add_leave_template() {
 			array("prompt"=>"Leave Entitlement", "type"=>"text", "name"=>"leave_entitlement", "length"=>20, "value"=>"", "clear"=>true),
 			array("prompt"=>"Leave Hours", "type"=>"text", "name"=>"leave_hours", "length"=>10, "value"=>"", "clear"=>true),
 			array("prompt"=>"Start Month", "type"=>"selection", "name"=>"start_month", "listarr"=>array( "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" ), "selected"=>"October", "value"=>"", "clear"=>true),
+			array("prompt"=>"Template Type", "type"=>"radio", "name"=>"template_type", "listarr"=>array("Fulltime", "Parttime"), "selected"=>"", "value"=>"", "clear"=>true),
 			array("type"=>"submit", "buttontext"=>"Create Template", "clear"=>true), 
 			array("type"=>'endform'));
 			$form = new forms;
@@ -4795,8 +4840,8 @@ function add_leave_template() {
 }
 
 function save_leave_template() {
-	$fieldarr= array("al_entitlement", "al_description","al_start_month");
-	$postarr= array($_POST["leave_entitlement"],$_POST["template_name"],$_POST["start_month"]);
+	$fieldarr= array("al_entitlement", "al_description","al_start_month", "al_type");
+	$postarr= array($_POST["leave_entitlement"],$_POST["template_name"],$_POST["start_month"], $_POST["template_type"]);
 	$save=array_combine($fieldarr, $postarr);
 	dl::insert("flexi_al_template", $save);
 	$lastId = dl::getId();
@@ -4815,6 +4860,7 @@ function edit_leave_template() {
 			array("prompt"=>"Leave Entitlement", "type"=>"text", "name"=>"leave_entitlement", "length"=>20, "value"=>$leave[0]["al_entitlement"], "clear"=>true),
 			array("prompt"=>"Leave Hours", "type"=>"text", "name"=>"leave_hours", "length"=>10, "value"=>$hours[0]["h_hours"], "clear"=>true),
 			array("prompt"=>"Start Month", "type"=>"selection", "name"=>"start_month", "listarr"=>array( "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" ), "selected"=>$leave[0]["al_start_month"], "value"=>"", "clear"=>true),
+			array("prompt"=>"Template Type", "type"=>"radio", "name"=>"template_type", "listarr"=>array("Fulltime", "Parttime"), "selected"=>$leave[0]["al_type"], "value"=>"", "clear"=>true),
 			array("type"=>"submit", "buttontext"=>"Save Template", "clear"=>true), 
 			array("type"=>'endform'));
 			$form = new forms;
@@ -4824,8 +4870,8 @@ function edit_leave_template() {
 }
 
 function save_leave_template_edit() {
-	$fieldarr= array("al_entitlement", "al_description","al_start_month");
-	$postarr= array($_POST["leave_entitlement"],$_POST["template_name"],$_POST["start_month"]);
+	$fieldarr= array("al_entitlement", "al_description","al_start_month", "al_type");
+	$postarr= array($_POST["leave_entitlement"],$_POST["template_name"],$_POST["start_month"], $_POST["template_type"]);
 	$save=array_combine($fieldarr, $postarr);
 	dl::update("flexi_al_template", $save, "al_template_id=".$_GET["id"]);
 	$hours = dl::select("flexi_al_hours", "template_id = ".$_GET["id"]);

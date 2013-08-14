@@ -70,6 +70,7 @@ $cal = new calendars;
 				$check_password = dl::select("flexi_security", "security_id=".$user_settings['secId']);
 				if(!empty($check_password)) {
 					foreach($check_password as $cp) {
+						echo MD5(SALT.$password), $cp["security_password"];
 						if($cp["security_password"] == MD5(SALT.$password)) {
 							$_SESSION["userSettings"]=$user_settings;
 							//connect to PERMISSION table and retrieve permission settings
@@ -140,13 +141,20 @@ $cal = new calendars;
 		//now need to get settings to display in left hand info location
 		//get annual leave entitlement and used leave
 		$used = checkLeaveEntitlement($_SESSION["userSettings"]["userId"]);
+		$arrTime = checkWeeklyHours($_SESSION["userSettings"]["userId"]);
 		global $entitledTo;
 		global $nextYrLeave;
 		global $hoursLeave;
+		global $hoursTaken;
+		global $leaveAccountType;
 		//now lets check if they have any additional holidays
 		$additional=0;
 		$additionalHols=dl::select("flexi_carried_forward_live", "timesheet_id=".$_SESSION["userSettings"]["timesheet"]);
 		$additional = $additionalHols[0]["additional_leave"]; 
+		if($leaveAccountType=="Parttime") {
+			$add = dl::select("flexi_template", "template_id=".$_SESSION["userSettings"]["flexiTemplate"]);
+			$additional = $additional * $add[0]["max_surplus"]; //this calculates the hours from the average hours worked per day.
+		}
 		?>
 		<div class='header_left'>
 			<div class='header_text'>
@@ -330,57 +338,73 @@ $cal = new calendars;
 			<div class='left_header'>
 			Entitlement:
 			</div>
-			<div class='left_text'>
-			<?php echo $entitledTo?> days
-			</div>
-            <div class='left_clear'></div>
-            <div class='left_header'>
-			Additional:
-			</div>
-			<div class='left_text'>
-			<?php echo $additional?> days
-			</div>
-            <div class='left_clear'></div>
-			<div class='left_header'>
-			Allocated:
-			</div>
-			<div class='left_text'>
-			<?php echo $used?> day(s)
-			</div>
-            <?php if($nextYrLeave > 0) { ?>
-            	<div class='left_clear'></div>
-                <div class='left_header'>
-                Next year:
-                </div>
-                <div class='left_text'>
-                <?php echo $nextYrLeave?> day(s)
-                </div>
-            <?php } ?>
-            <div class='left_clear'></div>
-			<div class='left_header'>
-			Remaining:
-			</div>
-			<div class='left_text'>
-			<?php $remaining= $entitledTo+$additional-$used;
-			echo $remaining;
-			?> day(s)
-			</div>
-			<div class='left_header'>
-			Hours:
-			</div>
-			<div class='left_text'>
-			<?php 
-			echo $hoursLeave;
-			?> hrs
-			</div>
-			<div class='left_header'>
-			Used Hours:
-			</div>
-			<div class='left_text'>
-			<?php 
-			echo $hoursTaken;
-			?> hrs
-			</div>
+			<?php if($leaveAccountType == "Fulltime") {?>
+				<div class='left_text'>
+				<?php echo $entitledTo?> days
+				</div>
+				<div class='left_clear'></div>
+				<div class='left_header'>
+				Additional:
+				</div>
+				<div class='left_text'>
+				<?php echo $additional?> days
+				</div>
+				<div class='left_clear'></div>
+				<div class='left_header'>
+				Allocated:
+				</div>
+				<div class='left_text'>
+				<?php echo $used?> day(s)
+				</div>
+				<?php if($nextYrLeave > 0) { ?>
+					<div class='left_clear'></div>
+					<div class='left_header'>
+					Next year:
+					</div>
+					<div class='left_text'>
+					<?php echo $nextYrLeave?> day(s)
+					</div>
+				<?php } ?>
+				<div class='left_clear'></div>
+				<div class='left_header'>
+				Remaining:
+				</div>
+				<div class='left_text'>
+				<?php $remaining= $entitledTo+$additional-$used;
+				echo $remaining;
+				?> day(s)
+				</div>
+			<?php }else{?>
+				<div class='left_text'>
+				<?php echo $entitledTo?> hrs
+				</div>
+				<div class='left_clear'></div>
+				<div class='left_header'>
+				Additional:
+				</div>
+				<div class='left_text'>
+				<?php echo $additional?> hrs
+				</div>
+				<div class='left_clear'></div>
+			
+				<div class='left_header'>
+				Used Hours:
+				</div>
+				<div class='left_text'>
+				<?php 
+				echo $hoursTaken;
+				?> hrs
+				</div>
+				<div class='left_header'>
+				Remaining:
+				</div>
+				<div class='left_text'>
+				<?php 
+				$remaining = $entitledTo+$additional-$hoursTaken;
+				echo $remaining;
+				?> hrs
+				</div>
+		<?php }?>
 		</div></div>
 		<?php
 
@@ -539,7 +563,7 @@ if($_SESSION["showMths"]== 4) {
 							if($cf[0]["current_flexi"] > $ft["max_deficit"]) { 
 								//need to get the managers' email address
 								//get approvers email and name
-								//dl::debug=true;
+								// dl::$debug=true;
 								//find the team the user is a local member of
 								$sql = "select * from flexi_team as ft 
 								join flexi_team_user as ftu on (ftu.team_id=ft.team_id)
