@@ -16,6 +16,7 @@ include('inc/email_messages.inc');
 require('inc/classes/calendar_class.php');
 require('inc/classes/form_class.php');
 require('inc/classes/libmail.inc');
+require('inc/classes/check_leave_class.php');
 require('inc/classes/tc_calendar.php');
 date_default_timezone_set('UTC');
 $cal = new calendars;
@@ -140,13 +141,14 @@ $cal = new calendars;
 	if($_SESSION["loggedin"]) { 
 		//now need to get settings to display in left hand info location
 		//get annual leave entitlement and used leave
-		$used = checkLeaveEntitlement($_SESSION["userSettings"]["userId"]);
-		$arrTime = checkWeeklyHours($_SESSION["userSettings"]["userId"]);
-		global $entitledTo;
-		global $nextYrLeave;
-		global $hoursLeave;
-		global $hoursTaken;
-		global $leaveAccountType;
+		$leave 						= new check_leave($_SESSION["userSettings"]["userId"]);
+		$arrTime 					= checkWeeklyHours($_SESSION["userSettings"]["userId"]);
+		$entitledTo 				= $leave->getLeaveEntitledTo();
+		$nextYrLeave 			= $leave->getNextYrLeaveTaken();
+		$hoursLeave				= $leave->getHoursLeave();
+		$hoursTaken 			= $leave->getHoursTaken();
+		$leaveAccountType 	= $leave->getLeaveAccountType();
+		$proRataTime 			= $leave->getProRataTime();
 		//now lets check if they have any additional holidays
 		$additional=0;
 		$additionalHols=dl::select("flexi_carried_forward_live", "timesheet_id=".$_SESSION["userSettings"]["timesheet"]);
@@ -340,21 +342,21 @@ $cal = new calendars;
 			</div>
 			<?php if($leaveAccountType == "Fulltime") {?>
 				<div class='left_text'>
-				<?php echo $entitledTo?> days
+				<?php echo $entitledTo/$proRataTime?> days
 				</div>
 				<div class='left_clear'></div>
 				<div class='left_header'>
 				Additional:
 				</div>
 				<div class='left_text'>
-				<?php echo $additional?> days
+				<?php echo $additional/$proRataTime?> days
 				</div>
 				<div class='left_clear'></div>
 				<div class='left_header'>
 				Allocated:
 				</div>
 				<div class='left_text'>
-				<?php echo $used?> day(s)
+				<?php echo $hoursTaken/$proRataTime?> day(s)
 				</div>
 				<?php if($nextYrLeave > 0) { ?>
 					<div class='left_clear'></div>
@@ -370,7 +372,7 @@ $cal = new calendars;
 				Remaining:
 				</div>
 				<div class='left_text'>
-				<?php $remaining= $entitledTo+$additional-$used;
+				<?php $remaining= ($entitledTo/$proRataTime)+($additional/$proRataTime)-$hoursTaken/$proRataTime;
 				echo $remaining;
 				?> day(s)
 				</div>
@@ -667,7 +669,7 @@ if($_SESSION["showMths"]== 4) {
 									$timeSaved = $timeSaved * -1;
 								}
 								$fieldList = array("timesheet_id", "sign", "flexitime","period_date");
-								$valuesArr = array($user["timesheet_id"], $carriedSign, $timeSaved, date("Y-m-d", strtotime($endPeriod)));
+								$valuesArr = array($user["timesheet_id"], $carriedSign,  $cf[0]["flexi_time_carried_forward"], date("Y-m-d", strtotime($endPeriod)));
 								$writeArr = array_combine($fieldList,$valuesArr);
 								dl::insert("flexi_carried_forward",$writeArr); //this has recorded the flexitime for the user for the current period. Will be used when examining the timesheet in each period.
 								//send email to manager copy superAdmin
@@ -843,7 +845,9 @@ if($_SESSION["showMths"]== 4) {
 					echo "</div>";
 				}
 			}
-
+			if($_GET["func"]=="reset_additional_leave") {
+				reset_additional_leave();
+			}
 			if($_GET["func"]=="logoff") {
 				clear_login();
 			}

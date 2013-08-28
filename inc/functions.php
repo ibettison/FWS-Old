@@ -571,7 +571,7 @@ function deliver_message($subject,$message) {
 
 function flexi_pot_edit($timesheetId) {
 	if(check_permission("Edit Flexipot")) {
-
+		
 		if( empty( $_GET["endDate"] ) or strtotime($_GET["endDate"]) > strtotime(date("Y-m-d")) ) {
 			//get the carried forward record
 			$carried = dl::select("flexi_carried_forward_live", "timesheet_id=".$timesheetId);
@@ -582,24 +582,34 @@ function flexi_pot_edit($timesheetId) {
 				dl::insert("flexi_carried_forward_live", $save);
 				$carried = dl::select("flexi_carried_forward_live", "timesheet_id=".$timesheetId);
 			}	
+			$sign = $carried[0]["sign"];
 			$carriedOverTime = date("H:i", ($carried[0]["flexi_time_carried_forward"]*60*60));		
 		}else{
-			$carried = dl::select("flexi_carried_forward", "timesheet_id=".$timesheetId." and period_date = '".$_GET["endDate"]."'");
-			if(! empty($carried) ) {
+			$carriedOver = dl::select("flexi_carried_forward", "timesheet_id=".$timesheetId." and period_date = '".$_GET["endDate"]."'");
+			$carried = dl::select("flexi_carried_forward_live", "timesheet_id=".$timesheetId);
+			if(! empty($carriedOver) ) {
 				//the endperiod has been found so change the value in - flexi_carried_forward
-				$carriedOverTime = date("H:i", ($carried[0]["flexitime"]*60*60));
+				$carriedOverTime = date("H:i", ($carriedOver[0]["flexitime"]*60*60));
+				$sign = $carriedOver[0]["sign"];
 			}else{ //the endperiod has not been found so the change must be in flexi_carried_forward_live
-				$carried = dl::select("flexi_carried_forward_live", "timesheet_id=".$timesheetId);
 				$carriedOverTime = date("H:i", ($carried[0]["flexi_time_carried_forward"]*60*60));
+				$sign = $carried[0]["sign"];
 			}
 		}
+		$sql = "select * from flexi_timesheet as t join flexi_user as u on (t.user_id=u.user_id) where timesheet_id = ".$timesheetId;
+		$username = dl::getQuery($sql);
+		//get annual leave entitlement and used leave
+		$leave 						= new check_leave($username[0]["user_id"]);
+		$leaveAccountType 	= $leave->getLeaveAccountType();
+		$proRataTime 			= $leave->getProRataTime();
 		echo "<div class='timesheet_workspace'>";
 		$formArr = array(array("type"=>"intro", "formtitle"=>"Carried Forward Time", "formintro"=>"Listed here is the time that has been carried forward. You can edit the time here but also swap time accumulated for supplemental holidays"), 
 			array("type"=>"form", "form"=>array("action"=>"index.php?func=saveflexipot&timesheet=".$timesheetId."&endDate=".$_GET["endDate"],"method"=>"post")),	
-			array("prompt"=>"Positive/minus", "type"=>"selection", "name"=>"posneg", "listarr"=>array("+","-"), "selected"=>$carried[0]["sign"], "value"=>"", "clear"=>true),
+			array("prompt"=>"User Name", "type"=>"label", "name"=>"usersCarriedOver", "length"=>30, "value"=>$username[0]["user_name"]." (".$leaveAccountType.")", "clear"=>true),
+			array("prompt"=>"Positive/minus", "type"=>"selection", "name"=>"posneg", "listarr"=>array("+","-"), "selected"=>$sign, "value"=>"", "clear"=>true),
 			array("prompt"=>"Carried over time", "type"=>"time", "name"=>"carried_over", "starttime"=>"0000", "endtime"=>"2300", "interval"=>1, "selected"=>$carriedOverTime, "clear"=>true),	
-			array("prompt"=>"Additional Leave", "type"=>"label", "name"=>"additionalLeave", "length"=>10, "value"=>$carried[0]["additional_leave"], "clear"=>true),
-			array("prompt"=>"New Leave (+/-)", "type"=>"text", "name"=>"newLeave", "length"=>10, "selected"=>"", "clear"=>true),
+			array("prompt"=>"Additional Leave", "type"=>"label", "name"=>"additionalLeave", "length"=>10, "value"=>$carried[0]["additional_leave"]." (1 day = ".$proRataTime." hours)", "clear"=>true),
+			array("prompt"=>"New Leave (+/-) Hours", "type"=>"text", "name"=>"newLeave", "length"=>10, "selected"=>"", "clear"=>true),
 			array("prompt"=>"Note", "type"=>"textarea", "name"=>"note", rows=>8, cols=>50, "selected"=>"", "clear"=>true),
 			array("type"=>"submit", "buttontext"=>"Edit", "clear"=>true), 
 			array("type"=>'endform'));
@@ -625,7 +635,6 @@ function add_reminder() {
 
 function flexi_pot_save($timesheetId) {
 	if(check_permission("Edit Flexipot")) {
-
 		//dl::$debug=true;
 		if( empty( $_GET["endDate"] ) ) {
 			$carriedFlexi = dl::select("flexi_carried_forward_live", "timesheet_id=".$timesheetId);
@@ -661,6 +670,9 @@ function flexi_pot_save($timesheetId) {
 				dl::update("flexi_carried_forward", array(sign=>$_POST["posneg"], flexitime=>$remainingLeave), "timesheet_id=".$timesheetId." and period_date = '".$_GET["endDate"]."'");
 			}else{ // update the live carried over time for the current period
 				dl::update("flexi_carried_forward_live", array(sign=>$_POST["posneg"], flexi_time_carried_forward=>$remainingLeave), "timesheet_id=".$timesheetId);
+			}
+			if($_POST["note"]!="") { //add the note to the carried forward note table
+				dl::insert("flexi_carried_forward_notes",array(timesheet_id=>$timesheetId, note=>$_POST["note"]));
 			}
 		}
 		echo "<SCRIPT language='javascript'>redirect('index.php?func=editflexipot&timesheet=$timesheetId');</SCRIPT>" ;
@@ -1485,6 +1497,22 @@ function add_messages_template() {
 	
 }
 
+function reset_additional_leave() {
+	// note this should only be ran once as it will cause issues if ran more that once. It uses the Additional leave to calculate an hourly value for the additional leave by using the max_surplus value
+	// replacing the additional_leave value after multiplying it by the max_surplus value.
+	//dl::$debug=true;
+	$leave = dl::select("flexi_carried_forward_live");
+	foreach( $leave as $l ) {
+		$additional_leave = $l["additional_leave"];
+		$timesheet = dl::select("flexi_timesheet", "timesheet_id = ". $l["timesheet_id"]);
+		$user = dl::select("flexi_user", "user_id=".$timesheet[0]["user_id"]);
+		$flexi_template = dl::select("flexi_template", "template_id = ".$user[0]["user_flexi_template"]);
+		$value = $additional_leave * $flexi_template[0]["max_surplus"];
+		echo $user[0]["user_name"]." ".$l["additional_leave"]." ".$flexi_template[0]["max_surplus"]." ".$value."<BR>";
+		dl::update("flexi_carried_forward_live", array("additional_leave"=>$value), "carried_forward_id =".$l["carried_forward_id"]);
+	}
+}
+
 function view_team_members() {
 	//dl::$debug=true;
 	if(!empty($_POST)) { //Team is a selection from the drop down list
@@ -1500,28 +1528,42 @@ function view_team_members() {
 		$user_name = dl::select("flexi_user", "user_id = ".$tm["user_id"]);
 		$userNames[] = array("user_name"=>$user_name[0]["user_name"], user_id=>$user_name[0]["user_id"]);
 		$timesheet= dl::select("flexi_timesheet", "user_id=".$user_name[0]["user_id"]);
+		
 		//get annual leave entitlement and used leave
-		$used = checkLeaveEntitlement($tm["user_id"]);
-		global $entitledTo;
-		global $nextYrLeave;
-		global $hoursLeave;
-		global $hoursTaken;
+		$leaveCheck 				= new check_leave($tm["user_id"]);
+		$entitledTo 				= $leaveCheck->getLeaveEntitledTo();
+		$nextYrLeave 			= $leaveCheck->getNextYrLeaveTaken();
+		$hoursLeave				= $leaveCheck->getHoursLeave();
+		$hoursTaken 			= $leaveCheck->getHoursTaken();
+		$leaveAccountType 	= $leaveCheck->getLeaveAccountType();
+		$proRataTime 			= $leaveCheck->getProRataTime();
 		//now lets check if they have any additional holidays
 		$additional=0;
 		$additionalHols=dl::select("flexi_carried_forward_live", "timesheet_id=".$timesheet[0]["timesheet_id"]);
 		$additional = $additionalHols[0]["additional_leave"];
-		$leave[]=array("days_taken"=>$used, "entitled_to"=>$entitledTo, "additional"=>$additional, "next_year"=>$nextYrLeave, "hours_leave"=>$hoursLeave, "hours_taken"=>$hoursTaken);
+		$leave[]=array("days_taken"=>$used, "entitled_to"=>$entitledTo, "additional"=>$additional, "next_year"=>$nextYrLeave, "hours_leave"=>$hoursLeave, "hours_taken"=>$hoursTaken, "account_type"=>$leaveAccountType, "proRata"=>$proRataTime);
 	}
 	$leaveCount = 0;
 	echo "<div class='timesheet_header'>Team Members</div>";
 	echo "<table class='table_view'>";
 	if(check_permission("View User Leave")) {
-		echo "<tr><th>User Names</th><th>Leave</th><th>Days Taken</th><th>Hours Leave</th><th>Hours Taken</th><th>Additional</th><th>Remaining</th><th>Next Year</th></tr>";
+		echo "<tr><th>User Names</th><th>Hours Leave</th><th>Hours Taken</th><th>Additional Hours</th><th>Remaining</th><th>Next Year</th></tr>";
 		foreach($userNames as $user) {
 			$deleted = dl::select("flexi_deleted", "user_id=".$user["user_id"]);
-			$remaining=$leave[$leaveCount]["entitled_to"]+$leave[$leaveCount]["additional"]-$leave[$leaveCount]["days_taken"];
+			$remaining=round($leave[$leaveCount]["hours_leave"]+$leave[$leaveCount]["additional"]-$leave[$leaveCount]["hours_taken"], 2);
+			if($leave[$leaveCount]["account_type"] == "Fulltime") {
+				$days 				= " ( ".round($leave[$leaveCount]["hours_leave"]/$leave[$leaveCount]["proRata"], 1)." days )";
+				$daysTaken  	= " ( ".round($leave[$leaveCount]["hours_taken"]/$leave[$leaveCount]["proRata"], 1)." days )";
+				$additionalHours= " ( ".round($leave[$leaveCount]["additional"]/$leave[$leaveCount]["proRata"], 1)." days )";
+				$remHours		= " ( ".round($remaining/$leave[$leaveCount]["proRata"],1 )." days )";
+			}else{
+				$days 				= "";
+				$daysTaken  	= "";
+				$additionalHours= "";
+				$remHours		= "";
+			}
 			if(empty($deleted)){
-				echo "<tr><td><a href='index.php?func=viewuserstimesheet&userid=".$user["user_id"]."'>".$user["user_name"]."</a></td><td>".$leave[$leaveCount]["entitled_to"]."</td><td>".$leave[$leaveCount]["days_taken"]."</td><td>".$leave[$leaveCount]["hours_leave"]."</td><td>".$leave[$leaveCount]["hours_taken"]."</td><td>".$leave[$leaveCount]["additional"]."</td><td>".$remaining."</td><td>".$leave[$leaveCount]["next_year"]."</td></tr>";
+				echo "<tr><td><a href='index.php?func=viewuserstimesheet&userid=".$user["user_id"]."'>".$user["user_name"]."</a></td><td>".round($leave[$leaveCount]["hours_leave"], 2).$days."</td><td>".round($leave[$leaveCount]["hours_taken"], 2).$daysTaken."</td><td>".round($leave[$leaveCount]["additional"], 2).$additionalHours."</td><td>".$remaining.$remHours."</td><td>".$leave[$leaveCount]["next_year"]."</td></tr>";
 			}
 			$leaveCount++;
 		}
@@ -1564,80 +1606,6 @@ function checkWeeklyHours($userId) {
 		$weekTimeHrs++;
 	}
 	return(array("hours"=>$weekTimeHrs, "mins"=>$weekTimeMins));
-}
-
-function checkLeaveEntitlement($userId) {
-	global $entitledTo;
-	global $nextYrLeave;
-	global $hoursLeave;
-	global $hoursTaken;
-	global $leaveAccountType;
-	$userSettings 				= dl::select("flexi_user", "user_id=".$userId);
-	$al 								= dl::select("flexi_al_template", "al_template_id=".$userSettings[0]["user_al_template"]);
-	$hours 							= dl::select("flexi_al_hours", "template_id=".$al[0]["al_template_id"]);
-	$leaveAccountType		= $al[0]["al_type"];
-	if($leaveAccountType 	== "Fulltime") {
-		$entitledTo 				= $al[0]["al_entitlement"];
-	}else{
-		$entitledTo				=	$hours[0]["h_hours"];	
-	}
-	
-	$leavestart 			= $al[0]["al_start_month"];
-	$hoursLeave 			= $hours[0]["h_hours"];
-	
-	//get used leave
-	if(date("n") 			>= date("n", strtotime($leavestart))){
-		//year is this year
-		$year 				= date("Y");
-		$datetoCompare= date("Y-m-d", mktime(0,0,0,date("n",strtotime($leavestart)),1,$year));
-		$dateNextYr  	= date("Y-m-d", mktime(0,0,0,date("n",strtotime($leavestart)),1,date("Y")+1));
-		
-	}else{
-		//the year is last year
-		$year 				= date("Y")-1;
-		$datetoCompare = date("Y-m-d", mktime(0,0,0,date("n",strtotime($leavestart)),1,$year));
-		//must also check for leave in the following year eg october to december
-		$dateNextYr 		= date("Y-m-d", mktime(0,0,0,date("n",strtotime($leavestart)),1,date("Y")));
-	}
-	//check if you have any leave booked from next years entitlement
-	$sql 						= "select * from flexi_event as e
-	join flexi_event_type as fet on (fet.event_type_id=e.event_type_id) 
-	join flexi_timesheet as ft on (e.timesheet_id=ft.timesheet_id)
-	where event_startdate_time >= '$dateNextYr' and e.event_type_id = 3 and event_al = 'Yes' and user_id = ".$userId;
-	$nextDaysTaken 	= 0;
-	$nextYrL 				= dl::getQuery($sql);
-	foreach($nextYrL as $nYr) {
-		$checkLeave 	= dl::select("flexi_leave_count", "flc_event_id = ".$nYr["event_id"]);
-		if(!empty($checkLeave)) {
-			$nextDaysTaken += $checkLeave[0]["flc_fullorhalf"];
-		}
-	}
-	$nextYrLeave 		= $nextDaysTaken;
-	$sql 						= "Select fe.event_id, fe.event_startdate_time, fe.event_enddate_time from flexi_event as fe 
-	join flexi_event_type as fet on (fet.event_type_id=fe.event_type_id) 
-	join flexi_timesheet as ft on (fe.timesheet_id=ft.timesheet_id) 
-	where fe.event_type_id = 3 and event_al = 'Yes' and event_startdate_time >= '$datetoCompare' and event_startdate_time <= '$dateNextYr' and user_id =".$userId;
-	$l 						= dl::getQuery($sql);
-	$sql 						= "select * from flexi_user as u join flexi_template as t on (u.user_flexi_template=t.template_id)
-				join flexi_template_days as td on (td.template_name_id=t.template_id) 
-				join flexi_template_days_settings as tds on (td.flexi_template_days_id=tds.template_days_id)
-				where user_id = ".$userId;
-	$template_days_id = dl::getQuery($sql);
-	foreach($l as $leave) {
-		$dayVal 			= date("N", strtotime($leave["event_startdate_time"]));
-		$time				= dl::select("flexi_day_times", "fdt_weekday_id=".$dayVal." and fdt_flexi_days_id = ".$template_days_id[0]["days_settings_id"]);
-		if(empty($time)) { // assuming this applies to all days but lets check
-			$time 			= dl::select("flexi_day_times", "fdt_weekday_id = 6 and fdt_flexi_days_id = ".$template_days_id[0]["days_settings_id"]);
-		}
-		$checkLeave 	= dl::select("flexi_leave_count", "flc_event_id = ".$leave["event_id"]);
-		if(!empty($checkLeave)) {
-			$daysTaken 	+= $checkLeave[0]["flc_fullorhalf"];
-			$hour 			+= substr($time[0]["fdt_working_time"],0,2) * $checkLeave[0]["flc_fullorhalf"]; 			//multiply by 1 or 0.5 depending on if its a full or half days leave
-			$min 			+= (substr($time[0]["fdt_working_time"],3,2)/60) * $checkLeave[0]["flc_fullorhalf"]; 	//convert to a decimal divide by 60
-		}
-	}
-	$hoursTaken 		= $hour + $min;
-	return($daysTaken);
 }
 
 function approve_leave() {
@@ -1704,8 +1672,13 @@ function approve_leave() {
 		echo "<tr><th>Approve</th><th>Refuse</th><th>Request From</th><th>Type</th><th>Annual Leave</th><th>Start</th><th>End</th><th>Reason for refusal</th><th>View</th></tr>";
 		foreach($reqArr as $r) {
 			//get annual leave entitlement and used leave
-			$used = checkLeaveEntitlement($r["userId"]);
-			global $entitledTo;
+			$leave 						= new check_leave($r["userId"]);
+			$entitledTo 				= $leave->getLeaveEntitledTo();
+			$nextYrLeave 			= $leave->getNextYrLeaveTaken();
+			$hoursLeave				= $leave->getHoursLeave();
+			$hoursTaken 			= $leave->getHoursTaken();
+			$leaveAccountType 	= $leave->getLeaveAccountType();
+			$proRataTime 			= $leave->getProRataTime();
 			//check if the holidays are from this years entitlement or next years
 			$usersLeave = dl::select("flexi_user", "user_id=".$r["userId"]);
 			$check_date = dl::select("flexi_al_template", "al_template_id = ".$usersLeave[0]["user_al_template"]);
@@ -1716,13 +1689,22 @@ function approve_leave() {
 			}else{
 				//now lets check if they have any additional holidays
 				$additional=0;
-				$additionalHols=dl::select("flexi_carried_forward_live", "timesheet_id=".$r["timesheetId"]);
-				$additional = $additionalHols[0]["additional_leave"];
-				$remaining = $entitledTo + $additional - $used;
-				$remaining .= " days left";
+				$additionalHols		=dl::select("flexi_carried_forward_live", "timesheet_id=".$timesheet[0]["timesheet_id"]);
+				$additional 			= $additionalHols[0]["additional_leave"];
+				echo $additional;
+				$remaining			=$hoursLeave+$additional-$hoursTaken;
+				if($leaveAccountType == "Fulltime") {
+					$day = "days";
+					if(round($remaining/$proRataTime,1 ) == 1) {
+						$day = "day";
+					}
+					$remHours		= " ( ".round($remaining/$proRataTime,1 )." $day left )";
+				}else{
+					$remHours		= " hours";
+				}
 			}
 			if(!in_array($r["id"],$searchArr)){
-				echo "<tr><td style='text-align:center'><input type='checkbox' name='approve[]' value='".$r["id"]."' $checked></td><td style='text-align:center'><input type='checkbox' name='refuse[]' value='".$r["id"]."'></td><td>".$r["user"]."</td><td>".$r["type"]."</td><td>".$remaining."</td><td>".substr($r["startdate"],0,16)."</td><td>".substr($r["enddate"],0,16)."</td><td><input type='text' size='50' name='message".$r["id"]."'><td style='text-align:center'><a href='index.php?func=showwk&startdate=".$r["startdate"]."&team=".$r["team"]."'><img src='inc/images/exclamation.png' border='0'></a></td></tr>";
+				echo "<tr><td style='text-align:center'><input type='checkbox' name='approve[]' value='".$r["id"]."' $checked></td><td style='text-align:center'><input type='checkbox' name='refuse[]' value='".$r["id"]."'></td><td>".$r["user"]."</td><td>".$r["type"]."</td><td>".$remaining.$remHours."</td><td>".substr($r["startdate"],0,16)."</td><td>".substr($r["enddate"],0,16)."</td><td><input type='text' size='50' name='message".$r["id"]."'><td style='text-align:center'><a href='index.php?func=showwk&startdate=".$r["startdate"]."&team=".$r["team"]."'><img src='inc/images/exclamation.png' border='0'></a></td></tr>";
 			}
 			$searchArr[] = $r["id"];
 		}
@@ -2473,8 +2455,6 @@ function add_time($title, $intro) {
 
 function add_event($title, $intro, $user="") {
 	if(check_permission("Events")) {
-
-		
 		if(empty($user)) {
 			$userId = $_SESSION["userSettings"]["userId"];
 		}else{
@@ -2496,6 +2476,7 @@ function add_event($title, $intro, $user="") {
 		join flexi_template_days_settings as ftds on (ftds.template_days_id=ftd.flexi_template_days_id) 
 		where user_id = $userId";
 		$event_settings = dl::getQuery($sql);
+		$userName = $event_settings[0]["user_name"];
 		//now lets find the default event ie. Working Day
 		$event = dl::select("flexi_event_type", "event_type_name='Working Day'");
 		$default_event = $event[0]["event_type_id"];
@@ -2533,6 +2514,10 @@ function add_event($title, $intro, $user="") {
 			$arrDurations= array("","Full day", "Half day");
 			//altered to a Full day or a Half day as the new template flexi_day-times will calculate the event time for the selected Day.
 		}
+		//now lets check if the selected event needs to show if a remainder option should be added to the $arrDurations array_combine
+		if($event[0]["event_remainder"]  == "Yes") {
+			array_push($arrDurations, "Remainder");
+		}
 		$event_types = dl::select("flexi_event_type");
 		
 		foreach($event_types as $types) {
@@ -2547,6 +2532,7 @@ function add_event($title, $intro, $user="") {
 		echo "<div class='timesheet_workspace'>";
 		$formArr[] = array("type"=>"intro", "formtitle"=>$title, "formintro"=>$intro); 
 		$formArr[] = array("type"=>"form", "form"=>array("action"=>"index.php?func=saveevent&user=$userId","method"=>"post"));	
+		$formArr[] = array("prompt"=>"User", "type"=>"label", "name"=>"user_name", "value"=>$userName, "clear"=>true);
 		$formArr[] = array("prompt"=>"Event Type", "type"=>"selection", "name"=>"event_type", "listarr"=>$eTypes, "selected"=>$default_event_description, "value"=>"", "clear"=>true, onchange=>"this.value");
 		if($multi_date == "Yes") {
 			$formArr[]=array("prompt"=>"Date From", "type"=>"date", "name"=>"date_name", "length"=>20, "value"=>$dateVal, zindex=>2, "clear"=>true);
@@ -2628,7 +2614,7 @@ function save_event($userId) {
 	//check to see if the duration is fixed that a value has been entered for event duration
 	if($durationType == "Fixed" and empty($_POST["duration"])) { //need to message the user ?>
 		<SCRIPT language="javascript">
-		alert("The event type you have tried to enter is a fixed type and therefore requires you to select an event duration. \n\nPlease re-enter the times to include the duration time (day, morning, afternoon).");
+		alert("The event type you have tried to enter is a fixed type and therefore requires you to select an event duration. \n\nPlease re-enter the times to include the duration time.");
 		redirect("index.php?choice=Add&subchoice=addevent");
 		</SCRIPT>
     	<?php
@@ -2641,6 +2627,12 @@ function save_event($userId) {
 	if($multiDate=="Yes") {
 		if($_POST["date_name"] != $_POST["date_name2"]) {
 			$multipleDates=true;
+			//check if the duration is not Remainder
+			if($leaveDuration == "Remainder") {
+				echo "<SCRIPT language='javascript'>alert('The event duration you selected was \"Remainder\" this cannot be selected with Multiple date. Please select \"Fullday\" to add your events.');" ;
+				echo "redirect('index.php?choice=Add&subchoice=addevent&type=".$_GET["type"]."');</SCRIPT>" ;
+				die();
+			}
 			if($_POST["date_name"] > $_POST["date_name2"]) {
 				?>
 				<SCRIPT language="javascript">
@@ -2676,7 +2668,7 @@ function save_event($userId) {
 				if(date("h", strtotime($duration_link[0]["fdt_working_time"])) >= 6) { // check if the time is greater than or equal to 6 hours. This is a EUROPEAN directive....
 					$add_lunch = strtotime($minimum_lunch_duration); // add min lunch as it will be taken off
 				}	
-			}else{
+			}elseif($leaveDuration == "Half Day"){
 				if(date("h", strtotime($duration_link[0]["fdt_working_time"]))/2 >= 6) { // check if the time is greater than or equal to 6 hours. This is a EUROPEAN directive....
 					$add_lunch = strtotime($minimum_lunch_duration); // add min lunch as it will be taken off
 				}
@@ -2687,12 +2679,56 @@ function save_event($userId) {
 		$duration = $duration_link[0]["fdt_working_time"];
 		$startTime = $_POST["duration_time_start"].":".$_POST["duration_time_start_mins"].":00";
 		$startTimeSecs = $_POST["duration_time_start"] * 60 * 60 + $_POST["duration_time_start_mins"] * 60;
-		$endTimeSecs = substr($duration,0,2) * 60 * 60 + substr($duration,3,2) * 60 + substr($duration,6,2) * 60;
+		$eventsToday = dl::select("flexi_event", "event_startdate_time >= '".$_POST["date_name"]." 00:00:00' and event_enddate_time <= '".$_POST["date_name"]." 23:59:59' and timesheet_id = ".$timeSheetId." order by event_startdate_time ASC");
+		if($leaveDuration == "Remainder") {
+			//this is either a (offsite mtg, Sickness, Training, Hospital or Emergency leave)
+			if(count($eventsToday) > 0) { //there is an existing event on this day so get the start time and work out the end time from the day duration
+				//puts the earliest event at the top
+				$startSecs = substr($eventsToday[0]["event_startdate_time"],11,2) * 60 * 60 + substr($eventsToday[0]["event_startdate_time"],14,2) * 60 + substr($eventsToday[0]["event_startdate_time"],17,2) * 60;
+				$durationSecs = substr($duration,0,2) * 60 * 60 + substr($duration,3,2) * 60 + substr($duration,6, 2) * 60;
+				$endTimeSecs = $startSecs + $durationSecs;
+				$endTimeSecs = $endTimeSecs - $startTimeSecs;
+			}else{ //this is the first event on this day so lets make an assumption that the start time is 09:00
+				$startSecs = 9*60*60;
+				$durationSecs = substr($duration,0,2) * 60 * 60 + substr($duration,3,2) * 60 + substr($duration,6, 2) * 60;
+				$endTimeSecs = $startSecs + $durationSecs;
+				$endTimeSecs = $endTimeSecs - $startTimeSecs;
+			}
+		}else{
+			$endTimeSecs = substr($duration,0,2) * 60 * 60 + substr($duration,3,2) * 60 + substr($duration,6,2) * 60;
+			
+		}
 		if($leaveDuration == 'Half day') {
 			$endTimeSecs = $endTimeSecs/2;
 		}
 		$endTime = date("H:i:s", $startTimeSecs + $endTimeSecs+ $add_lunch);
 	}else{
+		//need to find out which day the posted date is for
+		$dayNo = date("N", strtotime($_POST["date_name"]));
+		//lets get the day duration for the first day of the event
+		$duration_link = dl::select("flexi_day_times", "fdt_flexi_days_id = ".$days_settings_id." and fdt_weekday_id = ".$dayNo);
+		if(empty($duration_link)) { // this means that the weekday pattern is fixed for all days so lets check that with the weekday_id == 6
+			$duration_link = dl::select("flexi_day_times", "fdt_flexi_days_id = ".$days_settings_id." and fdt_weekday_id = 6");
+		}
+		if(!empty($duration_link)){
+			$duration = $duration_link[0]["fdt_working_time"];
+			$eventsToday = dl::select("flexi_event", "event_startdate_time >= '".$_POST["date_name"]." 00:00:00' and event_enddate_time <= '".$_POST["date_name"]." 23:59:59' and timesheet_id = ".$timeSheetId." order by event_startdate_time ASC");
+			//lets check if there are more than one event on this day and check if it is an event which is a remainder event
+			//as we will probably have to change the end date of the remainder event.
+			if(count($eventsToday) > 0) {
+				//now need to check if any of the events are remainder events.
+				foreach($eventsToday as $evs) {
+					$checkRems = dl::select("flexi_remainder", "r_event = ".$evs["event_id"]);
+					if(!empty($checkRems)) {
+						$startSecs = $_POST["time_start"] * 60 * 60 + $_POST["time_start_mins"] * 60;
+						$durationSecs = substr($duration,0,2) * 60 * 60 + substr($duration,3,2) * 60 + substr($duration,6, 2) * 60;
+						$endTimeSecs = $startSecs + $durationSecs;
+						$endTimeSecs = $endTimeSecs - $startTimeSecs;
+						dl::update("flexi_event", array("event_enddate_time"=>$_POST["date_name"]." ".date("H:i:s", $endTimeSecs)), "event_id = ".$evs["event_id"]);
+					}
+				}
+			}
+		}
 		$startTime = $_POST["time_start"].":".$_POST["time_start_mins"].":00";
 		$endTime = $_POST["time_end"].":".$_POST["time_end_mins"].":00";
 	}
@@ -2805,14 +2841,21 @@ function save_event($userId) {
 		$save = array_combine($fieldarr, $postarr);
 		if($eventGlobal=="No"){ //will write this record lower down.
 			dl::insert("flexi_event", $save);
+			$lastId = dl::getId();
 			$sql = "select MAX(event_id) as maxId from flexi_event where timesheet_id = ".$timeSheetId;
 			$lastRec = dl::getQuery($sql);
+			
 			if($eventType == 'Annual Leave') {
 				if($leaveDuration == "Full day") {
 					dl::insert("flexi_leave_count", array("flc_fullorhalf"=>1.0, "flc_event_id"=>$lastRec[0]["maxId"]));
 				}else{
 					dl::insert("flexi_leave_count", array("flc_fullorhalf"=>0.5, "flc_event_id"=>$lastRec[0]["maxId"]));
 				}
+			}
+			if($leaveDuration == "Remainder") { 
+				//if this is a remainder then add a record to the remainder table. Used to change the end time of the remainder event when a working event is added with a real start time.
+				//the remainder event initially assumes a start time of 09:00 in the morning, uses the day duration from the users working pattern to create a supposed end time.
+				dl::insert("flexi_remainder", array("r_event"=>$lastId));
 			}
 		}
 		//get the event Id for the event that has just been written
@@ -3559,7 +3602,8 @@ function add_event_type() {
 			array("prompt"=>"Global", "type"=>"checkbox", "name"=>"global_tag", "value"=>"Yes", "clear"=>false),
 			array("prompt"=>"Requires Authorisation", "type"=>"checkbox", "name"=>"author_tag", "value"=>"Yes", "clear"=>true),
 			array("prompt"=>"User can delete", "type"=>"checkbox", "name"=>"del_tag", "value"=>"Yes", "clear"=>false),
-			array("prompt"=>"Can override Template", "type"=>"checkbox", "name"=>"override_template", "value"=>"Yes", "clear"=>true),
+			array("prompt"=>"Can override Template", "type"=>"checkbox", "name"=>"override_template", "value"=>"Yes", "clear"=>false),
+			array("prompt"=>"Show Remainder", "type"=>"checkbox", "name"=>"remainder", "value"=>"Yes", "clear"=>true),
 			array("prompt"=>"Select Colour", "type"=>"colour", "name"=>"sel_colour", "length"=>20, "value"=>"", "clear"=>true),
 			array("prompt"=>"Duration Type", "type"=>"radio", "name"=>"duration_type", "listarr"=>array("Fixed","User definable", "Both"), "selected"=>"fixed", "value"=>"", "clear"=>true),
 			array("prompt"=>"Changes Time", "type"=>"checkbox", "name"=>"changes_time", "value"=>"Yes", "clear"=>false),
@@ -3575,7 +3619,7 @@ function add_event_type() {
 }
 
 function save_event_type() {
-	$fieldarr = array("event_type_name", "event_colour", "event_shortcode","event_description","event_al", "event_flexi","event_work","event_global","event_authorisation", "event_sickness","event_delete", "event_override");
+	$fieldarr = array("event_type_name", "event_colour", "event_shortcode","event_description","event_al", "event_flexi","event_work","event_global","event_authorisation", "event_sickness","event_delete", "event_override", "remainder");
 	$leave=$_POST["leave_tag"];
 	$flexi=$_POST["flexi_tag"];
 	$work=$_POST["work_tag"];
@@ -3584,6 +3628,7 @@ function save_event_type() {
 	$author=$_POST["author_tag"];
 	$delete=$_POST["del_tag"];
 	$override=$_POST["override_template"];
+	$remainder = $_POST["remainder"];
 	if($leave == "") {
 		$leave = "No";
 	}
@@ -3608,7 +3653,10 @@ function save_event_type() {
 	if($override== "") {
 		$override = "No";
 	}
-	$postarr = array($_POST["type_name"],$_POST["sel_colour"],$_POST["short_code"],$_POST["type_description"],$leave, $flexi, $work, $global, $author, $sick, $delete, $override);
+	if($remainder== "") {
+		$remainder = "No";
+	}
+	$postarr = array($_POST["type_name"],$_POST["sel_colour"],$_POST["short_code"],$_POST["type_description"],$leave, $flexi, $work, $global, $author, $sick, $delete, $override, $remainder);
 	$save = array_combine($fieldarr, $postarr);
 	dl::insert("flexi_event_type", $save);
 	//saved the template name now need to get the template name id
@@ -3627,9 +3675,9 @@ function view_event_types() {
 	echo "<div class='timesheet_header'>View Event Types</div>";
 	$events = dl::select("flexi_event_type");
 	echo "<table class='table_view'>";
-	echo "<tr><th>Name</th><th>Colour</th><th>Short Code</th><th>Description</th><th>Annual Leave</th><th>Flexi</th><th>Work</th><th>Sick</th><th>Global</th><th>Author-isation</th><th>Can delete</th><th>Can Override</th></tr>";
+	echo "<tr><th>Name</th><th>Colour</th><th>Short Code</th><th>Description</th><th>Annual Leave</th><th>Flexi</th><th>Work</th><th>Sick</th><th>Global</th><th>Author-isation</th><th>Can delete</th><th>Can Override</th><th>Show remainder</th></tr>";
 	foreach($events as $event) {
-		echo "<tr><td>".$event["event_type_name"]."</td><td style='background-color:".$event["event_colour"].";' >&nbsp;</td><td>".$event["event_shortcode"]."</td><td>".$event["event_description"]."</td><td>".$event["event_al"]."</td><td>".$event["event_flexi"]."</td><td>".$event["event_work"]."</td><td>".$event["event_sickness"]."</td><td>".$event["event_global"]."</td><td>".$event["event_authorisation"]."</td><td>".$event["event_delete"]."</td><td>".$event["event_override"]."</td></tr>";
+		echo "<tr><td>".$event["event_type_name"]."</td><td style='background-color:".$event["event_colour"].";' >&nbsp;</td><td>".$event["event_shortcode"]."</td><td>".$event["event_description"]."</td><td>".$event["event_al"]."</td><td>".$event["event_flexi"]."</td><td>".$event["event_work"]."</td><td>".$event["event_sickness"]."</td><td>".$event["event_global"]."</td><td>".$event["event_authorisation"]."</td><td>".$event["event_delete"]."</td><td>".$event["event_override"]."</td><td>".$event["event_remainder"]."</td></tr>";
 	}
 	echo "</table>";
 }
@@ -3639,9 +3687,9 @@ function select_event_types() {
 		echo "<div class='timesheet_header'>Edit Event Types</div>";
 		$events = dl::select("flexi_event_type");
 		echo "<table class='table_view'>";
-		echo "<tr><th>Name</th><th>Colour</th><th>Short Code</th><th>Description</th><th>Leave</th><th>Flexi</th><th>Work</th><th>Sick</th><th>Global</th><th>Author-isation</th><th>Can delete</th><th>Can Override</th><th>Delete</th><th>Edit</th></tr>";
+		echo "<tr><th>Name</th><th>Colour</th><th>Short Code</th><th>Description</th><th>Leave</th><th>Flexi</th><th>Work</th><th>Sick</th><th>Global</th><th>Author-isation</th><th>Can delete</th><th>Can Override</th><th>Show remainder</th><th>Delete</th><th>Edit</th></tr>";
 		foreach($events as $event) {
-			echo "<tr><td>".$event["event_type_name"]."</td><td style='background-color:".$event["event_colour"].";' >&nbsp;</td><td>".$event["event_shortcode"]."</td><td>".$event["event_description"]."</td><td>".$event["event_al"]."</td><td>".$event["event_flexi"]."</td><td>".$event["event_work"]."</td><td>".$event["event_sickness"]."</td><td>".$event["event_global"]."</td><td>".$event["event_authorisation"]."</td><td>".$event["event_delete"]."</td><td>".$event["event_override"]."</td><td><a href='index.php?func=deleteeventtype&id=".$event["event_type_id"]."'>delete</a></td><td><a href='index.php?func=editeventtype&id=".$event["event_type_id"]."'>edit</a></td></tr>";
+			echo "<tr><td>".$event["event_type_name"]."</td><td style='background-color:".$event["event_colour"].";' >&nbsp;</td><td>".$event["event_shortcode"]."</td><td>".$event["event_description"]."</td><td>".$event["event_al"]."</td><td>".$event["event_flexi"]."</td><td>".$event["event_work"]."</td><td>".$event["event_sickness"]."</td><td>".$event["event_global"]."</td><td>".$event["event_authorisation"]."</td><td>".$event["event_delete"]."</td><td>".$event["event_override"]."</td><td>".$event["event_remainder"]."</td><td><a href='index.php?func=deleteeventtype&id=".$event["event_type_id"]."'>delete</a></td><td><a href='index.php?func=editeventtype&id=".$event["event_type_id"]."'>edit</a></td></tr>";
 		}
 		echo "</table>";
 	}
@@ -3666,7 +3714,8 @@ function edit_event_types() {
 				array("prompt"=>"Global", "type"=>"checkbox", "name"=>"global_tag", "selected"=>$editType["event_global"], "value"=>"Yes", "clear"=>false),
 				array("prompt"=>"Requires Authorisation", "type"=>"checkbox", "name"=>"author_tag", "selected"=>$editType["event_authorisation"], "value"=>"Yes", "clear"=>true),
 				array("prompt"=>"User can delete", "type"=>"checkbox", "name"=>"del_tag", "selected"=>$editType["event_delete"], "value"=>"Yes", "clear"=>false),
-				array("prompt"=>"Can Override Template", "type"=>"checkbox", "name"=>"override_template", "selected"=>$editType["event_override"], "value"=>"Yes", "clear"=>true),
+				array("prompt"=>"Can Override Template", "type"=>"checkbox", "name"=>"override_template", "selected"=>$editType["event_override"], "value"=>"Yes", "clear"=>false),
+				array("prompt"=>"Show remainder", "type"=>"checkbox", "name"=>"remainder", "selected"=>$editType["event_remainder"], "value"=>"Yes", "clear"=>true),
 				array("prompt"=>"Current Colour (select a new colour to change)", "type"=>"text", "name"=>"sel_colour", "length"=>20, "value"=>$editType["event_colour"], "clear"=>true),
 				array("prompt"=>"Select Colour", "type"=>"colour", "name"=>"new_colour", "length"=>20, "value"=>$editType["event_colour"], "clear"=>true),
 				array("prompt"=>"Duration Type", "type"=>"radio", "name"=>"duration_type", "listarr"=>array("Fixed","User definable", "Both"), "selected"=>$editType["duration_type"], "value"=>"", "clear"=>true),
@@ -3684,7 +3733,7 @@ function edit_event_types() {
 }
 
 function save_event_type_edit() {
-	$fieldarr = array("event_type_name", "event_colour", "event_shortcode","event_description", "event_al", "event_flexi","event_work","event_global","event_authorisation","event_sickness","event_delete", "event_override");
+	$fieldarr = array("event_type_name", "event_colour", "event_shortcode","event_description", "event_al", "event_flexi","event_work","event_global","event_authorisation","event_sickness","event_delete", "event_override", "event_remainder");
 	if(!empty($_POST["new_colour"])) {
 		$colour=$_POST["new_colour"]; 
 	}else{
@@ -3698,6 +3747,7 @@ function save_event_type_edit() {
 	$author=$_POST["author_tag"];
 	$delete=$_POST["del_tag"];
 	$override = $_POST["override_template"];
+	$remainder = $_POST["remainder"];
 	if($leave == "") {
 		$leave = "No";
 	}
@@ -3716,10 +3766,16 @@ function save_event_type_edit() {
 	if($author == "") {
 		$author = "No";
 	}
+	if($override == "") {
+		$override = "No";
+	}
+	if($remainder == "") {
+		$remainder = "No";
+	}
 	if($delete == "") {
 		$delete = "No";
 	}
-	$postarr = array($_POST["type_name"],$colour,$_POST["short_code"],$_POST["type_description"],$leave, $flexi, $work, $global, $author, $sick, $delete, $override);
+	$postarr = array($_POST["type_name"],$colour,$_POST["short_code"],$_POST["type_description"],$leave, $flexi, $work, $global, $author, $sick, $delete, $override, $remainder);
 	$save = array_combine($fieldarr, $postarr);
 	dl::update("flexi_event_type", $save, "event_type_id=".$_GET["id"]);
 	//now update the settings

@@ -1,6 +1,6 @@
 <?php
 session_start();
-//error_reporting("E_ALL & ~E_NOTICE");
+error_reporting("E_ALL & ~E_NOTICE");
 //error_reporting("~E_NOTICE");
 require('inc/mysqli_datalayer.php');
 require('inc/connection.inc');
