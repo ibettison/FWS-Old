@@ -2578,7 +2578,7 @@ function save_event($userId) {
 	include("inc/email_messages.inc");
 	//dl::$debug=true;
 	$eventType							= $_POST["event_type"];
-	$leaveDuration						= $_POST["duration"]; // this 'Full day' or 'Half day' or Blank
+	$leaveDuration						= $_POST["duration"]; // this 'Full day', 'Half day' 'Remainder' or Blank
 	$event 									= dl::select("flexi_event_type", "event_type_name='$eventType'");
 	$eventId 								= $event[0]["event_type_id"];
 	//check the event type to see if an authorisation is required
@@ -2713,7 +2713,7 @@ function save_event($userId) {
 		if(!empty($duration_link)){
 			$duration = $duration_link[0]["fdt_working_time"];
 			$eventsToday = dl::select("flexi_event", "event_startdate_time >= '".$_POST["date_name"]." 00:00:00' and event_enddate_time <= '".$_POST["date_name"]." 23:59:59' and timesheet_id = ".$timeSheetId." order by event_startdate_time ASC");
-			//lets check if there are more than one event on this day and check if it is an event which is a remainder event
+			//lets check if there is more than one event on this day and check if it is an event which is a remainder event
 			//as we will probably have to change the end date of the remainder event.
 			if(count($eventsToday) > 0) {
 				//now need to check if any of the events are remainder events.
@@ -2922,8 +2922,9 @@ function save_event($userId) {
 							$startTimeSecs = $_POST["duration_time_start"] * 60 * 60 + $_POST["duration_time_start_mins"] * 60;
 							$endTimeSecs = substr($duration,0,2) * 60 * 60 + substr($duration,3,2) * 60 + substr($duration,6,2) * 60;
 							$endTime = date("H:i:s", $startTimeSecs + $endTimeSecs+ $add_lunch);
-							
-							
+							if(empty($leaveDuration)) { // on a multi date entry use the user defined times therefore overriding the template end times
+								$endTime = $_POST["time_end"].":".$_POST["time_end_mins"].":00";
+							}
 							$endDateTime = date('Y-m-d', $timeStart)." ".$endTime;
 							//check to see if the time has already been entered and does not overlap any other time/leave etc.
 							$checkEntered = dl::select("flexi_event", "(substr(event_startdate_time,1,10) = '".substr($startDateTime,0,10)."' and substr(event_enddate_time,1,10) = '".substr($startDateTime,0,10)."') and timesheet_id=".$timeSheetId);
@@ -5084,53 +5085,76 @@ function delete_teams() {
 
 function leave_dates($user_id, $year="") {
 	//find users leave teamplate
-	$user = dl::select("flexi_user", "user_id=".$user_id);
-	$userName = $user[0]["user_name"];
+	$user 								= dl::select("flexi_user", "user_id=".$user_id);
+	$userName 						= $user[0]["user_name"];
+	$leaveCheck 						= new check_leave($user_id);
+	$accType 							= $leaveCheck->getLeaveAccountType();
+	$proRataTime					= $leaveCheck->getProRataTime();
 	//get annual leave entitlement
-	$al = dl::select("flexi_al_template", "al_template_id=".$user[0]["user_al_template"]);
-	$entitledTo = $al[0]["al_entitlement"];
-	$leavestart = $al[0]["al_start_month"];
+	$al 									= dl::select("flexi_al_template", "al_template_id=".$user[0]["user_al_template"]);
+	$entitledTo 						= $al[0]["al_entitlement"];
+	$leavestart 						= $al[0]["al_start_month"];
 	//get used leave
-	if(date("n") >= date("n", strtotime($leavestart))){
+	if(date("n") 						>= date("n", strtotime($leavestart))){
 		//year is this year
 		if(empty($year)) {
-			$year = date("Y");
+			$year 						= date("Y");
 		}
-		$datetoCompare = date("Y-m-d", mktime(0,0,0,date("n",strtotime($leavestart)),1,$year))." 00:00:00";
-		$lastdate = date("Y-m-d", mktime(0,0,0,date("n",strtotime($leavestart)),1,$year+1))." 00:00:00";
+		$datetoCompare 			= date("Y-m-d", mktime(0,0,0,date("n",strtotime($leavestart)),1,$year))." 00:00:00";
+		$lastdate 						= date("Y-m-d", mktime(0,0,0,date("n",strtotime($leavestart)),1,$year+1))." 00:00:00";
 	}else{
 		//year is last year
 		if(empty($year)) {
-			$year = date("Y")-1;
+			$year 						= date("Y")-1;
 		}
-		$datetoCompare = date("Y-m-d", mktime(0,0,0,date("n",strtotime($leavestart)),1,$year))." 00:00:00";
-		$lastdate = date("Y-m-d", mktime(0,0,0,date("n",strtotime($leavestart)),1,$year+1))." 00:00:00";
+		$datetoCompare			= date("Y-m-d", mktime(0,0,0,date("n",strtotime($leavestart)),1,$year))." 00:00:00";
+		$lastdate 						= date("Y-m-d", mktime(0,0,0,date("n",strtotime($leavestart)),1,$year+1))." 00:00:00";
 	}
 	// need to find out which event signifies an annual leave event type
-	$leaveEvent = dl::select("flexi_event_type", "event_al='Yes'");
-	$leaveId = $leaveEvent[0]["event_type_id"];
+	$leaveEvent 						= dl::select("flexi_event_type", "event_al='Yes'");
+	$leaveId 							= $leaveEvent[0]["event_type_id"];
 	echo "<div class='timesheet_header'>Listed taken/planned leave for $userName</div>";
-	$sql = "Select fe.event_id, fe.event_startdate_time, fe.event_enddate_time from flexi_event as fe 
+	$sql 									= "Select fe.event_id, fe.event_startdate_time, fe.event_enddate_time from flexi_event as fe 
 	join flexi_event_type as fet on (fet.event_type_id=fe.event_type_id) 
 	join flexi_timesheet as ft on (fe.timesheet_id=ft.timesheet_id) 
-	where fe.event_type_id = 3 and event_al = 'Yes' and event_startdate_time >= '$datetoCompare' and event_startdate_time < '$lastdate' and user_id =".$user_id." order by event_startdate_time";
-	$l = dl::getQuery($sql);
+	where fe.event_type_id = $leaveId and event_al = 'Yes' and event_startdate_time >= '$datetoCompare' and event_startdate_time < '$lastdate' and user_id =".$user_id." order by event_startdate_time";
+	$l 									= dl::getQuery($sql);
 	echo "<table class='table_view'>";
-	echo "<tr><th>Date</th><th>Start Time</th><th>End Time</th><th>Accumulative<br>Days taken</th></tr>";
-	
-	foreach($l as $leave) {
-		$date = substr($leave["event_startdate_time"],0,10);
-		$time1 = substr($leave["event_startdate_time"],11,8);
-		$time2 = substr($leave["event_enddate_time"],11,8);
-		$checkLeave = dl::select("flexi_leave_count", "flc_event_id = ".$leave["event_id"]);
-		if(!empty($checkLeave)) {
-			$daysTaken += $checkLeave[0]["flc_fullorhalf"];
-		}
-		echo "<tr><td>".$date."</td><td>$time1</td><td>$time2</td><td>$daysTaken</td></tr>";
+	echo "<tr><th>Date</th><th>Start Time</th><th>End Time</th><th>Accumulated<br>Leave taken<br>(Hrs)</th>";
+	if($accType 						== "Fulltime") {
+		echo "<th>Accumulated<br>Leave taken<br> (Days)</th>";
 	}
+	echo "</tr>";
+	foreach($l as $leave) {
+		$date 							= substr($leave["event_startdate_time"],0,10);
+		$time1 							= substr($leave["event_startdate_time"],11,8);
+		$time2 							= substr($leave["event_enddate_time"],11,8);
+		$time1Secs 					= (substr($time1,0,2)*60*60) + (substr($time1,3,2)*60);
+		$time2Secs 					= (substr($time2,0,2)*60*60) + (substr($time2,3,2)*60);
+		$timeSecs					= $time2Secs - $time1Secs;
+		if(date("H", $timeSecs) 	>= 6){
+			$timeSecs 				= $timeSecs - 30*60; //remove 30 minutes for a day in excess of 6 hours as per minimum lunch
+		}
+		$accHours 					+= date("H", $timeSecs);
+		$accMins						+= date("i", $timeSecs);
+		if($accMins 					> 60) {
+			$accMins 					-= 60;
+			$accHours 				+=1;
+		}
+		$decimal 						= $accMins/60;
+		$timeTaken 					= $accHours + $decimal;
+		if($accType 					== "Fulltime") {
+			$daysFromHrs 			= $timeTaken/$proRataTime;
+		}
+		echo "<tr><td>".$date."</td><td align='center'>$time1</td><td align='center'>$time2</td><td align='center'>".$timeTaken."</td>";
+		if($accType 					== "Fulltime") {
+			echo "<td align='center'> ".round($daysFromHrs,2)." day(s)</td>";
+		}
+		echo "</tr>";
+	} 
 	echo "</table>";
-	$timesheet = dl::select("flexi_timesheet", "user_id=".$user_id);
-	$checkadditional = dl::select("flexi_additional_leave", "timesheet_id=".$timesheet[0]["timesheet_id"]." and leave_year = ". $_GET["year"]);
+	$timesheet 						= dl::select("flexi_timesheet", "user_id=".$user_id);
+	$checkadditional 				= dl::select("flexi_additional_leave", "timesheet_id=".$timesheet[0]["timesheet_id"]." and leave_year = ". $_GET["year"]);
 	if(!empty($checkadditional)) {
 		echo "<DIV class='timesheet_header'>Year ".$_GET["year"]." Summary</DIV>";
 		echo "<table class='table_view'>";
@@ -5140,7 +5164,7 @@ function leave_dates($user_id, $year="") {
 		}
 		echo "</table>";
 	}
-	$yr=date("Y")-5;
+	$yr									=date("Y")-5;
 	echo "<BR />View leave from previous years<BR />"; //5 years in the past
 	for($i=$yr; $i<=$yr+5; $i++) {
 		echo "<a href='index.php?func=showuserleave&year=$i&userid=$user_id'>$i</a> ";

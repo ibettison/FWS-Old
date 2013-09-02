@@ -153,10 +153,7 @@ $cal = new calendars;
 		$additional=0;
 		$additionalHols=dl::select("flexi_carried_forward_live", "timesheet_id=".$_SESSION["userSettings"]["timesheet"]);
 		$additional = $additionalHols[0]["additional_leave"]; 
-		if($leaveAccountType=="Parttime") {
-			$add = dl::select("flexi_template", "template_id=".$_SESSION["userSettings"]["flexiTemplate"]);
-			$additional = $additional * $add[0]["max_surplus"]; //this calculates the hours from the average hours worked per day.
-		}
+		
 		?>
 		<div class='header_left'>
 			<div class='header_text'>
@@ -340,7 +337,7 @@ $cal = new calendars;
 			<div class='left_header'>
 			Entitlement:
 			</div>
-			<?php if($leaveAccountType == "Fulltime") {?>
+	<?php if($leaveAccountType == "Fulltime") {?>
 				<div class='left_text'>
 				<?php echo $entitledTo/$proRataTime?> days
 				</div>
@@ -376,7 +373,7 @@ $cal = new calendars;
 				echo $remaining;
 				?> day(s)
 				</div>
-			<?php }else{?>
+	<?php }else{?>
 				<div class='left_text'>
 				<?php echo $entitledTo?> hrs
 				</div>
