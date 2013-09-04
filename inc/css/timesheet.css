@@ -414,7 +414,23 @@
 	border-left: 1px #6593CF solid;
 	border-top: 1px #6593CF solid;
 }
-	
+
+.timesheet_table_header_addIcon {
+	background: transparent url('images/document_add.jpg') no-repeat;
+	height: 18px;
+	width: 18px;
+	float: right;
+	background-color: ##CCC;
+	margin-top: -6px;
+	margin-right: -2px;
+	opacity: 0.25;
+}
+
+.timesheet_table_header_addIcon:hover {
+	opacity: 0.75;
+}
+
+
 .timesheet_table_header_white_we, .timesheet_table_header_time {
 	min-width: 50px;
 	border-right: 1px #fff solid;

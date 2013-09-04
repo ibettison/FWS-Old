@@ -222,6 +222,22 @@ z-index:1000;
 	border:1px #fff solid;
 }
 
+.calendar_day a:link {
+	color: #333;
+	text-decoration: none;
+}
+
+.calendar_day a:visited {
+	color: #333;
+	text-decoration: none;
+}
+
+.calendar_day a:hover {
+	color: #333;
+	text-decoration: none;
+	background-color: #BDD9FD;
+}
+
 .calendar_day_name {
 	width:18px;
 	background-color:#fff;
@@ -231,11 +247,25 @@ z-index:1000;
 
 .calendar_today {
 	width:10px;
-	margin-left:8px;
-	background-color:#BDD9FD;
-	border: 1px #6593CF solid;
-	opacity: 0.8;
+	border:1px #fff solid;
 	color: #900;
+	margin-left: 8px;
+	background-color: #FEDBBC;
+}
+.calendar_today a:link {
+	color: #900;
+	text-decoration: none;
+}
+
+.calendar_today a:visited {
+	color: #900;
+	text-decoration: none;
+}
+
+.calendar_today a:hover {
+	color: #333;
+	text-decoration: none;
+	background-color: #BDD9FD;
 }
 
 .calendar_view {

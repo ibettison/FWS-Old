@@ -71,7 +71,6 @@ $cal = new calendars;
 				$check_password = dl::select("flexi_security", "security_id=".$user_settings['secId']);
 				if(!empty($check_password)) {
 					foreach($check_password as $cp) {
-						echo MD5(SALT.$password), $cp["security_password"];
 						if($cp["security_password"] == MD5(SALT.$password)) {
 							$_SESSION["userSettings"]=$user_settings;
 							//connect to PERMISSION table and retrieve permission settings
@@ -339,21 +338,21 @@ $cal = new calendars;
 			</div>
 	<?php if($leaveAccountType == "Fulltime") {?>
 				<div class='left_text'>
-				<?php echo $entitledTo/$proRataTime?> days
+				<?php echo round($entitledTo/$proRataTime, 1)?> days
 				</div>
 				<div class='left_clear'></div>
 				<div class='left_header'>
 				Additional:
 				</div>
 				<div class='left_text'>
-				<?php echo $additional/$proRataTime?> days
+				<?php echo round($additional/$proRataTime, 1)?> days
 				</div>
 				<div class='left_clear'></div>
 				<div class='left_header'>
 				Allocated:
 				</div>
 				<div class='left_text'>
-				<?php echo $hoursTaken/$proRataTime?> day(s)
+				<?php echo round($hoursTaken/$proRataTime, 1)?> day(s)
 				</div>
 				<?php if($nextYrLeave > 0) { ?>
 					<div class='left_clear'></div>
@@ -370,7 +369,7 @@ $cal = new calendars;
 				</div>
 				<div class='left_text'>
 				<?php $remaining= ($entitledTo/$proRataTime)+($additional/$proRataTime)-$hoursTaken/$proRataTime;
-				echo $remaining;
+				echo round($remaining, 1);
 				?> day(s)
 				</div>
 	<?php }else{?>
@@ -400,7 +399,7 @@ $cal = new calendars;
 				<div class='left_text'>
 				<?php 
 				$remaining = $entitledTo+$additional-$hoursTaken;
-				echo $remaining;
+				echo round($remaining, 1);
 				?> hrs
 				</div>
 		<?php }?>

@@ -231,7 +231,7 @@ function display_cal_headers() {
 	}	
 }
 
-function display_cal_days($month, $firstDay) {
+function display_cal_days($month, $firstDay, $year) {
 	global $cal;
 	$monthDays=array("dummy","31","28","31","30","31","30","31","31","30","31","30","31");
 	$dayCount=1;
@@ -266,9 +266,9 @@ function display_cal_days($month, $firstDay) {
 	}
 	for($x=1; $x<=$daysinMonth; $x++) {
 		if($x == $cal->get_todays_day() && $month == $cal->get_todays_month_num() && date("Y")==$cal->get_todays_year() ) {
-			echo "<div class='calendar_today'>$x</div>";
+			echo "<div class='calendar_today'><a href=\"index.php?choice=Add&subchoice=addevent&type=Working Day&userid=".$_SESSION["userSettings"]["userId"]."&date=".date("Y-m-d", mktime(0,0,0,$month, $x, $year))."\">$x</a></div>";
 		}else{
-			echo "<div class='calendar_day'>$x</div>";
+			echo "<div class='calendar_day'><a href=\"index.php?choice=Add&subchoice=addevent&type=Working Day&userid=".$_SESSION["userSettings"]["userId"]."&date=".date("Y-m-d", mktime(0,0,0,$month, $x, $year))."\">$x</a></div>";
 		}
 	}
 }
@@ -302,7 +302,7 @@ function display_calendar($numMonth, $month_offset=0) {
 		echo "<div class='calendar_holder'>";
 			echo "<div class='calendar_body'>";
 				display_cal_headers();
-				display_cal_days($thisMonthNum++, $cal->get_first_day($monthCount++));
+				display_cal_days($thisMonthNum++, $cal->get_first_day($monthCount++), $year);
 				if($thisMonthNum == 13  && $yearUpdated==false) { //if month goes over year end add 1 to the year counter
 					$year++;
 					$_SESSION["Year"]=$year;
@@ -310,7 +310,7 @@ function display_calendar($numMonth, $month_offset=0) {
 			echo "</div>";
 			echo "<div class='calendar_body'>";
 				display_cal_headers();
-				display_cal_days($thisMonthNum++, $cal->get_first_day($monthCount++));
+				display_cal_days($thisMonthNum++, $cal->get_first_day($monthCount++), $year);
 				if($thisMonthNum == 13  && $yearUpdated==false) { //if month goes over year end add 1 to the year counter
 					$year++;
 					$_SESSION["Year"]=$year;
@@ -1212,6 +1212,7 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 								echo "&nbsp;</div>";
 							}
 						}
+						echo "<a href=\"index.php?choice=Add&subchoice=addevent&type=Working Day&userid=".$userId."&date=".date("Y-m-d", strtotime($date))."\" title='Add another event on ".date("d/m", strtotime($date))."'><div class='timesheet_table_header_addIcon'> </div></a>";
 						if($extended_lunch) {
 							echo "<img src='inc/images/fork_knife.jpg' title='".$event["event_lunch"]."' />";
 						}
@@ -2714,16 +2715,22 @@ function save_event($userId) {
 			$duration = $duration_link[0]["fdt_working_time"];
 			$eventsToday = dl::select("flexi_event", "event_startdate_time >= '".$_POST["date_name"]." 00:00:00' and event_enddate_time <= '".$_POST["date_name"]." 23:59:59' and timesheet_id = ".$timeSheetId." order by event_startdate_time ASC");
 			//lets check if there is more than one event on this day and check if it is an event which is a remainder event
-			//as we will probably have to change the end date of the remainder event.
+			//as we will probably have to change the end time of the remainder event.
 			if(count($eventsToday) > 0) {
 				//now need to check if any of the events are remainder events.
 				foreach($eventsToday as $evs) {
 					$checkRems = dl::select("flexi_remainder", "r_event = ".$evs["event_id"]);
 					if(!empty($checkRems)) {
+						//need to check if  the none remainder event is greater than or equal to 6 hours. If yes we then need to add 30 mins to the remainder event
 						$startSecs = $_POST["time_start"] * 60 * 60 + $_POST["time_start_mins"] * 60;
+						$endSecs = $_POST["time_end"] * 60 * 60 + $_POST["time_end_mins"] * 60;
+						$minLunch=0;
+						if(date("H", $endSecs-$startSecs) >= 6 ) {
+							$minLunch = strtotime($minimum_lunch_duration); // add min lunch as it will be taken off
+						}
 						$durationSecs = substr($duration,0,2) * 60 * 60 + substr($duration,3,2) * 60 + substr($duration,6, 2) * 60;
 						$endTimeSecs = $startSecs + $durationSecs;
-						$endTimeSecs = $endTimeSecs - $startTimeSecs;
+						$endTimeSecs = $endTimeSecs - $startTimeSecs+$minLunch;
 						dl::update("flexi_event", array("event_enddate_time"=>$_POST["date_name"]." ".date("H:i:s", $endTimeSecs)), "event_id = ".$evs["event_id"]);
 					}
 				}
