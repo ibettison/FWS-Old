@@ -66,20 +66,25 @@ class check_leave {
 		$hour									= 0;
 		$min										= 0;
 		foreach($l as $leave) {
-			$dayVal 							= date("N", strtotime($leave["event_startdate_time"]));
-			$time								= dl::select("flexi_day_times", "fdt_weekday_id=".$dayVal." and fdt_flexi_days_id = ".$template_days_id[0]["days_settings_id"]);
-			
-			if(empty($time)) { // assuming this applies to all days but lets check
-				$time 							= dl::select("flexi_day_times", "fdt_weekday_id = 6 and fdt_flexi_days_id = ".$template_days_id[0]["days_settings_id"]);
+			$date 							= substr($leave["event_startdate_time"],0,10);
+			$time1 							= substr($leave["event_startdate_time"],11,8);
+			$time2 							= substr($leave["event_enddate_time"],11,8);
+			$time1Secs 					= (substr($time1,0,2)*60*60) + (substr($time1,3,2)*60);
+			$time2Secs 					= (substr($time2,0,2)*60*60) + (substr($time2,3,2)*60);
+			$timeSecs					= $time2Secs - $time1Secs;
+			if(date("H", $timeSecs) 	>= 6){
+				$timeSecs 				= $timeSecs - 30*60; //remove 30 minutes for a day in excess of 6 hours as per minimum lunch
 			}
-			$checkLeave 					= dl::select("flexi_leave_count", "flc_event_id = ".$leave["event_id"]);
-			if(!empty($checkLeave)) {
-				$daysTaken 					+= $checkLeave[0]["flc_fullorhalf"];
-				$hour 							+= substr($time[0]["fdt_working_time"],0,2) * $checkLeave[0]["flc_fullorhalf"]; 			//multiply by 1 or 0.5 depending on if its a full or half days leave
-				$min 							+= (substr($time[0]["fdt_working_time"],3,2)/60) * $checkLeave[0]["flc_fullorhalf"]; 	//convert to a decimal divide by 60
+			$accHours 					+= date("H", $timeSecs);
+			$accMins						+= date("i", $timeSecs);
+			if($accMins 					> 60) {
+				$accMins 					-= 60;
+				$accHours 				+=1;
 			}
+			$decimal 						= $accMins/60;
+			$timeTaken 					= $accHours + $decimal;
 		}
-		$this->hoursTaken 				= $hour + $min;
+		$this->hoursTaken 				= $timeTaken;
 		return true;
 	}
 	

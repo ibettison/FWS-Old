@@ -1096,47 +1096,33 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 							echo " &nbsp;</div></div>";
 						}
 						$loopCount=$arrCount+1;
+						$accumulateTime = strtotime($timediff);
+						//now loop through multiple events on the same day
 						while(date('Y-m-d',strtotime($date)) == date('Y-m-d',strtotime($events[$loopCount]["event_startdate_time"]))) {
 							$timeFrom = date('H:i:s', strtotime($events[$loopCount]["event_startdate_time"]));
 							$timeTo = date('H:i:s', strtotime($events[$loopCount]["event_enddate_time"]));
 							$alt = date('H:i', strtotime($events[$loopCount]["event_startdate_time"]))." - ".date('H:i', strtotime($events[$loopCount]["event_enddate_time"]));
 							$timediff = date('H:i:s',strtotime($timeTo) - strtotime($timeFrom));
-
-							//check if lunch has already been deducted
-							if($lunchDeducted) {
-								//check if an extended lunch was taken
-								if($events[$loopCount]["event_lunch"] != "00:00:00") { //extended lunch has been taken
-								//check if the extended lunch is greater than minimum lunch
-									if (strtotime($events[$loopCount]["event_lunch"]) > strtotime($daysMinimumLunchDuration)) { //minimum lunch in seconds
-										$timediff = date('H:i:s',strtotime($timediff) - strtotime($event["event_lunch"]));
-										$extended_lunch=true;
-									}else{
-										$extended_lunch=false;
-										//need to check if have to take lunch off
-										if($daysMinimumLunch=="Yes") {
-											if(date("G", strtotime($timediff)) > 6 ) { //if the time worked is greater than 6 hours then take off lunch
-												$timediff = date('H:i:s',strtotime($timediff) - strtotime($daysMinimumLunchDuration));
-											}
-										}
-									}
-								}else{
-									//need to check if have to take lunch off
-									if($daysMinimumLunch=="Yes") {
-										// capture the time for this event as there may be multiple events on the one day (eg: working session then a training session followed by a working session
-										//*************************************************
-										if(date("G", strtotime($timediff)) >= 6 ) { //if the time worked is only 4 hours then don't take off lunch
+							$accumulateTime += strtotime($timeTo) - strtotime($timeFrom);
+							//check if the event Type is Flexi Leave if so then don't add the time but capture the flexi Leave
+							$eventType = dl::select("flexi_event_type", "event_type_id = ".$events[$loopCount]["event_type_id"]);
+							if(date("G", $accumulateTime) >= 6) {
+								if(!$lunchDeducted and !$extendedLunch) {
+									if(date('Y-m-d',strtotime($date)) == date('Y-m-d',strtotime($events[$loopCount+1]["event_startdate_time"]))) { //check to see if the next event is still on the same day
+										//need to check if the next event for this date is a remainder date if it is then the lunch duration is not to be taken off
+										$remainder = dl::select("flexi_remainder", "r_event = ". $events[$loopCount+1]["event_id"]);
+										if(empty($remainder)) {
 											$timediff = date('H:i:s',strtotime($timediff) - strtotime($daysMinimumLunchDuration));
 											$lunchDeducted = true;
 										}
-									}								
-								}
-							}
-							//check if the event Type is Flexi Leave if so then don't add the time but capture the flexi Leave
-							$eventType = dl::select("flexi_event_type", "event_type_id = ".$events[$loopCount]["event_type_id"]);
-							if(date("G", $workingEvent) >= 6) {
-								if(!$lunchDeducted) {
-									$timediff = date('H:i:s',strtotime($timediff) - strtotime($daysMinimumLunchDuration));
-									$lunchDeducted = true;
+									}else{
+										//check if this event is a remainder event if it is then don't take the lunch off
+										$remainder = dl::select("flexi_remainder", "r_event = ". $events[$loopCount]["event_id"]);
+										if(empty($remainder)) {
+											$timediff = date('H:i:s',strtotime($timediff) - strtotime($daysMinimumLunchDuration));
+											$lunchDeducted = true;
+										}
+									}
 								}
 							}
 							// add up the number of hours and mins
@@ -1263,8 +1249,10 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 							$cf = dl::select("flexi_carried_forward_live", "timesheet_id = ".$timesheetId);
 							if(empty($cf)) { //create a record for this
 								$rec = dl::insert("flexi_carried_forward_live", $writeArr);
-							}else{ //update the flexi time in the existing records
-								$rec = dl::update("flexi_carried_forward_live", $writeArr, "timesheet_id = ".$timesheetId);
+							}else{ //update the flexi time in the existing records IF IN THE CURRENT PERIOD
+								if(substr($eventStartDate,0,10) == $flexiStartPeriod ) {
+									$rec = dl::update("flexi_carried_forward_live", $writeArr, "timesheet_id = ".$timesheetId);
+								}
 							}
 						}else{
 							echo "<div class='timesheet_table_header_time'><div class='timesheet_padding'>-</div></div>";
@@ -1387,8 +1375,10 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 					$cf = dl::select("flexi_carried_forward_live", "timesheet_id = ".$timesheetId);
 					if(empty($cf)) { //create a record for this
 						$rec = dl::insert("flexi_carried_forward_live", $writeArr);
-					}else{ //update the flexi time in the existing records
-						$rec = dl::update("flexi_carried_forward_live", $writeArr, "timesheet_id = ".$timesheetId);
+					}else{ //update the flexi time in the existing records IF IN THE CURRENT PERIOD
+						if(substr($eventStartDate,0,10) == $flexiStartPeriod ) {
+							$rec = dl::update("flexi_carried_forward_live", $writeArr, "timesheet_id = ".$timesheetId);
+						}
 					}
 				}else{
 					echo "<div class='timesheet_table_header_time'><div class='timesheet_padding'>-</div></div>";
@@ -1471,25 +1461,25 @@ function set_pixelSize ( $screenRes ) {
 		$showDate 			= 3;
 	}elseif($screenRes 			> 1439) {
 		$pixelSize 			= 12;
-		$showDate 			= 3;
+		$showDate 			= 4;
 	}elseif($screenRes 			> 1280) {
 		$pixelSize 			= 10;
 		$showDate 			= 4;
 	}elseif($screenRes 			> 1080) {
-		$pixelSize 			= 9;
+		$pixelSize 			= 8;
 		$showDate 			= 5;
 	}elseif($screenRes 			> 1048) {
 		$pixelSize 			= 8;
-		$showDate 			= 5;
+		$showDate 			= 7;
 	}elseif($screenRes 			> 768) {
-		$pixelSize 			= 7;
-		$showDate 			= 6;
+		$pixelSize 			= 6;
+		$showDate 			= 8;
 	}elseif($screenRes 			> 568) {
 		$pixelSize 			= 7;
-		$showDate 			= 6;
+		$showDate 			= 8;
 	}else{
-		$pixelSize 			= 7;
-		$showDate 			= 5;
+		$pixelSize 			= 5;
+		$showDate 			= 7;
 	}
 	return( array($pixelSize, $showDate) );
 }
@@ -1517,18 +1507,18 @@ function reset_additional_leave() {
 function view_team_members() {
 	//dl::$debug=true;
 	if(!empty($_POST)) { //Team is a selection from the drop down list
-		$team_name = $_POST["team_name"];
-		$teamUser = dl::select("flexi_team", "team_name = '".$team_name."'");
-		$teams = dl::select("flexi_team_user", "team_id = ".$teamUser[0]["team_id"]." and user_id <> 0");
+		$team_name 			= $_POST["team_name"];
+		$teamUser 				= dl::select("flexi_team", "team_name = '".$team_name."'");
+		$teams 					= dl::select("flexi_team_user", "team_id = ".$teamUser[0]["team_id"]." and user_id <> 0");
 	}else{
-		$team_id = $_GET["team"];
-		$team_name = dl::select("flexi_team", "team_id = ".$team_id);
-		$teams = dl::select("flexi_team_user", "team_id = ".$team_id." and user_id <> 0");
+		$team_id 					= $_GET["team"];
+		$team_name 			= dl::select("flexi_team", "team_id = ".$team_id);
+		$teams 					= dl::select("flexi_team_user", "team_id = ".$team_id." and user_id <> 0");
 	}
 	foreach($teams as $tm) {
-		$user_name = dl::select("flexi_user", "user_id = ".$tm["user_id"]);
-		$userNames[] = array("user_name"=>$user_name[0]["user_name"], user_id=>$user_name[0]["user_id"]);
-		$timesheet= dl::select("flexi_timesheet", "user_id=".$user_name[0]["user_id"]);
+		$user_name 				= dl::select("flexi_user", "user_id = ".$tm["user_id"]);
+		$userNames[] 			= array("user_name"=>$user_name[0]["user_name"], user_id=>$user_name[0]["user_id"]);
+		$timesheet				= dl::select("flexi_timesheet", "user_id=".$user_name[0]["user_id"]);
 		
 		//get annual leave entitlement and used leave
 		$leaveCheck 				= new check_leave($tm["user_id"]);
@@ -1539,10 +1529,10 @@ function view_team_members() {
 		$leaveAccountType 	= $leaveCheck->getLeaveAccountType();
 		$proRataTime 			= $leaveCheck->getProRataTime();
 		//now lets check if they have any additional holidays
-		$additional=0;
-		$additionalHols=dl::select("flexi_carried_forward_live", "timesheet_id=".$timesheet[0]["timesheet_id"]);
-		$additional = $additionalHols[0]["additional_leave"];
-		$leave[]=array("days_taken"=>$used, "entitled_to"=>$entitledTo, "additional"=>$additional, "next_year"=>$nextYrLeave, "hours_leave"=>$hoursLeave, "hours_taken"=>$hoursTaken, "account_type"=>$leaveAccountType, "proRata"=>$proRataTime);
+		$additional				=0;
+		$additionalHols			=dl::select("flexi_carried_forward_live", "timesheet_id=".$timesheet[0]["timesheet_id"]);
+		$additional 				= $additionalHols[0]["additional_leave"];
+		$leave[]						=array("days_taken"=>$used, "entitled_to"=>$entitledTo, "additional"=>$additional, "next_year"=>$nextYrLeave, "hours_leave"=>$hoursLeave, "hours_taken"=>$hoursTaken, "account_type"=>$leaveAccountType, "proRata"=>$proRataTime);
 	}
 	$leaveCount = 0;
 	echo "<div class='timesheet_header'>Team Members</div>";
@@ -1681,19 +1671,21 @@ function approve_leave() {
 			$leaveAccountType 	= $leave->getLeaveAccountType();
 			$proRataTime 			= $leave->getProRataTime();
 			//check if the holidays are from this years entitlement or next years
-			$usersLeave = dl::select("flexi_user", "user_id=".$r["userId"]);
-			$check_date = dl::select("flexi_al_template", "al_template_id = ".$usersLeave[0]["user_al_template"]);
-			$today = date("Y-m-d");
-			$newLeaveDate = "1st ".$check_date[0]["al_start_month"]." ".date("Y");
+			$usersLeave 				= dl::select("flexi_user", "user_id=".$r["userId"]);
+			$timesheet				= dl::select("flexi_timesheet", "user_id=".$usersLeave[0]["user_id"]);
+			$check_date 			= dl::select("flexi_al_template", "al_template_id = ".$usersLeave[0]["user_al_template"]);
+			$today 						= date("Y-m-d");
+			$newLeaveDate 		= "1st ".$check_date[0]["al_start_month"]." ".date("Y");
+			$remHours				= "";
 			if($today < date("Y-m-d", strtotime($newLeaveDate)) and $r["startdate"] > date("Y-m-d", strtotime($newLeaveDate)) ) {
 				$remaining = "From Next Year";
 			}else{
 				//now lets check if they have any additional holidays
-				$additional=0;
+				$additional			=0;
 				$additionalHols		=dl::select("flexi_carried_forward_live", "timesheet_id=".$timesheet[0]["timesheet_id"]);
 				$additional 			= $additionalHols[0]["additional_leave"];
-				echo $additional;
-				$remaining			=$hoursLeave+$additional-$hoursTaken;
+				$remaining			=	$hoursLeave+$additional-$hoursTaken;
+				
 				if($leaveAccountType == "Fulltime") {
 					$day = "days";
 					if(round($remaining/$proRataTime,1 ) == 1) {
@@ -2716,14 +2708,27 @@ function save_event($userId) {
 			$eventsToday = dl::select("flexi_event", "event_startdate_time >= '".$_POST["date_name"]." 00:00:00' and event_enddate_time <= '".$_POST["date_name"]." 23:59:59' and timesheet_id = ".$timeSheetId." order by event_startdate_time ASC");
 			//lets check if there is more than one event on this day and check if it is an event which is a remainder event
 			//as we will probably have to change the end time of the remainder event.
+			
 			if(count($eventsToday) > 0) {
 				//now need to check if any of the events are remainder events.
+				//first event will be the earliest event lets check if the posted times are less than the first event
+				if($_POST["time_start"] < substr($eventsToday[0]["event_startdate_time"],11,2)) {
+					$timeStart = $_POST["time_start"];
+					$timeStartMins = $_POST["time_start_mins"];
+					$timeEnd = $_POST["time_end"];
+					$timeEndMins = $_POST["time_end_mins"];
+				}else{
+					$timeStart = substr($eventsToday[0]["event_startdate_time"],11,2);
+					$timeStartMins = substr($eventsToday[0]["event_startdate_time"],14,2);
+					$timeEnd = substr($eventsToday[0]["event_enddate_time"],11,2);
+					$timeEndMins = substr($eventsToday[0]["event_enddate_time"],14,2);
+				}
 				foreach($eventsToday as $evs) {
 					$checkRems = dl::select("flexi_remainder", "r_event = ".$evs["event_id"]);
 					if(!empty($checkRems)) {
 						//need to check if  the none remainder event is greater than or equal to 6 hours. If yes we then need to add 30 mins to the remainder event
-						$startSecs = $_POST["time_start"] * 60 * 60 + $_POST["time_start_mins"] * 60;
-						$endSecs = $_POST["time_end"] * 60 * 60 + $_POST["time_end_mins"] * 60;
+						$startSecs = $timeStart * 60 * 60 + $timeStartMins * 60;
+						$endSecs = $timeEnd * 60 * 60 + $timeEndMins * 60;
 						$minLunch=0;
 						if(date("H", $endSecs-$startSecs) >= 6 ) {
 							$minLunch = strtotime($minimum_lunch_duration); // add min lunch as it will be taken off

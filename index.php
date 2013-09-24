@@ -518,86 +518,9 @@ if($_SESSION["showMths"]== 4) {
 					where user_flexi_template=".$ft["template_id"]." and date_deleted IS NULL";
 					$users = dl::getQuery($sql);
 					foreach($users as $user) {
-						//need to get the managers' email address
-						//get approvers email and name
-						//find the team the user is a local member of
-						$sql = "select * from flexi_team as ft 
-						join flexi_team_user as ftu on (ftu.team_id=ft.team_id)
-						join flexi_team_local as tl on (ftu.team_user_id=tl.team_user_id) 
-						where ftu.user_id=".$user["user_id"];
-						$teams = dl::getQuery($sql);
-						$team_id = $teams[0]["team_id"];
-						//now need to see if this user is a manager/approver within this team
-						//this determines if the manager in this team receives the approval request or the none local team member approver/manager
-						$sql = "select * from flexi_permission_template as fpt 
-						join flexi_user as fu on (fu.user_permission_id=fpt.permission_template_name_id) 
-						join flexi_team_user as ftu on (ftu.user_id=fu.user_id)
-						left outer join flexi_team_local as tl on (ftu.team_user_id=tl.team_user_id)
-						left outer join flexi_deleted as d on (fu.user_id=d.user_id) 
-						join flexi_team as ft on (ft.team_id=ftu.team_id) 
-						where ft.team_id = ".$team_id." and fpt.permission_team_authorise = 'true' and date_deleted IS NULL and tl.team_user_id IS NOT NULL";
-						$localManager = dl::getQuery($sql);
-						if($localManager["user_id"] == $user["user_id"]) { // this is a request from the local team manager so the request should go to the non-local manager	
-							$sql = "select * from flexi_permission_template as fpt 
-							join flexi_user as fu on (fu.user_permission_id=fpt.permission_template_name_id) 
-							join flexi_team_user as ftu on (ftu.user_id=fu.user_id)
-							left outer join flexi_team_local as tl on (ftu.team_user_id=tl.team_user_id)
-							left outer join flexi_deleted as d on (fu.user_id=d.user_id) 
-							join flexi_team as ft on (ft.team_id=ftu.team_id) 
-							where ft.team_id = ".$team_id." and fpt.permission_team_authorise = 'true' and date_deleted IS NULL and tl.team_user_id IS NULL";
-							$manager = dl::getQuery($sql);
-							foreach($manager as $m) {
-								//create an array of the managers who can approve the event
-								$recipients[]=$m["user_email"];
-							}
-						}else{
-							foreach($localManager as $lm) {
-								//create an array of the managers who can approve the event
-								$recipients[]=$lm["user_email"];
-							}
-						}
 						$cf = dl::select("flexi_carried_forward_live", "timesheet_id=".$user["timesheet_id"]);
 						if(!empty($cf)) { //need to move the flexi
 							if($cf[0]["current_flexi"] > $ft["max_deficit"]) { 
-								//need to get the managers' email address
-								//get approvers email and name
-								// dl::$debug=true;
-								//find the team the user is a local member of
-								$sql = "select * from flexi_team as ft 
-								join flexi_team_user as ftu on (ftu.team_id=ft.team_id)
-								join flexi_team_local as tl on (ftu.team_user_id=tl.team_user_id) 
-								where ftu.user_id=".$user["user_id"];
-								$teams = dl::getQuery($sql);
-								$team_id = $teams[0]["team_id"];
-								//now need to see if this user is a manager/approver within this team
-								//this determines if the manager in this team receives the approval request or the none local team member approver/manager
-								$sql = "select * from flexi_permission_template as fpt 
-								join flexi_user as fu on (fu.user_permission_id=fpt.permission_template_name_id) 
-								join flexi_team_user as ftu on (ftu.user_id=fu.user_id)
-								left outer join flexi_team_local as tl on (ftu.team_user_id=tl.team_user_id)
-								left outer join flexi_deleted as d on (fu.user_id=d.user_id) 
-								join flexi_team as ft on (ft.team_id=ftu.team_id) 
-								where ft.team_id = ".$team_id." and fpt.permission_team_authorise = 'true' and date_deleted IS NULL and tl.team_user_id IS NOT NULL";
-								$localManager = dl::getQuery($sql);
-								if($localManager["user_id"] == $user["user_id"]) { // this is a request from the local team manager so the request should go to the non-local manager	
-									$sql = "select * from flexi_permission_template as fpt 
-									join flexi_user as fu on (fu.user_permission_id=fpt.permission_template_name_id) 
-									join flexi_team_user as ftu on (ftu.user_id=fu.user_id)
-									left outer join flexi_team_local as tl on (ftu.team_user_id=tl.team_user_id)
-									left outer join flexi_deleted as d on (fu.user_id=d.user_id) 
-									join flexi_team as ft on (ft.team_id=ftu.team_id) 
-									where ft.team_id = ".$team_id." and fpt.permission_team_authorise = 'true' and date_deleted IS NULL and tl.team_user_id IS NULL";
-									$manager = dl::getQuery($sql);
-									foreach($manager as $m) {
-										//create an array of the managers who can approve the event
-										$recipients[]=$m["user_email"];
-									}
-								}else{
-									foreach($localManager as $lm) {
-										//create an array of the managers who can approve the event
-										$recipients[]=$lm["user_email"];
-									}
-								}
 								//the current flexi calculation
 								$currentFlexi = $cf[0]["current_flexi"];
 								$timeCarried = $currentFlexi;
@@ -614,7 +537,6 @@ if($_SESSION["showMths"]== 4) {
 									$carriedSign = "+";
 								}else{
 									$carriedSign = "-";
-									$timeSaved = $timeSaved * -1;
 								}
 								$fieldList = array("timesheet_id", "sign", "flexitime","period_date");
 								$valuesArr = array($user["timesheet_id"], $cf[0]["sign"], $cf[0]["flexi_time_carried_forward"], date("Y-m-d", strtotime($endPeriod)));
@@ -630,14 +552,12 @@ if($_SESSION["showMths"]== 4) {
 									$bodyText = str_replace("%%INSERT%%", date("H:i", $lostTime), $bodyText);
 									$recipients = array($user["user_email"]);	
 									//send the email confirmation
-									$recips=explode(", ", $recipients);
 									$m = new Mail();
 									$m->From( "FWS <fws@ncl.ac.uk>" ); // the first address in the recipients list is used as the from email contact and will receive emails in response to the registration request.
 									$m->autoCheck(false);
 									$m->To( $recipients );
 									$m->Subject( $subject );
 									$m->Body( $bodyText );
-									$m->Cc($authEmail);
 									$m->Priority(3);
 									$m->Send();
 									//update the flexipot
@@ -665,7 +585,7 @@ if($_SESSION["showMths"]== 4) {
 									$timeSaved = $timeSaved * -1;
 								}
 								$fieldList = array("timesheet_id", "sign", "flexitime","period_date");
-								$valuesArr = array($user["timesheet_id"], $carriedSign,  $cf[0]["flexi_time_carried_forward"], date("Y-m-d", strtotime($endPeriod)));
+								$valuesArr = array($user["timesheet_id"], $cf[0]["sign"],  $cf[0]["flexi_time_carried_forward"], date("Y-m-d", strtotime($endPeriod)));
 								$writeArr = array_combine($fieldList,$valuesArr);
 								dl::insert("flexi_carried_forward",$writeArr); //this has recorded the flexitime for the user for the current period. Will be used when examining the timesheet in each period.
 								//send email to manager copy superAdmin
@@ -689,7 +609,7 @@ if($_SESSION["showMths"]== 4) {
 							}
 						}
 					}
-					//lastly lets check if any deleted users should be completly removed from the system
+					//lastly lets check if any deleted users should be completely removed from the system
 					$deletions = check_for_deletions();
 					if(!empty($deletions)) {
 						//delete all of the table entries for the id's in the $deletions array
