@@ -1070,31 +1070,26 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 						}else{
 							$note = "";
 						}
+						$dateTitle = date("d/m/Y", strtotime($date));
+						$alt .= " ".date("H:i", strtotime($timediff)); 
+						$alt = date($shortDate, strtotime($date))." ".$alt.$note;
 						if($_SESSION["userPermissions"]["add_global"] == "true") { //if you have the global add permission then user is considered an Admin
-							echo "<div class='timesheet_table_header_white'><div class='timesheet_padding'><div class='connected' id='time".$event["event_id"]."'style='cursor: move; float:left; background-color:".$eventColour."; width:".$pxWidth."px '>";
+							echo "<div class='timesheet_table_header_white' title='$dateTitle'><div class='timesheet_padding'><div title='$alt' class='connected' id='time".$event["event_id"]."'style='cursor: move; float:left; background-color:".$eventColour."; width:".$pxWidth."px '>";
 						}else{
 							if( substr($event["event_startdate_time"],0,10) > $flexiStartPeriod) {
 								if($eventType[0]["event_global"] == "No") {
-									echo "<div class='timesheet_table_header_white'><div class='timesheet_padding'><div class='connected' id='time".$event["event_id"]."'style='cursor: move; float:left; background-color:".$eventColour."; width:".$pxWidth."px '>";
+									echo "<div class='timesheet_table_header_white' title='$dateTitle'><div class='timesheet_padding'><div title='$alt' class='connected' id='time".$event["event_id"]."'style='cursor: move; float:left; background-color:".$eventColour."; width:".$pxWidth."px '>";
 								}else{
-									echo "<div class='timesheet_table_header_white'><div class='timesheet_padding'><div style='float:left; background-color:".$eventColour."; width:".$pxWidth."px '>";
+									echo "<div class='timesheet_table_header_white' title='$dateTitle'><div class='timesheet_padding'><div title='$alt' style='float:left; background-color:".$eventColour."; width:".$pxWidth."px '>";
 								}
 							}else{
-								echo "<div class='timesheet_table_header_white'><div class='timesheet_padding'><div style='float:left; background-color:".$eventColour."; width:".$pxWidth."px '>";
+								echo "<div class='timesheet_table_header_white' title='$dateTitle'><div class='timesheet_padding'><div title='$alt' style='float:left; background-color:".$eventColour."; width:".$pxWidth."px '>";
 							}
 						}
-						$alt .= " ".date("H:i", strtotime($timediff));
-						if(date("G", strtotime($timediff)) > $showDate ) { // this prevents the clock causing formatting problems
+						if(date("G", strtotime($timediff)) > $showDate ) { 
 							echo date($shortDate, strtotime($date));
-							$alt = $alt.$note;
-						}else{
-							$alt = date($shortDate, strtotime($date))." ".$alt.$note;
 						}
-						if(date("G", strtotime($timediff)) >= 2 ) {
-							echo "&nbsp;&nbsp; <img src='inc/images/clock.gif' title='$alt' align='absmiddle' /></div></div>";
-						}else{
-							echo " &nbsp;</div></div>";
-						}
+						echo " &nbsp;</div></div>";
 						$loopCount=$arrCount+1;
 						$accumulateTime = strtotime($timediff);
 						//now loop through multiple events on the same day
@@ -1170,33 +1165,27 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 							}else{
 								$note = "";
 							}
+							$alt .= " ".date("H:i", strtotime($timediff)); 
+							$alt = date($shortDate, strtotime($date))." ".$alt.$note;
 							if($_SESSION["userPermissions"]["add_global"] == "true") { //if you have the global add permission then user is considered an Admin
-								echo "<div class='connected' id='time".$events[$loopCount]["event_id"]."'style='cursor: move; float:left; background-color:".$eventColour."; width:".$pxWidth."px '>";
+								echo "<div class='connected' id='time".$events[$loopCount]["event_id"]."' style='cursor: move; float:left; background-color:".$eventColour."; width:".$pxWidth."px ' title='$alt'>";
 							}else{
 								if( substr($events[$loopCount]["event_startdate_time"],0,10) > $flexiStartPeriod) {
 									if($eventType[0]["event_global"] == "No") {
-										echo "<div class='connected' id='time".$events[$loopCount]["event_id"]."'style='cursor: move; float:left; background-color:".$eventColour."; width:".$pxWidth."px '>";
+										echo "<div class='connected' id='time".$events[$loopCount]["event_id"]."' style='cursor: move; float:left; background-color:".$eventColour."; width:".$pxWidth."px ' title='$alt'>";
 									}else{
-										echo "<div style='float:left; background-color:".$eventColour."; width:".$pxWidth."px '>";
+										echo "<div style='float:left; background-color:".$eventColour."; width:".$pxWidth."px ' title='$alt'>";
 									}
 								}else{
-									echo "<div style='float:left; background-color:".$eventColour."; width:".$pxWidth."px '>";
+									echo "<div style='float:left; background-color:".$eventColour."; width:".$pxWidth."px ' title='$alt'>";
 								}
 							}
 							$loopCount++;
 							//echo "<div style='float:left; background-color:".$eventColour."; width:".$pxWidth."px'>";
-							$alt .= " ".date("H:i", strtotime($timediff));
-							if(date("G", strtotime($timediff)) > $showDate ) { // this prevents the clock causing formatting problems
+							if(date("G", strtotime($timediff)) > $showDate ) { 
 								echo date($shortDate, strtotime($date));
-								$alt = $alt.$note;
-							}else{
-								$alt = date($shortDate, strtotime($date))." ".$alt.$note;
 							}
-							if(date("G", strtotime($timediff)) >= 2 ) {
-								echo "&nbsp;&nbsp; <img src='inc/images/clock.gif' title='$alt' align='absmiddle' /></div>";
-							}else{
-								echo "&nbsp;</div>";
-							}
+							echo "&nbsp;</div>";
 						}
 						echo "<a href=\"index.php?choice=Add&subchoice=addevent&type=Working Day&userid=".$userId."&date=".date("Y-m-d", strtotime($date))."\" title='Add another event on ".date("d/m", strtotime($date))."'><div class='timesheet_table_header_addIcon'> </div></a>";
 						if($extended_lunch) {
