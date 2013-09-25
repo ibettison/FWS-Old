@@ -713,14 +713,14 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 			$_SESSION["endPeriod"] 			= "";
 			$_SESSION["user"]					= "";
 		}
-	if($userId 									!= $_SESSION["userSettings"]["userId"]) { //the timesheet request is not from the logged in user
+	if($userId 											!= $_SESSION["userSettings"]["userId"]) { //the timesheet request is not from the logged in user
 		//need to find the user's details
 		//need to check if the logged in user has management credentials
 		$users 									= dl::select("flexi_user", "user_id = ".$userId);
 		$name 									= $users[0]["user_name"];
 		$timeTemplate 						= $users[0]["user_time_template"];
 		$flexiTemplate 						= $users[0]["user_flexi_template"];
-		$permissionTemplate 			= $users[0]["user_permission_id"];
+		$permissionTemplate 				= $users[0]["user_permission_id"];
 		$own_timesheet 					= false;
 	}else{
 		$name									= $_SESSION["userSettings"]["name"];

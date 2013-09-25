@@ -5,7 +5,7 @@ function redirect(url) {
 	window.location = url;
 }
 </script>
-<?php 
+<?php
 session_start();
 error_reporting("E_ALL & ~E_NOTICE");
 //error_reporting("~E_NOTICE");
@@ -145,7 +145,7 @@ $cal = new calendars;
 		$entitledTo 				= $leave->getLeaveEntitledTo();
 		$nextYrLeave 			= $leave->getNextYrLeaveTaken();
 		$hoursLeave				= $leave->getHoursLeave();
-		$hoursTaken 			= $leave->getHoursTaken();
+		$hoursTaken 				= $leave->getHoursTaken();
 		$leaveAccountType 	= $leave->getLeaveAccountType();
 		$proRataTime 			= $leave->getProRataTime();
 		//now lets check if they have any additional holidays
