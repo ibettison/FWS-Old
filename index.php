@@ -136,6 +136,7 @@ $cal = new calendars;
 		$form = new forms;
 		echo $form->create_form($formArr, "120px");
 	}
+
 	// confirm that the user has logged in
 	if($_SESSION["loggedin"]) { 
 		//now need to get settings to display in left hand info location
@@ -152,7 +153,7 @@ $cal = new calendars;
 		$additional=0;
 		$additionalHols=dl::select("flexi_carried_forward_live", "timesheet_id=".$_SESSION["userSettings"]["timesheet"]);
 		$additional = $additionalHols[0]["additional_leave"]; 
-		
+        
 		?>
 		<div class='header_left'>
 			<div class='header_text'>
@@ -475,7 +476,7 @@ $cal = new calendars;
 					}
 				}else{
 					//message and return to access account
-					echo "<SCRIPT language='javascript'>alert(\"Sorry you have an incorrect passcode!!!\"); redirect('index.php?func=login')</SCRIPT>" ;
+					echo "<SCRIPT language='javascript'>alert(\"Sorry you have an incorrect passcode!!!\"); redirect('index.php?func=login')</SCRIPT>";
 				}
 			}else{ // message and return to access account
 				echo "<SCRIPT language='javascript'>alert(\"Passwords do not match, please retype them!\"); redirect('index.php?func=confirmAcc&passcode=".$_GET["passcode"]."')</SCRIPT>" ;

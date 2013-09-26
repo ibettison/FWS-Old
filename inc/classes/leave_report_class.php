@@ -1,4 +1,5 @@
 <?php
+//TODO : Year end report for hours (October)
 class report_on_leave {
 	public $leave_entitlement;
 	public $leave_month;

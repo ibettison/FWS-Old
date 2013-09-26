@@ -726,7 +726,7 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 		$name									= $_SESSION["userSettings"]["name"];
 		$timeTemplate 						= $_SESSION["userSettings"]["timeTemplate"];
 		$flexiTemplate 						= $_SESSION["userSettings"]["flexiTemplate"];
-		$permissionTemplate 			= $_SESSION["userSettings"]["permissionId"];
+		$permissionTemplate 			    = $_SESSION["userSettings"]["permissionId"];
 		$own_timesheet 					= true;
 	}
 	
@@ -1061,6 +1061,7 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 							where event_id=".$event["event_id"];
 							$notes = dl::getQuery($sql);
 						}
+                        $note = "";
 						if(!empty($notes)) {
 							if($notes[0]["notes_type"] == "Public" and $authorise) {
 								$note = "\n\n".$notes[0]["notes_note"];
@@ -1153,17 +1154,16 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 							if($authorise or $own_timesheet) {
 								$sql="select * from flexi_event_notes as en 
 								join flexi_notes as n on (en.note_id=n.notes_id) 
-								where event_id=".$event["event_id"];
+								where event_id=".$events[$loopCount]["event_id"];
 								$notes = dl::getQuery($sql);
 							}
+                            $note = "";
 							if(!empty($notes)) {
 								if($notes[0]["notes_type"] == "Public" and $authorise) {
 									$note = "\n\n".$notes[0]["notes_note"];
 								}elseif($notes[0]["notes_type"] == "Private" and $own_timesheet) {
 									$note = "\n\n".$notes[0]["notes_note"];
 								}
-							}else{
-								$note = "";
 							}
 							$alt .= " ".date("H:i", strtotime($timediff)); 
 							$alt = date($shortDate, strtotime($date))." ".$alt.$note;
