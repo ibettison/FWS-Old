@@ -4883,6 +4883,7 @@ function add_leave_template() {
 			array("prompt"=>"Leave Hours", "type"=>"text", "name"=>"leave_hours", "length"=>10, "value"=>"", "clear"=>true),
 			array("prompt"=>"Start Month", "type"=>"selection", "name"=>"start_month", "listarr"=>array( "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" ), "selected"=>"October", "value"=>"", "clear"=>true),
 			array("prompt"=>"Template Type", "type"=>"radio", "name"=>"template_type", "listarr"=>array("Fulltime", "Parttime"), "selected"=>"", "value"=>"", "clear"=>true),
+			array("prompt"=>"Leave Note", "type"=>"textarea", "name"=>"leave_note", "rows"=>8, "cols"=>70, "value"=>"", "clear"=>true),
 			array("type"=>"submit", "buttontext"=>"Create Template", "clear"=>true), 
 			array("type"=>'endform'));
 			$form = new forms;
