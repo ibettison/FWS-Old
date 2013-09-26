@@ -4873,6 +4873,7 @@ function delete_flexi_days_template($id) {
 }
 
 function add_leave_template() {
+    //TODO : Need to create a function to add a note if there are changes to the leave template hours due to additional leave granted etc. For example there was an extra day for the Royal Wedding
 	if(check_permission("Templates")) {
 		echo "<div class='timesheet_workspace'>";
 		$formArr = array(array("type"=>"intro", "formtitle"=>"Create Leave Template", "formintro"=>"Fill out the fields below to create the Leave template"), 
