@@ -915,6 +915,9 @@ if($_SESSION["showMths"]== 4) {
 			if($_GET["func"] == "editleavetemplate") {
 				edit_leave_template();
 			}
+			if($_GET["func"] == "deleteleavenote") {
+				delete_leave_note($_GET["id"]);
+			}
 			if($_GET["func"] == "saveleavetemplateedit") {
 				save_leave_template_edit();
 			}
