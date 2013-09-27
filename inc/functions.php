@@ -2561,34 +2561,34 @@ function save_event($userId) {
 	//dl::$debug=true;
 	$eventType							= $_POST["event_type"];
 	$leaveDuration						= $_POST["duration"]; // this 'Full day', 'Half day' 'Remainder' or Blank
-	$event 									= dl::select("flexi_event_type", "event_type_name='$eventType'");
-	$eventId 								= $event[0]["event_type_id"];
+	$event 								= dl::select("flexi_event_type", "event_type_name='$eventType'");
+	$eventId 							= $event[0]["event_type_id"];
 	//check the event type to see if an authorisation is required
 	$eventName 							= $event[0]["event_type_name"];
 	$eventAuthorisation 				= $event[0]["event_authorisation"];
 	$eventWork 							= $event[0]["event_work"];
 	$eventGlobal 						= $event[0]["event_global"];
-	$eventAnnualLeave 				= $event[0]["event_al"];
+	$eventAnnualLeave 					= $event[0]["event_al"];
 	$eventFlexiLeave 					= $event[0]["event_flexi"];
 	$eventDelete 						= $event[0]["event_delete"];
 	$eventOverride						= $event[0]["event_override"];
 	//*******************************************
 	//check the flexi template days settings to make sure the entered times are within the template ranges specified
-	$sql 										= "select * from flexi_user as u 
+	$sql 								= "select * from flexi_user as u 
 	join flexi_template as t on (u.user_flexi_template=t.template_id) 
 	join flexi_template_days as td on (td.template_name_id=t.template_name_id) 
 	join flexi_template_days_settings as tds on (tds.template_days_id=td.flexi_template_days_id) 
 	where u.user_id =".$userId;
-	$ranges 								= dl::getQuery($sql);
-	$earliest_start 						= $ranges[0]["earliest_starttime"];
-	$latest_start 							= $ranges[0]["latest_starttime"];
+	$ranges 							= dl::getQuery($sql);
+	$earliest_start 					= $ranges[0]["earliest_starttime"];
+	$latest_start 						= $ranges[0]["latest_starttime"];
 	$earliest_lunch_start				= $ranges[0]["lunch_earliest_start_time"];
 	$latest_lunch_end					= $ranges[0]["lunch_latest_end_time"];
 	$earliest_end 						= $ranges[0]["earliest_endtime"];
-	$latest_end 							= $ranges[0]["latest_endtime"];
+	$latest_end 						= $ranges[0]["latest_endtime"];
 	$days_settings_id 					= $ranges[0]["days_settings_id"];
-	$minimum_lunch 					= $ranges[0]["minimum_lunch"];
-	$minimum_lunch_duration 		= $ranges[0]["minimum_lunch_duration"];
+	$minimum_lunch 						= $ranges[0]["minimum_lunch"];
+	$minimum_lunch_duration 			= $ranges[0]["minimum_lunch_duration"];
 	//$normal_day_duration[0]["normal_day_duration"]; the normal day duration is no longer required as the new flexi_day_times template accomodates the times for individual and multiple days
 	//********************************************
 	$eventSettings 						= dl::select("flexi_event_settings", "event_typeid=".$eventId);
@@ -2611,7 +2611,7 @@ function save_event($userId) {
 			$multipleDates=true;
 			//check if the duration is not Remainder
 			if($leaveDuration == "Remainder") {
-				echo "<SCRIPT language='javascript'>alert('The event duration you selected was \"Remainder\" this cannot be selected with Multiple date. Please select \"Fullday\" to add your events.');" ;
+				echo "<SCRIPT language='javascript'>alert('The event duration you selected was \"Remainder\" this cannot be selected with Multiple dates. Please select \"Fullday\" to add your events.');" ;
 				echo "redirect('index.php?choice=Add&subchoice=addevent&type=".$_GET["type"]."');</SCRIPT>" ;
 				die();
 			}
@@ -2662,6 +2662,8 @@ function save_event($userId) {
 		$startTime = $_POST["duration_time_start"].":".$_POST["duration_time_start_mins"].":00";
 		$startTimeSecs = $_POST["duration_time_start"] * 60 * 60 + $_POST["duration_time_start_mins"] * 60;
 		$eventsToday = dl::select("flexi_event", "event_startdate_time >= '".$_POST["date_name"]." 00:00:00' and event_enddate_time <= '".$_POST["date_name"]." 23:59:59' and timesheet_id = ".$timeSheetId." order by event_startdate_time ASC");
+		//TODO : REMAINDER need to look at a hospital appointment when it is not at the end of the day to change the time of the appointment to not exceed an equivalent full day for the persons working pattern
+		 
 		if($leaveDuration == "Remainder") {
 			//this is either a (offsite mtg, Sickness, Training, Hospital or Emergency leave)
 			if(count($eventsToday) > 0) { //there is an existing event on this day so get the start time and work out the end time from the day duration
