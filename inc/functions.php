@@ -4900,12 +4900,15 @@ function add_leave_template() {
 }
 
 function save_leave_template() {
+    print_r($_POST);
+    echo date("Y-m-d");
 	$fieldarr= array("al_entitlement", "al_description","al_start_month", "al_type");
 	$postarr= array($_POST["leave_entitlement"],$_POST["template_name"],$_POST["start_month"], $_POST["template_type"]);
 	$save=array_combine($fieldarr, $postarr);
 	dl::insert("flexi_al_template", $save);
 	$lastId = dl::getId();
 	dl::insert("flexi_al_hours", array("template_id"=>$lastId, "h_hours"=>$_POST["leave_hours"]));
+    dl::insert("flexi_al_notes", array("n_template_id"=>$lastId, "n_note"=>$_POST["leave_note"], "n_date"=>date("Y-m-d")));
 	echo "<SCRIPT language='javascript'>redirect('index.php?choice=Templates&subchoice=leavetemplate')</SCRIPT>" ;
 }
 
@@ -4913,6 +4916,7 @@ function edit_leave_template() {
 	if(check_permission("Templates")) {
 		$leave=dl::select("flexi_al_template", "al_template_id=".$_GET["id"]);
 		$hours=dl::select("flexi_al_hours", "template_id = ".$_GET["id"]);
+        $notes=dl::select("flexi_al_notes", "n_template_id = ".$_GET["id"]);
 		echo "<div class='timesheet_workspace'>";
 		$formArr = array(array("type"=>"intro", "formtitle"=>"Edit Leave Template", "formintro"=>"Fill out the fields below to edit the Leave template"), 
 			array("type"=>"form", "form"=>array("action"=>"index.php?func=saveleavetemplateedit&id=".$_GET["id"],"method"=>"post")),	
@@ -4921,25 +4925,63 @@ function edit_leave_template() {
 			array("prompt"=>"Leave Hours", "type"=>"text", "name"=>"leave_hours", "length"=>10, "value"=>$hours[0]["h_hours"], "clear"=>true),
 			array("prompt"=>"Start Month", "type"=>"selection", "name"=>"start_month", "listarr"=>array( "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" ), "selected"=>$leave[0]["al_start_month"], "value"=>"", "clear"=>true),
 			array("prompt"=>"Template Type", "type"=>"radio", "name"=>"template_type", "listarr"=>array("Fulltime", "Parttime"), "selected"=>$leave[0]["al_type"], "value"=>"", "clear"=>true),
+			array("prompt"=>"Leave Note", "type"=>"textarea", "name"=>"leave_note", "rows"=>8, "cols"=>70, "value"=>"", "clear"=>true),
+            array("prompt"=>"Template Change Date", "type"=>"date", "name"=>"date_change", "length"=>20, "value"=>"", "clear"=>true),
 			array("type"=>"submit", "buttontext"=>"Save Template", "clear"=>true), 
 			array("type"=>'endform'));
 			$form = new forms;
 			$form->create_form($formArr);
 		echo "</div>";
+		echo "<div style='clear:both'><table class='table_view'>";
+        echo "<tr><th>Date</th><th>Note</th></tr>";
+        foreach($notes as $n) {
+            echo "<tr><td>".$n["n_date"]."</td><td><a id='leave".$n["n_id"]."' href='#' title='".substr($n["n_note"],0,145)."...'>View Note</a></td></tr>";
+            
+        }
+        echo "</table></div>";
+        echo "</div>";
+        foreach($notes as $n) {
+            echo "<div id='dialog".$n["n_id"]."' style='display: none;' title='Viewing the leave note'>";
+            echo $n["n_note"]."<BR /><BR />";
+            echo "</div>";
+            ?>
+            <script>
+            $(function() {
+                
+                $("#<?php echo "leave".$n["n_id"]?>").click(function(){
+                  $("#<?php echo "dialog".$n["n_id"]?>").dialog({
+                    resizable: false,
+                    height:200,
+                    modal: true,
+                    buttons: {
+                        "Cancel": function() {
+                            $( "#<?php echo "dialog".$n["n_id"]?>" ).dialog( "close" );
+                        }
+                    }
+                  });
+                });
+            });
+            </script>
+            <?php
+        }
 	}
 }
 
 function save_leave_template_edit() {
+    print_r($_POST);
+    dl::$debug=true;
 	$fieldarr= array("al_entitlement", "al_description","al_start_month", "al_type");
 	$postarr= array($_POST["leave_entitlement"],$_POST["template_name"],$_POST["start_month"], $_POST["template_type"]);
 	$save=array_combine($fieldarr, $postarr);
 	dl::update("flexi_al_template", $save, "al_template_id=".$_GET["id"]);
+    dl::insert("flexi_al_notes", array("n_template_id"=>$_GET["id"], "n_note"=>$_POST["leave_note"], "n_date"=>$_POST["date_change"]));
 	$hours = dl::select("flexi_al_hours", "template_id = ".$_GET["id"]);
 	if(empty($hours)) {
 		dl::insert("flexi_al_hours", array("template_id"=>$_GET["id"], "h_hours"=>$_POST["leave_hours"]));
 	}else{
 		dl::update("flexi_al_hours", array("h_hours"=>$_POST["leave_hours"]), "template_id=".$_GET["id"]);
 	}
+    die();
 	echo "<SCRIPT language='javascript'>redirect('index.php?choice=Templates&subchoice=leavetemplate')</SCRIPT>" ;
 }
 

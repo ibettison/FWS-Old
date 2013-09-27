@@ -30,7 +30,7 @@ class forms {
 		foreach( $arrFields as $aField ) {
 			$this->field_type 			= $aField['type'];
 			$this->field_prompt 		= $aField['prompt'];
-			$this->field_length 			= $aField['length'];
+			$this->field_length 		= $aField['length'];
 			$this->field_rows 			= $aField['rows'];
 			$this->field_cols 			= $aField['cols'];
 			$this->field_value 			= $aField['value'];
@@ -40,15 +40,15 @@ class forms {
 			$this->field_start 			= $aField['starttime'];
 			$this->field_end 			= $aField['endtime'];
 			$this->field_interval 		= $aField["interval"];
-			$this->field_list 				= $aField["listarr"];
+			$this->field_list 			= $aField["listarr"];
 			$this->field_link 			= $aField["link"];
 			$this->field_selected 		= $aField["selected"];
 			$this->field_compare		= $aField["field"];
 			$this->field_multiple 		= $aField["multiple"];
 			$this->field_zindex 		= $aField["zindex"];
-			$this->message 			= $aField["message"];
+			$this->message 			    = $aField["message"];
 			$this->button_value 		= $aField['buttontext'];
-			$this->field_onchange 	= $aField['onchange'];
+			$this->field_onchange 	    = $aField['onchange'];
 			if(!empty($aField['formtitle'])) {
 				$this->form_title 		= $aField['formtitle'];
 			}
