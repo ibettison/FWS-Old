@@ -5137,50 +5137,51 @@ function delete_teams() {
 
 function leave_dates($user_id, $year="") {
 	//find users leave teamplate
-	$user 								= dl::select("flexi_user", "user_id=".$user_id);
+	$user 							= dl::select("flexi_user", "user_id=".$user_id);
 	$userName 						= $user[0]["user_name"];
-	$leaveCheck 						= new check_leave($user_id);
-	$accType 							= $leaveCheck->getLeaveAccountType();
+	$leaveCheck 					= new check_leave($user_id);
+	$accType 						= $leaveCheck->getLeaveAccountType();
 	$proRataTime					= $leaveCheck->getProRataTime();
+	$entitlement					= $leaveCheck->getLeaveEntitledTo();
 	//get annual leave entitlement
-	$al 									= dl::select("flexi_al_template", "al_template_id=".$user[0]["user_al_template"]);
-	$entitledTo 						= $al[0]["al_entitlement"];
-	$leavestart 						= $al[0]["al_start_month"];
+	$al 							= dl::select("flexi_al_template", "al_template_id=".$user[0]["user_al_template"]);
+	$entitledTo 					= $al[0]["al_entitlement"];
+	$leavestart 					= $al[0]["al_start_month"];
 	//get used leave
-	if(date("n") 						>= date("n", strtotime($leavestart))){
+	if(date("n") 					>= date("n", strtotime($leavestart))){
 		//year is this year
 		if(empty($year)) {
-			$year 						= date("Y");
+			$year 					= date("Y");
 		}
-		$datetoCompare 			= date("Y-m-d", mktime(0,0,0,date("n",strtotime($leavestart)),1,$year))." 00:00:00";
-		$lastdate 						= date("Y-m-d", mktime(0,0,0,date("n",strtotime($leavestart)),1,$year+1))." 00:00:00";
+		$datetoCompare 				= date("Y-m-d", mktime(0,0,0,date("n",strtotime($leavestart)),1,$year))." 00:00:00";
+		$lastdate 					= date("Y-m-d", mktime(0,0,0,date("n",strtotime($leavestart)),1,$year+1))." 00:00:00";
 	}else{
 		//year is last year
 		if(empty($year)) {
-			$year 						= date("Y")-1;
+			$year 					= date("Y")-1;
 		}
-		$datetoCompare			= date("Y-m-d", mktime(0,0,0,date("n",strtotime($leavestart)),1,$year))." 00:00:00";
-		$lastdate 						= date("Y-m-d", mktime(0,0,0,date("n",strtotime($leavestart)),1,$year+1))." 00:00:00";
+		$datetoCompare				= date("Y-m-d", mktime(0,0,0,date("n",strtotime($leavestart)),1,$year))." 00:00:00";
+		$lastdate 					= date("Y-m-d", mktime(0,0,0,date("n",strtotime($leavestart)),1,$year+1))." 00:00:00";
 	}
 	// need to find out which event signifies an annual leave event type
-	$leaveEvent 						= dl::select("flexi_event_type", "event_al='Yes'");
-	$leaveId 							= $leaveEvent[0]["event_type_id"];
-	echo "<div class='timesheet_header'>Listed taken/planned leave for $userName</div>";
-	$sql 									= "Select fe.event_id, fe.event_startdate_time, fe.event_enddate_time from flexi_event as fe 
+	$leaveEvent 					= dl::select("flexi_event_type", "event_al='Yes'");
+	$leaveId 						= $leaveEvent[0]["event_type_id"];
+	echo "<div class='timesheet_header'>Past leave for $userName</div>";
+	$sql 							= "Select fe.event_id, fe.event_startdate_time, fe.event_enddate_time from flexi_event as fe 
 	join flexi_event_type as fet on (fet.event_type_id=fe.event_type_id) 
 	join flexi_timesheet as ft on (fe.timesheet_id=ft.timesheet_id) 
 	where fe.event_type_id = $leaveId and event_al = 'Yes' and event_startdate_time >= '$datetoCompare' and event_startdate_time < '$lastdate' and user_id =".$user_id." order by event_startdate_time";
-	$l 									= dl::getQuery($sql);
+	$l 								= dl::getQuery($sql);
 	echo "<table class='table_view'>";
 	echo "<tr><th>Date</th><th>Start Time</th><th>End Time</th><th>Accumulated<br>Leave taken<br>(Hrs)</th>";
-	if($accType 						== "Fulltime") {
+	if($accType 					== "Fulltime") {
 		echo "<th>Accumulated<br>Leave taken<br> (Days)</th>";
 	}
 	echo "</tr>";
 	foreach($l as $leave) {
-		$date 							= substr($leave["event_startdate_time"],0,10);
-		$time1 							= substr($leave["event_startdate_time"],11,8);
-		$time2 							= substr($leave["event_enddate_time"],11,8);
+		$date 						= substr($leave["event_startdate_time"],0,10);
+		$time1 						= substr($leave["event_startdate_time"],11,8);
+		$time2 						= substr($leave["event_enddate_time"],11,8);
 		$time1Secs 					= (substr($time1,0,2)*60*60) + (substr($time1,3,2)*60);
 		$time2Secs 					= (substr($time2,0,2)*60*60) + (substr($time2,3,2)*60);
 		$timeSecs					= $time2Secs - $time1Secs;
@@ -5188,18 +5189,18 @@ function leave_dates($user_id, $year="") {
 			$timeSecs 				= $timeSecs - 30*60; //remove 30 minutes for a day in excess of 6 hours as per minimum lunch
 		}
 		$accHours 					+= date("H", $timeSecs);
-		$accMins						+= date("i", $timeSecs);
-		if($accMins 					> 60) {
-			$accMins 					-= 60;
+		$accMins					+= date("i", $timeSecs);
+		if($accMins 				> 60) {
+			$accMins 				-= 60;
 			$accHours 				+=1;
 		}
-		$decimal 						= $accMins/60;
+		$decimal 					= $accMins/60;
 		$timeTaken 					= $accHours + $decimal;
-		if($accType 					== "Fulltime") {
+		if($accType 				== "Fulltime") {
 			$daysFromHrs 			= $timeTaken/$proRataTime;
 		}
 		echo "<tr><td>".$date."</td><td align='center'>$time1</td><td align='center'>$time2</td><td align='center'>".$timeTaken."</td>";
-		if($accType 					== "Fulltime") {
+		if($accType 				== "Fulltime") {
 			echo "<td align='center'> ".round($daysFromHrs,2)." day(s)</td>";
 		}
 		echo "</tr>";
@@ -5208,19 +5209,31 @@ function leave_dates($user_id, $year="") {
 	$timesheet 						= dl::select("flexi_timesheet", "user_id=".$user_id);
 	$checkadditional 				= dl::select("flexi_additional_leave", "timesheet_id=".$timesheet[0]["timesheet_id"]." and leave_year = ". $_GET["year"]);
 	if(!empty($checkadditional)) {
-		echo "<DIV class='timesheet_header'>Year ".$_GET["year"]." Summary</DIV>";
+		$nextYr = $_GET["year"]+1; 
+		echo "<DIV class='timesheet_header'>Year ".$_GET["year"]."-".$nextYr." Summary</DIV>";
 		echo "<table class='table_view'>";
-		echo "<tr><th>Additional Days</th><th>Month</th><th>Year</th><th>Taken</th><th>Left</th></tr>";
-		foreach( $checkadditional as $ca ) {
-			echo "<tr><td>".$ca["additional_days"]."</td><td>".$ca["leave_month"]."</td><td>".$ca["leave_year"]."</td><td>".$ca["leave_taken"]."</td><td>".$ca["leave_left"]."</td></tr>";
+		if($_GET["year"] < 2013) { // 2013 was the year the backend changed to hours so all leave etc. was managed using hours. Therefore the report displays differently from this date.
+			echo "<tr><th>Additional Days</th><th>Month</th><th>Year</th><th>Taken</th><th>Left</th></tr>";
+			foreach( $checkadditional as $ca ) {
+				echo "<tr><td>".$ca["additional_days"]."</td><td>".$ca["leave_month"]."</td><td>".$ca["leave_year"]."</td><td>".$ca["leave_taken"]."</td><td>".$ca["leave_left"]."</td></tr>";
+			}
+		}else{
+			echo "<tr><th>Leave<BR>Entitlement (hrs)</th><th>Additional<BR>Hours</th><th>Year End<br>Month</th><th>Year</th><th>Leave Taken<BR>(Hrs)</th><th>Leave<BR>Carried Over</th><th>Leave<BR>Notes</th></tr>";
+			foreach( $checkadditional as $ca ) {
+				echo "<tr><td>".$ca["entitlement"]."</td><td>".$ca["additional_days"]."</td><td>".$ca["leave_month"]."</td><td>".$ca["leave_year"]."</td><td>".$ca["leave_taken"]."</td><td>".$ca["leave_left"]."</td>";
+				//TODO : add the links to the leave notes here
+				echo "</tr>";
+			}
 		}
 		echo "</table>";
 	}
-	$yr									=date("Y")-5;
+	$yr								=date("Y")-5;
 	echo "<BR />View leave from previous years<BR />"; //5 years in the past
 	for($i=$yr; $i<=$yr+5; $i++) {
-		echo "<a href='index.php?func=showuserleave&year=$i&userid=$user_id'>$i</a> ";
+		$nxtYear = $i+1;
+		echo " <a href='index.php?func=showuserleave&year=$i&userid=$user_id'>".$i."-".$nxtYear."</a> |";
 	}
+	echo "<br><br>";
 }
 
 function calendar_picker($date_name, $date_view, $date_select="", $date_ZIndex) {
@@ -5331,21 +5344,23 @@ function reset_leave_report() {
 	$header = array("Select","Leave month","User Name","Leave days", "Additional days", "Leave taken", "Leave Left");
 	$spacing = array(10,10,10,80,10,10,10);
 	echo $reset->show_header( $header, $spacing );
-	$spacing = array(70,155,75,75,70,60);
+	$spacing = array(90,160,90,90,70,60);
 	echo $reset->open_form( "form1", "reports.php?func=saveLeave" );
 	foreach($users as $user) {
-		$reset->entitlement( $user["user_al_template"] );
-		$annualLeave = $reset->get_leave( );
-		$monthName = $reset->get_month( );
-		$additionalLeave = $reset->get_additional_leave( $user["user_id"] );
-		$usedleave =  $reset->used_leave( $user["user_id"] );
+		$leave = new check_leave( $user["user_id"] );
+		$annualLeave = $leave->getLeaveEntitledTo();
+		$monthName = $reset->get_month($user["user_al_template"]);
+		$additionalLeave = round($reset->get_additional_leave( $user["user_id"] ), 1);
+		
+		$usedleave =  round($leave->getHoursTaken(), 1);
 		$checkUpdated = dl::select("flexi_additional_leave", "timesheet_id = ".$reset->timesheet[0]["timesheet_id"]." and leave_month = '".$monthName."' and leave_year = ".date("Y", strtotime($reset->startDate)));
 		if(!empty($checkUpdated)) {
 			echo $reset->add_select( "select", $user["user_id"], "disabled" );	
 		}else{
-			echo "<div style='width:120px; float:right; padding-right:20px;'>Not updated</div>".$reset->add_select( "select", $user["user_id"] );
+			echo $reset->add_select( "select", $user["user_id"] );
 		}
-		$line = array( $monthName, $user["user_name"], $annualLeave, $additionalLeave, $usedleave, $additionalLeave + $annualLeave - $usedleave );
+		$leaveLeft = round($additionalLeave + $annualLeave - $usedleave, 1);
+		$line = array( $monthName, $user["user_name"], $annualLeave, $additionalLeave, $usedleave, $leaveLeft );
 		echo $reset->show_line( $line, $spacing );
 		echo "<BR />";
 	}
@@ -5355,13 +5370,13 @@ function reset_leave_report() {
 }
 
 function save_additional_leave() {
-	$save = new report_on_leave( );
+	$save = new check_leave( );
 	$c=0;
 	foreach( $_POST["select"] as $posted ) {
 		$users = dl::select("flexi_user", "user_id = ".$posted);
-		$save->entitlement( $users[0]["user_al_template"] );
-		$annualLeave = $save->get_leave( );
-		$monthName = $save->get_month( );
+		$save->getLeaveEntitledTo();
+		$annualLeave = $save->getHoursTaken();
+		$monthName = $save->getStartMonth();
 		$additionalLeave = $save->get_additional_leave( $users[0]["user_id"] );
 		$usedleave =  $save->used_leave( $users[0]["user_id"] );
 		$fields = array( "timesheet_id", "additional_days", "leave_month", "leave_year", "leave_taken", "leave_left" );

@@ -38,18 +38,14 @@ class report_on_leave {
 		return $base;
 	}
 	
-	public function entitlement( $leaveId ) {
+	public function get_month( $leaveId ) {
 		$leave = dl::select("flexi_al_template", "al_template_id = ".$leaveId);
-		$this->leave_entitlement = $leave[0]["al_entitlement"];
 		$this->leave_month = $leave[0]["al_start_month"];
+		return $this->leave_month;
 	}
 	
 	public function get_leave( ){
 		return $this->leave_entitlement;
-	}
-	
-	public function get_month( ){
-		return $this->leave_month;
 	}
 	
 	public function timesheetId( $userId ) {

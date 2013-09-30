@@ -8,6 +8,7 @@ global $dl;
 include("inc/classes/form_class.php");
 include("inc/classes/tc_calendar.php");
 include("inc/classes/leave_report_class.php");
+include("inc/classes/check_leave_class.php");
 include('inc/functions.php');
 date_default_timezone_set('UTC');
 
