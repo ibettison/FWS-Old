@@ -115,6 +115,22 @@ z-index:1000;
 .sub_menu_button A:active {text-decoration: none}
 .sub_menu_button A:hover {text-decoration: none; color:#333;}
 
+#note_title {
+	padding: 0.5em;
+	color:#003366;
+	text-decoration: underline;
+	font-size: 1.5em;
+}
+#note_date {
+	padding-left: 1.5em;
+	color:#6593CF;
+}
+
+#note_line {
+	padding-left: 1.5em;
+	color:#666666;
+}
+
 .header_left, .button_top {
 	background: transparent url('images/header_background.png') repeat;
 }

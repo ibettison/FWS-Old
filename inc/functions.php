@@ -5166,7 +5166,7 @@ function leave_dates($user_id, $year="") {
 	// need to find out which event signifies an annual leave event type
 	$leaveEvent 					= dl::select("flexi_event_type", "event_al='Yes'");
 	$leaveId 						= $leaveEvent[0]["event_type_id"];
-	echo "<div class='timesheet_header'>Past leave for $userName</div>";
+	echo "<div class='timesheet_header'>Leave for $userName</div>";
 	$sql 							= "Select fe.event_id, fe.event_startdate_time, fe.event_enddate_time from flexi_event as fe 
 	join flexi_event_type as fet on (fet.event_type_id=fe.event_type_id) 
 	join flexi_timesheet as ft on (fe.timesheet_id=ft.timesheet_id) 
@@ -5212,20 +5212,66 @@ function leave_dates($user_id, $year="") {
 		$nextYr = $_GET["year"]+1; 
 		echo "<DIV class='timesheet_header'>Year ".$_GET["year"]."-".$nextYr." Summary</DIV>";
 		echo "<table class='table_view'>";
-		if($_GET["year"] < 2013) { // 2013 was the year the backend changed to hours so all leave etc. was managed using hours. Therefore the report displays differently from this date.
+		if($_GET["year"] < 2012) { // 2013 was the year the backend changed to hours so all leave etc. was managed using hours. Therefore the report displays differently from this date.
 			echo "<tr><th>Additional Days</th><th>Month</th><th>Year</th><th>Taken</th><th>Left</th></tr>";
 			foreach( $checkadditional as $ca ) {
 				echo "<tr><td>".$ca["additional_days"]."</td><td>".$ca["leave_month"]."</td><td>".$ca["leave_year"]."</td><td>".$ca["leave_taken"]."</td><td>".$ca["leave_left"]."</td></tr>";
 			}
 		}else{
-			echo "<tr><th>Leave<BR>Entitlement (hrs)</th><th>Additional<BR>Hours</th><th>Year End<br>Month</th><th>Year</th><th>Leave Taken<BR>(Hrs)</th><th>Leave<BR>Carried Over</th><th>Leave<BR>Notes</th></tr>";
+			echo "<tr><th>Leave<BR>Entitlement<BR>(hrs)</th><th>Additional<BR>Hours</th><th>Year End<br>Month</th><th>Year</th><th>Leave<BR>Taken<BR>(Hrs)</th><th>Leave<BR>Carried<BR>Over</th><th>Leave<BR>Notes</th></tr>";
 			foreach( $checkadditional as $ca ) {
-				echo "<tr><td>".$ca["entitlement"]."</td><td>".$ca["additional_days"]."</td><td>".$ca["leave_month"]."</td><td>".$ca["leave_year"]."</td><td>".$ca["leave_taken"]."</td><td>".$ca["leave_left"]."</td>";
+				echo "<tr><td align='center'>".$ca["entitlement"]."</td><td align='center'>".$ca["additional_days"]."</td><td align='center'>".$ca["leave_month"]."</td><td align='center'>".$ca["leave_year"]."</td><td align='center'>".$ca["leave_taken"]."</td><td align='center'>".$ca["leave_left"]."</td>";
 				//TODO : add the links to the leave notes here
+				echo "<td align='center'><img src='inc/images/notes-icon.png' id='view_notes'></td>";
 				echo "</tr>";
 			}
 		}
 		echo "</table>";
+		$userTemplate 			= dl::select("flexi_user", "user_id = ".$user_id);
+		$alTemplate 			= dl::select("flexi_al_notes", "n_template_id = ". $userTemplate[0]["user_al_template"]." and n_date >= '".$datetoCompare."' and n_date <= '".$lastdate."'");
+		$timesheet				= dl::select("flexi_timesheet", "user_id = ".$user_id);
+		$carriedOverNotes		= dl::select("flexi_carried_forward_notes", "timesheet_id = ".$timesheet[0]["timesheet_id"]." and note_datetime >= '".$datetoCompare."' and note_datetime <= '".$lastdate."'");
+		//setup of the dialog div
+		echo "<div id='notes_div' title='Summary Notes for ".$_GET["year"]."-".$nextYr."' style='display: none; overflow-y:scroll'>";
+		echo "<div id='note_title'>Leave Notes</div>";
+		if(!empty($alTemplate)) {
+			foreach($alTemplate as $alt) {
+				echo "<div id='note_date'>".$alt["n_date"]."</div>";
+				echo "<div id='note_line'>".nl2br($alt["n_note"])."</div>";
+			}
+		}else{
+			echo "<div id='note_line'>There are no Leave Notes for this template within this period.</div>";
+		}
+		echo "<div id='note_title'>Carriedover Notes</div>";
+		if(!empty($carriedOverNotes)) {
+			foreach($carriedOverNotes as $co) {
+				echo "<div id='note_date'>".$co["note_datetime"]."</div>";
+				echo "<div id='note_line'>".nl2br($co["note"])."</div>";
+			}
+		}else{
+			echo "<div id='note_line'>There are no Carried Over Notes for this user within this period.</div>";
+		}
+		echo "</div>";
+		?>
+                <script>
+                $(function() {
+                    
+                    $("#view_notes").click(function(){
+                      $("#notes_div").dialog({
+                        resizable: false,
+                        height:500,
+                        width: 500,
+                        modal: true,
+                        buttons: {
+                            "Close": function() {
+                                $( "#notes_div" ).dialog( "close" );
+                            }
+                        }
+                      });
+                    });
+                });
+                </script>
+                <?php
 	}
 	$yr								=date("Y")-5;
 	echo "<BR />View leave from previous years<BR />"; //5 years in the past
@@ -5352,7 +5398,7 @@ function reset_leave_report() {
 		$monthName = $reset->get_month($user["user_al_template"]);
 		$additionalLeave = round($reset->get_additional_leave( $user["user_id"] ), 1);
 		
-		$usedleave =  round($leave->getHoursTaken(), 1);
+		$usedleave =  round(usedLeaveLastYear(date("F"), $user["user_id"]), 1);
 		$checkUpdated = dl::select("flexi_additional_leave", "timesheet_id = ".$reset->timesheet[0]["timesheet_id"]." and leave_month = '".$monthName."' and leave_year = ".date("Y", strtotime($reset->startDate)));
 		if(!empty($checkUpdated)) {
 			echo $reset->add_select( "select", $user["user_id"], "disabled" );	
@@ -5370,24 +5416,104 @@ function reset_leave_report() {
 }
 
 function save_additional_leave() {
-	$save = new check_leave( );
-	$c=0;
 	foreach( $_POST["select"] as $posted ) {
-		$users = dl::select("flexi_user", "user_id = ".$posted);
-		$save->getLeaveEntitledTo();
-		$annualLeave = $save->getHoursTaken();
-		$monthName = $save->getStartMonth();
-		$additionalLeave = $save->get_additional_leave( $users[0]["user_id"] );
-		$usedleave =  $save->used_leave( $users[0]["user_id"] );
-		$fields = array( "timesheet_id", "additional_days", "leave_month", "leave_year", "leave_taken", "leave_left" );
-		$values = array( $save->timesheet[0]["timesheet_id"], $additionalLeave, $monthName, date("Y", strtotime($save->startDate)),$usedleave, $save->leave_entitlement + $additionalLeave - $usedleave);
-		$save->update_leave( $fields, $values );
-		$remaining = $save->leave_entitlement + $additionalLeave - $usedleave;
-		if( $remaining > 5 ) {
-			$remaining = 5;
+		$save 						= new check_leave( $posted );
+		$users 						= dl::select("flexi_user", "user_id = ".$posted);
+		$leave_entitlement 			= $save->getLeaveEntitledTo();
+		$annualLeave 				= $save->getHoursTaken();
+		$monthName 					= $save->getStartMonth();
+		$timesheet 					= dl::select("flexi_timesheet", "user_id = ".$posted);
+		$additional 				= dl::select( "flexi_carried_forward_live", "timesheet_id = ". $timesheet[0]["timesheet_id"] );
+		$additionalLeave 			= $additional[0]["additional_leave"];
+		$usedleave 					=  usedLeaveLastYear($monthName, $posted);
+		$startDate 					= date( "Y-m-d H:i:s", mktime(0,0,0,date("m"),1,date("Y")-1) );
+		$fields 					= array( "timesheet_id", "entitlement", "additional_days", "leave_month", "leave_year", "leave_taken", "leave_left" );
+		$leaveRemaining				= $leave_entitlement + $additionalLeave - $usedleave;
+		$values 					= array( $timesheet[0]["timesheet_id"], $leave_entitlement, $additionalLeave, $monthName, date("Y", strtotime($startDate)),$usedleave, $leaveRemaining);
+		$arrWrite 					= array_combine($fields, $values);
+		//insert the year end leave record into the additional leave table
+		dl::insert("flexi_additional_leave", $arrWrite);
+		
+		/*need to get the users weekly hours and check if they have that to carry over if more then it should equal the weekly hours.
+		 * If it's less that the weekly hours then just carry over the calculated hours.
+		 */
+		$sql 						= "select * from flexi_user as u join flexi_template as t on (u.user_flexi_template=t.template_id)
+									join flexi_template_days as td on (td.template_name_id=t.template_id) 
+									join flexi_template_days_settings as tds on (td.flexi_template_days_id=tds.template_days_id)
+									where user_id = ".$posted;
+		$settings					= dl::getQuery($sql);
+		$times_id					= $settings[0]["days_settings_id"];
+		$times						= dl::select("flexi_day_times", "fdt_flexi_days_id = ".$times_id, "fdt_weekday_id");
+		$hr							= 0;
+		$min						= 0;
+		if($times[0]["fdt_weekday_id"] == 6 ) { //this is same time for 5 days
+			$hr 					= date("g", strtotime($times[0]["fdt_working_time"]));
+			$min 					= date("i", strtotime($times[0]["fdt_working_time"]));
+			$hr 					= $hr * 5;
+			$min 					= $min * 5;
+			while( $min >= 60 ) {
+				$min 				= $min - 60;
+				$hr++;
+			}
+			$min = $min/60; //convert $min to a decimal
+			$decimal = round($hr+$min, 2);
+		}else{
+			foreach ($times as $t) {
+				$hr 				+= date("g", strtotime($t["fdt_working_time"]));
+				$min 				+= date("i", strtotime($t["fdt_working_time"]));
+
+			}
+			while( $min >= 60 ) {
+				$min 				= $min - 60;
+				$hr++;
+			}
+			$min 					= $min/60; //convert $min to a decimal
+			$decimal 				= round($hr+$min, 2);
 		}
-		dl::update( "flexi_carried_forward_live", array("additional_leave"=>$remaining), "timesheet_id=".$save->timesheet[0]["timesheet_id"]	);
+		//$decimal is the maximum amount of hours that the user can carry over. This equates to the full hours they work in a week.
+		// Equivalent to a week of leave...
+		if($leaveRemaining < $decimal) {
+			$leaveToCarryOver 		= $leaveRemaining;
+		}else{
+			$leaveToCarryOver 		= $decimal;
+		}
+		dl::update( "flexi_carried_forward_live", array("additional_leave"=>$leaveToCarryOver), "timesheet_id=".$timesheet[0]["timesheet_id"]	);
 	}
 	echo "<SCRIPT language='javascript'>redirect('reports.php?func=leaveReset')</SCRIPT>" ;
 }
+
+function usedLeaveLastYear($monthName, $userId) {
+	$year 						= date("Y")-1;
+	$datetoCompare 				= date("Y-m-d", mktime(0,0,0,date("n",strtotime($monthName)),1,$year));
+	//must also check for leave in the following year eg october to december
+	$dateNextYr 				= date("Y-m-d", mktime(0,0,0,date("n",strtotime($monthName)),1,date("Y")));
+	$sql 						= "Select fe.event_id, fe.event_startdate_time, fe.event_enddate_time from flexi_event as fe 
+	join flexi_event_type as fet on (fet.event_type_id=fe.event_type_id) 
+	join flexi_timesheet as ft on (fe.timesheet_id=ft.timesheet_id) 
+	where fe.event_type_id = 3 and event_al = 'Yes' and event_startdate_time >= '$datetoCompare' and event_startdate_time <= '$dateNextYr' and user_id =".$userId;
+	$l 							= dl::getQuery($sql);
+	$accHours 					= 0;
+	$accMins					= 0;
+	foreach($l as $leave) {
+		$date 					= substr($leave["event_startdate_time"],0,10);
+		$time1 					= substr($leave["event_startdate_time"],11,8);
+		$time2 					= substr($leave["event_enddate_time"],11,8);
+		$time1Secs 				= (substr($time1,0,2)*60*60) + (substr($time1,3,2)*60);
+		$time2Secs 				= (substr($time2,0,2)*60*60) + (substr($time2,3,2)*60);
+		$timeSecs				= $time2Secs - $time1Secs;
+		if(date("H", $timeSecs) >= 6){
+			$timeSecs 			= $timeSecs - 30*60; //remove 30 minutes for a day in excess of 6 hours as per minimum lunch
+		}
+		$accHours 				+= date("H", $timeSecs);
+		$accMins				+= date("i", $timeSecs);
+		if($accMins 			> 60) {
+			$accMins 			-= 60;
+			$accHours 			+=1;
+		}
+		$decimal 				= $accMins/60;
+		$timeTaken 				= $accHours + $decimal;
+	}
+	return $timeTaken;
+}
+
 ?>
