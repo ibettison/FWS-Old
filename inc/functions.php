@@ -4944,7 +4944,7 @@ function edit_leave_template() {
             echo "</div>";
             foreach($notes as $n) {
                 echo "<div id='dialog".$n["n_id"]."' style='display: none;' title='Viewing the leave note'>";
-                echo $n["n_note"]."<BR /><BR />";
+                echo nl2br($n["n_note"])."<BR /><BR />";
                 echo "</div>";
                 ?>
                 <script>
@@ -5479,7 +5479,7 @@ function save_additional_leave() {
 		}
 		dl::update( "flexi_carried_forward_live", array("additional_leave"=>$leaveToCarryOver), "timesheet_id=".$timesheet[0]["timesheet_id"]	);
 	}
-	echo "<SCRIPT language='javascript'>redirect('reports.php?func=leaveReset')</SCRIPT>" ;
+	echo "<SCRIPT language='javascript'> window.location='reports.php?func=leaveReset'</SCRIPT>" ;
 }
 
 function usedLeaveLastYear($monthName, $userId) {
