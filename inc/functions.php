@@ -5425,10 +5425,10 @@ function save_additional_leave() {
 		$timesheet 					= dl::select("flexi_timesheet", "user_id = ".$posted);
 		$additional 				= dl::select( "flexi_carried_forward_live", "timesheet_id = ". $timesheet[0]["timesheet_id"] );
 		$additionalLeave 			= $additional[0]["additional_leave"];
-		$usedleave 					=  usedLeaveLastYear($monthName, $posted);
+		$usedleave 					= usedLeaveLastYear($monthName, $posted);
 		$startDate 					= date( "Y-m-d H:i:s", mktime(0,0,0,date("m"),1,date("Y")-1) );
 		$fields 					= array( "timesheet_id", "entitlement", "additional_days", "leave_month", "leave_year", "leave_taken", "leave_left" );
-		$leaveRemaining				= $leave_entitlement + $additionalLeave - $usedleave;
+		$leaveRemaining				= round($leave_entitlement + $additionalLeave - $usedleave, 1);
 		$values 					= array( $timesheet[0]["timesheet_id"], $leave_entitlement, $additionalLeave, $monthName, date("Y", strtotime($startDate)),$usedleave, $leaveRemaining);
 		$arrWrite 					= array_combine($fields, $values);
 		//insert the year end leave record into the additional leave table
@@ -5468,7 +5468,7 @@ function save_additional_leave() {
 				$hr++;
 			}
 			$min 					= $min/60; //convert $min to a decimal
-			$decimal 				= round($hr+$min, 2);
+			$decimal 				= round($hr+$min, 1);
 		}
 		//$decimal is the maximum amount of hours that the user can carry over. This equates to the full hours they work in a week.
 		// Equivalent to a week of leave...
@@ -5513,7 +5513,7 @@ function usedLeaveLastYear($monthName, $userId) {
 		$decimal 				= $accMins/60;
 		$timeTaken 				= $accHours + $decimal;
 	}
-	return $timeTaken;
+	return round($timeTaken, 1);
 }
 
 ?>
