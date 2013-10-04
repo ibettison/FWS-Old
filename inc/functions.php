@@ -748,20 +748,20 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 		$authorise 							= false;
 	}
 	//check if the permission permits the viewing of the users timesheet at all
-	$viewTimesheet 						= dl::select("flexi_permission_template", "permission_template_name_id = ".$permissionTemplate);
-	$viewTimesheetCheck 				= $viewTimesheet[0]["permission_view_timesheet"];
+	$viewTimesheet 							= dl::select("flexi_permission_template", "permission_template_name_id = ".$permissionTemplate);
+	$viewTimesheetCheck 					= $viewTimesheet[0]["permission_view_timesheet"];
 	//now check if the permission overrides the setting on the logged in user.
 	$viewOverride 							= $permissions[0]["permission_view_override"];
 	// get the Event that is a working Session so as to treat it differently to the other events.
-	$types 										= dl::select("flexi_event_type", "event_work = 'Yes'");
+	$types 									= dl::select("flexi_event_type", "event_work = 'Yes'");
 	$workingType 							= $types[0]["event_type_id"];
 	//now get the template settings
-	$sql 											= "select * from flexi_template as t 
+	$sql 									= "select * from flexi_template as t 
 	join flexi_template_name as tn on (t.template_name_id=tn.flexi_template_name_id) 
 	join flexi_template_days as td on (td.template_name_id=tn.flexi_template_name_id) 
 	join flexi_template_days_settings as tds on (tds.template_days_id=td.flexi_template_days_id) 
 	where t.template_id = ".$flexiTemplate;
-	$flexi_settings 							= dl::getQuery($sql);
+	$flexi_settings 						= dl::getQuery($sql);
 	$time_settings 							= dl::select("flexi_time_template", "time_template_name_id =".$timeTemplate);
 	//get day settings
 	$sql = "select * from flexi_template_name as tn 
@@ -772,11 +772,11 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 	//setup all of the template variables
 	// Date Format *******************************************************
 	$timedateFormat 						= $time_settings[0]["time_template_date_format"];
-	if($timedateFormat 					== "dd-mm-yyyy") { 
+	if($timedateFormat 						== "dd-mm-yyyy") { 
 		$dateFormat							= "d-m-Y";
 		$shortDate 							= "d/m";
 	}else{
-		$dateFormat 							= "m-d-Y";
+		$dateFormat 						= "m-d-Y";
 		$shortDate 							= "m/d";
 	}
 	//Flexi Settings *****************************************************
@@ -789,42 +789,42 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 	$flexiEndPeriod 						= $flexi_settings[0]["end_period"];
 	
 	// Day settings ******************************************************
-	$flexiID										= $day_settings[0]["days_settings_id"];
-	$daysTemplateType 					= $day_settings[0]["template_type"];
+	$flexiID								= $day_settings[0]["days_settings_id"];
+	$daysTemplateType 						= $day_settings[0]["template_type"];
 	$daysPerWeek 							= $day_settings[0]["days_week"];
-	$daysDayDuration 					= $day_settings[0]["day_duration"]; //this is the policy day duration ie 7hr 24 mins ******* Not used anymore *********
+	$daysDayDuration 						= $day_settings[0]["day_duration"]; //this is the policy day duration ie 7hr 24 mins ******* Not used anymore *********
 
-	$daysNormalDuration 				= $day_settings[0]["normal_day_duration"]; //this the user day duration as entered by them ******* Not used anymore *********
-	$daysTimeDifferential 				= strtotime($daysNormalDuration) - strtotime($daysDayDuration); //this is the difference between the day duration and Normal day duration
-	$daysHalfDayDuration 				= strtotime($daysDayDuration)/2;
-	$daysHalfDayDuration 				= date('H:i:s', $daysHalfDayDuration);
-	$daysDayHours 						= substr($daysDayDuration,0,2); //the duration of the day hours (What is required for each day!!)
+	$daysNormalDuration 					= $day_settings[0]["normal_day_duration"]; //this the user day duration as entered by them ******* Not used anymore *********
+	$daysTimeDifferential 					= strtotime($daysNormalDuration) - strtotime($daysDayDuration); //this is the difference between the day duration and Normal day duration
+	$daysHalfDayDuration 					= strtotime($daysDayDuration)/2;
+	$daysHalfDayDuration 					= date('H:i:s', $daysHalfDayDuration);
+	$daysDayHours 							= substr($daysDayDuration,0,2); //the duration of the day hours (What is required for each day!!)
 	$daysDayMins 							= substr($daysDayDuration,3,2); // the duration of the day minutes (What is required for each day!!)
-	$daysMinimumLunch					= $day_settings[0]["minimum_lunch"];
-	$daysMinimumLunchDuration 	= $day_settings[0]["minimum_lunch_duration"];
-	$daysLunchEarliest 					= $day_settings[0]["lunch_earliest_start_time"];
-	$daysLunchLatest 					= $day_settings[0]["lunch_latest_end_time"];
+	$daysMinimumLunch						= $day_settings[0]["minimum_lunch"];
+	$daysMinimumLunchDuration 				= $day_settings[0]["minimum_lunch_duration"];
+	$daysLunchEarliest 						= $day_settings[0]["lunch_earliest_start_time"];
+	$daysLunchLatest 						= $day_settings[0]["lunch_latest_end_time"];
 	//*********************************************************************
 	// get the timesheet id of the user
 	$timesheet 								= dl::select("flexi_timesheet", "user_id = ".$userId);
 	$timesheetId 							= $timesheet[0]["timesheet_id"]; 
 	//get the week hours from the flexi_day_times
 	$dayTimes 								= dl::select("flexi_day_times", "fdt_flexi_days_id = ".$flexiID);
-	if($dayTimes[0]["fdt_weekday_id"] == 6 ) {
+	if($dayTimes[0]["fdt_weekday_id"] 		== 6 ) {
 		$multiplier = $daysPerWeek;
 	}else{
-		$multiplier 							= 1;
+		$multiplier 						= 1;
 	}
 	foreach($dayTimes as $dt) {
-		$hours 									+= substr($dt["fdt_working_time"], 0,2);
-		$mins 									+= substr($dt["fdt_working_time"],3,2);
+		$hours 								+= substr($dt["fdt_working_time"], 0,2);
+		$mins 								+= substr($dt["fdt_working_time"],3,2);
 	}
-	$hours 										= $hours * $multiplier;
-	$mins 										= $mins * $multiplier;
-	$mins 										= $mins/60;
-	$hours 										= $hours + (int) $mins;
-	$mins										= $mins - (int) $mins;
-	$hoursPerWeek 						= number_format($hours + $mins,1);
+	$hours 									= $hours * $multiplier;
+	$mins 									= $mins * $multiplier;
+	$mins 									= $mins/60;
+	$hours 									= $hours + (int) $mins;
+	$mins									= $mins - (int) $mins;
+	$hoursPerWeek 							= number_format($hours + $mins,1);
 	
 	// get the events for the userId specified.
 	// check if there has been parameters passed with start and end dates
@@ -836,30 +836,30 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 		$eventEndDate 						= $flexiEndPeriod." 11:59:59";
 	}
 	if($authorise or $own_timesheet) { //can view full timesheet
-		if($viewTimesheetCheck			=="true" or $viewOverride=="true"){
-			$events 							= dl::select("flexi_event", "timesheet_id=".$timesheetId." and event_startdate_time >= '".$eventStartDate."' and event_enddate_time <= '".$eventEndDate."'", "event_startdate_time ASC");
+		if($viewTimesheetCheck				=="true" or $viewOverride=="true"){
+			$events 						= dl::select("flexi_event", "timesheet_id=".$timesheetId." and event_startdate_time >= '".$eventStartDate."' and event_enddate_time <= '".$eventEndDate."'", "event_startdate_time ASC");
 		}
 	}else{ // can just view flexi and annual leave on the timesheet
 		//can only do this if the view user timesheet template option is true
-		if($viewTimesheetCheck			=="true" or $viewOverride=="true"){
-			$sql 									= "select * from flexi_event as e join flexi_event_type as et on (	et.event_type_id=e.event_type_id ) 
+		if($viewTimesheetCheck				=="true" or $viewOverride=="true"){
+			$sql 							= "select * from flexi_event as e join flexi_event_type as et on (	et.event_type_id=e.event_type_id ) 
 													where timesheet_id=".$timesheetId." and event_startdate_time >= '".$eventStartDate."' 
 													and event_enddate_time <= '".$eventEndDate."' and (event_work='No') order by event_startdate_time ASC";
-			$events 							= dl::getQuery($sql);
+			$events 						= dl::getQuery($sql);
 		}
 	}
 	// check which period we are looking at and get the flexi carry over for that period
-	$flexi_carry 								= dl::select("flexi_carried_forward", "timesheet_id=".$timesheetId." and period_date = '".substr($eventEndDate,0,10)."'");
+	$flexi_carry 							= dl::select("flexi_carried_forward", "timesheet_id=".$timesheetId." and period_date = '".substr($eventEndDate,0,10)."'");
 	if(!empty($flexi_carry)) { //we are looking at a timesheet in the past
-		$flexiInPot 							= date("H:i", $flexi_carry[0]["flexitime"]*60*60);
-		$sign 									= $flexi_carry[0]["sign"];
+		$flexiInPot 						= date("H:i", $flexi_carry[0]["flexitime"]*60*60);
+		$sign 								= $flexi_carry[0]["sign"];
 	}elseif(substr($eventEndDate,0,10)==$flexiEndPeriod){ //the current period
 		//get the live/current flexitime in their pot
-		$flexiPot 								= dl::select("flexi_carried_forward_live", "timesheet_id=".$timesheetId);
-		$flexiInPot 							= date("H:i", $flexiPot[0]["flexi_time_carried_forward"]*60*60);
-		$sign 									= $flexiPot[0]["sign"];
+		$flexiPot 							= dl::select("flexi_carried_forward_live", "timesheet_id=".$timesheetId);
+		$flexiInPot 						= date("H:i", $flexiPot[0]["flexi_time_carried_forward"]*60*60);
+		$sign 								= $flexiPot[0]["sign"];
 	}else{
-		$flexiInPot 							= "00:00";
+		$flexiInPot 						= "00:00";
 	}	
 	echo "<div class='timesheet_header'>TIMESHEET</div>";
     echo "<div class='timesheet_name'>".$name."</div>";
@@ -910,38 +910,38 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 							$minsPerWeek = $daysDayMins * $daysPerWeek;
 							$addOnHours = $minsPerWeek/60;
 							$hoursPerWeek += $addOnHours;*/
-							$extra_time 				= ($extra_time * date("i",$daysTimeDifferential))/60;
-							$weekTimeMins 		+=$extra_time;
-							$weekHrs 					= $weekTimeMins/60;
+							$extra_time 			= ($extra_time * date("i",$daysTimeDifferential))/60;
+							$weekTimeMins 			+=$extra_time;
+							$weekHrs 				= $weekTimeMins/60;
 							$weekTimeHrs 			+= intval($weekHrs);
 							$weekMins 				= (($weekTimeMins - intval($weekHrs)*60)/60);
 							$hoursWorked 			= $weekTimeHrs+$weekMins + $extra_time;						
 							$workBalance 			= $hoursWorked - $hoursPerWeek;
-							$workBalanceTotal 	+= $workBalance;
+							$workBalanceTotal 		+= $workBalance;
 							//check what's in the flexi pot and subtract
-							if($flexiInPot 				!= "00:00:00") {
-									$flexiHrs 			= $flexiweekTimeHrs  - date("G", strtotime($flexiInPot));
+							if($flexiInPot 			!= "00:00:00") {
+									$flexiHrs 		= $flexiweekTimeHrs  - date("G", strtotime($flexiInPot));
 									$flexiMins 		= $flexiweekTimeMins - date("i", strtotime($flexiInPot));
 							}
 							$flexiPotHour 			= date("G",strtotime($flexiInPot));
 							//sign is whether to add or subtract the flexipot value
-							if($sign 					== "+") {
+							if($sign 				== "+") {
 								$flexiPotTotal 		= $workBalanceTotal + $flexiPotHour+number_format((date("i", strtotime($flexiInPot))/60),2);
 							}else{
 								$flexiPotTotal 		= $workBalanceTotal - $flexiPotHour-number_format((date("i", strtotime($flexiInPot))/60),2);
 							}
-							$style						="";
+							$style					="";
 							if(number_format($flexiPotTotal,1) < $flexiMaxSurplus and  number_format($flexiPotTotal,2) > 0 ) {
 								//in the black and not too much
-								$style 					= "background-color:#0C6;";
+								$style 				= "background-color:#0C6;";
 							}
 							if(number_format($flexiPotTotal,2) > $flexiMaxSurplus ) {
 								// too much
-								$style 					= "background-color:#FF6C00;";
+								$style 				= "background-color:#FF6C00;";
 							}
 							if(number_format($flexiPotTotal,2) < $flexiMaxDeficit ) {
 								//in the red
-								$style 					= "background-color:#F00;";
+								$style 				= "background-color:#F00;";
 							}
 							echo "<div class='timesheet_table_header_time'><div class='timesheet_padding'>".number_format($hoursWorked,1)." hrs</div></div>";
 							echo "<div class='timesheet_table_header_time'><div class='timesheet_padding'>".number_format($hoursPerWeek,1)." hrs</div></div>";
@@ -967,53 +967,54 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 								$rec = dl::update("flexi_carried_forward_live", $writeArr, "timesheet_id = ".$timesheetId);
 							}
 						}
-						$date 							= add_date(strtotime($date),2);//add 2 to skip weekend
+						$date 						= add_date(strtotime($date),2);//add 2 to skip weekend
 						$weekTimeHrs				= 0;
 						$weekTimeMins				= 0;
-						$extra_time 					= 0;
+						$extra_time 				= 0;
 					}
 				}
-				if(date('l',strtotime($date))=="Monday") { //start of the 4 weekly period display
+				if(date('l',strtotime($date))		=="Monday") { //start of the 4 weekly period display
 					echo "<div class='timesheet_table_header_blank'><div class='timesheet_padding'>".date($dateFormat, strtotime($date))."</div></div>";
 				}
-				if(date('Y-m-d',strtotime($date)) == date('Y-m-d',strtotime($event["event_startdate_time"]))) {
-					if(date('l',strtotime($date))!="Saturday") { 
-						$timeFrom 				= date('H:i:s', strtotime($event["event_startdate_time"]));
+				if(date('Y-m-d',strtotime($date)) 	== date('Y-m-d',strtotime($event["event_startdate_time"]))) {
+					if(date('l',strtotime($date))	!="Saturday") { 
+						$timeFrom 					= date('H:i:s', strtotime($event["event_startdate_time"]));
 						$timeTo 					= date('H:i:s', strtotime($event["event_enddate_time"]));
 						$timediff 					= date('H:i:s',strtotime($timeTo) - strtotime($timeFrom));
-						$alt 							= date('H:i', strtotime($event["event_startdate_time"]))." - ".date('H:i', strtotime($event["event_enddate_time"]));
+						$alt 						= date('H:i', strtotime($event["event_startdate_time"]))." - ".date('H:i', strtotime($event["event_enddate_time"]));
 						//check if the event Type is Flexi Leave if so then don't add the time but capture the flexi Leave
-						$eventType 				= dl::select("flexi_event_type", "event_type_id = ".$event["event_type_id"]);
+						$eventType 					= dl::select("flexi_event_type", "event_type_id = ".$event["event_type_id"]);
 						//find out if the event has a lunch_deduction
-						$lunchDeduction 		= dl::select("flexi_event_settings", "event_typeid = ".$event["event_type_id"]);
+						$lunchDeduction 			= dl::select("flexi_event_settings", "event_typeid = ".$event["event_type_id"]);
 						if($lunchDeduction[0]["lunch_deduction"] == "Yes") { //the event requires a lunch deduction to be taken off but only if equal or over 6 hours
-							$workingEvent 		+= strtotime($timediff);
+							$workingEvent 			+= strtotime($timediff);
 						}
+						//TODO : Need to check if there is a remainder event within this days events this should stop the minimum lunch being taken off even if greater than 6 hours
 						//check if an extended lunch was taken
-						if($event["event_lunch"] != "00:00:00") { //extended lunch has been taken
+						if($event["event_lunch"] 	!= "00:00:00") { //extended lunch has been taken
 							//check if the extended lunch is greater than minimum lunch
 							if (strtotime($event["event_lunch"]) > strtotime($daysMinimumLunchDuration)) { //minimum lunch in seconds
-								$timediff = date('H:i:s',strtotime($timediff) - strtotime($event["event_lunch"]));
-								$extended_lunch=true;
-								$lunchDeducted = true;
+								$timediff 			= date('H:i:s',strtotime($timediff) - strtotime($event["event_lunch"]));
+								$extended_lunch		= true;
+								$lunchDeducted 		= true;
 							}else{
-								$extended_lunch=false;
+								$extended_lunch		=false;
 								//need to check if have to take lunch off
 								if($daysMinimumLunch=="Yes") {
 									if(date("G", strtotime($timediff)) > 6 ) { //if the time worked is greater than 6 hours then take off lunch
-										$timediff = date('H:i:s',strtotime($timediff) - strtotime($daysMinimumLunchDuration));
+										$timediff 	= date('H:i:s',strtotime($timediff) - strtotime($daysMinimumLunchDuration));
 										$lunchDeducted = true;
 									}
 								}
 							}
 						}else{
-							$extended_lunch=false;
+							$extended_lunch			=false;
 							//need to check if have to take lunch off
-							if($daysMinimumLunch=="Yes") {
+							if($daysMinimumLunch	=="Yes") {
 								// capture the time for this event as there may be multiple events on the one day (eg: working session then a training session followed by a working session
 								//*************************************************
 								if(date("G", strtotime($timediff)) >= 6 ) { //if the time worked is greater than 6 hours then take off lunch
-									$timediff 				= date('H:i:s',strtotime($timediff) - strtotime($daysMinimumLunchDuration));
+									$timediff 		= date('H:i:s',strtotime($timediff) - strtotime($daysMinimumLunchDuration));
 									$lunchDeducted 	= true;
 								}
 							}
@@ -1027,53 +1028,53 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 						}
 						// add up the number of hours and mins
 						if($eventType[0]["event_flexi"]=="Yes") {
-							$flexiTimeHrs 				= $flexiTimeHrs + date("G", strtotime($timediff));
-							$flexiTimeMins 				= $flexiTimeMins + date("i", strtotime($timediff));
+							$flexiTimeHrs 			= $flexiTimeHrs + date("G", strtotime($timediff));
+							$flexiTimeMins 			= $flexiTimeMins + date("i", strtotime($timediff));
 						}else{
-							$weekTimeHrs 				= $weekTimeHrs + date("G", strtotime($timediff));
+							$weekTimeHrs 			= $weekTimeHrs + date("G", strtotime($timediff));
 							$weekTimeMins 			= $weekTimeMins + date("i", strtotime($timediff));
 						}
-						$hours 								= date("G", strtotime($timediff));
-						$mins 								= date("i", strtotime($timediff));
+						$hours 						= date("G", strtotime($timediff));
+						$mins 						= date("i", strtotime($timediff));
 						//need to link pixels to the resolution of the screen
-						$screenRes 						= $_SESSION["screenResolution"];
+						$screenRes 					= $_SESSION["screenResolution"];
 						list($pixelSize, $showDate) = set_pixelSize($screenRes);
 						
-						if($hours != 12) {
-							$pixels = $hours * $pixelSize;
+						if($hours 					!= 12) {
+							$pixels 				= $hours * $pixelSize;
 						}else{
-							$pixels = 0;
+							$pixels 				= 0;
 						}
-						$pixels += $mins/5;
+						$pixels 					+= $mins/5;
 						//need to calculate the pixels for the timediff
-						$pxWidth = $pixels;
+						$pxWidth 					= $pixels;
 						//get the event Type and colour
 						if($own_timesheet or $authorise) {
-							$eventColour = $eventType[0]["event_colour"];
-							$eventShortCode = $eventType[0]["event_shortcode"];
+							$eventColour 			= $eventType[0]["event_colour"];
+							$eventShortCode 		= $eventType[0]["event_shortcode"];
 						}else{
-							$eventColour = "#CCC";
+							$eventColour 			= "#CCC";
 						}
 						//get any notes and attach to the alt check if they are public or private
 						if($authorise or $own_timesheet) {
-							$sql="select * from flexi_event_notes as en 
-							join flexi_notes as n on (en.note_id=n.notes_id) 
-							where event_id=".$event["event_id"];
-							$notes = dl::getQuery($sql);
+							$sql					="select * from flexi_event_notes as en 
+												join flexi_notes as n on (en.note_id=n.notes_id) 
+												where event_id=".$event["event_id"];
+							$notes 					= dl::getQuery($sql);
 						}
                         $note = "";
 						if(!empty($notes)) {
 							if($notes[0]["notes_type"] == "Public" and $authorise) {
-								$note = "\n\n".$notes[0]["notes_note"];
+								$note 				= "\n\n".$notes[0]["notes_note"];
 							}elseif($notes[0]["notes_type"] == "Private" and $own_timesheet) {
-								$note = "\n\n".$notes[0]["notes_note"];
+								$note 				= "\n\n".$notes[0]["notes_note"];
 							}
 						}else{
-							$note = "";
+							$note 					= "";
 						}
-						$dateTitle = date("d/m/Y", strtotime($date));
-						$alt .= " ".date("H:i", strtotime($timediff)); 
-						$alt = date($shortDate, strtotime($date))." ".$alt.$note;
+						$dateTitle 					= date("d/m/Y", strtotime($date));
+						$alt 						.= " ".date("H:i", strtotime($timediff)); 
+						$alt 						= date($shortDate, strtotime($date))." ".$alt.$note;
 						if($_SESSION["userPermissions"]["add_global"] == "true") { //if you have the global add permission then user is considered an Admin
 							echo "<div class='timesheet_table_header_white' title='$dateTitle'><div class='timesheet_padding'><div title='$alt' class='connected' id='time".$event["event_id"]."'style='cursor: move; float:left; background-color:".$eventColour."; width:".$pxWidth."px '>";
 						}else{
@@ -5221,7 +5222,6 @@ function leave_dates($user_id, $year="") {
 			echo "<tr><th>Leave<BR>Entitlement<BR>(hrs)</th><th>Additional<BR>Hours</th><th>Year End<br>Month</th><th>Year</th><th>Leave<BR>Taken<BR>(Hrs)</th><th>Leave<BR>Carried<BR>Over</th><th>Leave<BR>Notes</th></tr>";
 			foreach( $checkadditional as $ca ) {
 				echo "<tr><td align='center'>".$ca["entitlement"]."</td><td align='center'>".$ca["additional_days"]."</td><td align='center'>".$ca["leave_month"]."</td><td align='center'>".$ca["leave_year"]."</td><td align='center'>".$ca["leave_taken"]."</td><td align='center'>".$ca["leave_left"]."</td>";
-				//TODO : add the links to the leave notes here
 				echo "<td align='center'><img src='inc/images/notes-icon.png' id='view_notes'></td>";
 				echo "</tr>";
 			}
