@@ -5358,7 +5358,7 @@ function show_sickness_report() {
 	echo "</div></div>";
 }
 
-function show_leave_report() {
+function show_leave_report() {		
 	//dl::$debug=true;
 	$user_id = $_SESSION["userSettings"]["userId"]; //this is the logged on user id.
 	echo "<div class='report_body'><div class='report_heading_space'><div class='report_heading'>LEAVE MANAGEMENT REPORT</div></div><div class='report_space'>";
