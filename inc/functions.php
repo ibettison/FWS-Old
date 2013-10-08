@@ -701,33 +701,33 @@ function clear_login() {
 function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 	if($_GET["func"]=="nextperiod" or $_GET["func"] == "previousperiod" or $_GET["func"] == "viewuserstimesheet") { // this is for the redirection after a draggable deletion
 			$_SESSION["pageLocation"] 		= $_GET["func"];
-			$_SESSION["startPeriod"] 			= $_GET["start"];
+			$_SESSION["startPeriod"] 		= $_GET["start"];
 			$_SESSION["endPeriod"] 			= $_GET["end"];
-			$_SESSION["user"]					= $_GET["userid"];
+			$_SESSION["user"]				= $_GET["userid"];
 		}elseif($_GET["choice"]="View") {//adding to your own spreadsheet
 			$_SESSION["pageLocation"]		= "viewuserstimesheet";
-			$_SESSION["user"]					= $_SESSION["userSettings"]["userId"];
+			$_SESSION["user"]				= $_SESSION["userSettings"]["userId"];
 		}else{
 			$_SESSION["pageLocation"]		= "";
-			$_SESSION["startPeriod"] 			= "";
+			$_SESSION["startPeriod"] 		= "";
 			$_SESSION["endPeriod"] 			= "";
-			$_SESSION["user"]					= "";
+			$_SESSION["user"]				= "";
 		}
 	if($userId 											!= $_SESSION["userSettings"]["userId"]) { //the timesheet request is not from the logged in user
 		//need to find the user's details
 		//need to check if the logged in user has management credentials
-		$users 									= dl::select("flexi_user", "user_id = ".$userId);
-		$name 									= $users[0]["user_name"];
+		$users 								= dl::select("flexi_user", "user_id = ".$userId);
+		$name 								= $users[0]["user_name"];
 		$timeTemplate 						= $users[0]["user_time_template"];
 		$flexiTemplate 						= $users[0]["user_flexi_template"];
 		$permissionTemplate 				= $users[0]["user_permission_id"];
-		$own_timesheet 					= false;
+		$own_timesheet 						= false;
 	}else{
 		$name									= $_SESSION["userSettings"]["name"];
 		$timeTemplate 						= $_SESSION["userSettings"]["timeTemplate"];
 		$flexiTemplate 						= $_SESSION["userSettings"]["flexiTemplate"];
 		$permissionTemplate 			    = $_SESSION["userSettings"]["permissionId"];
-		$own_timesheet 					= true;
+		$own_timesheet 						= true;
 	}
 	
 	//check the time change table to see if there has been any flexi template modifications
@@ -830,10 +830,10 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 	// check if there has been parameters passed with start and end dates
 	if(!empty($pStartDate) and !empty($pEndDate)) {
 		$eventStartDate 					= $pStartDate." 00:00:00";
-		$eventEndDate 						= $pEndDate." 11:59:59";
+		$eventEndDate 						= $pEndDate." 23:59:59";
 	}else{
 		$eventStartDate						= $flexiStartPeriod." 00:00:00";
-		$eventEndDate 						= $flexiEndPeriod." 11:59:59";
+		$eventEndDate 						= $flexiEndPeriod." 23:59:59";
 	}
 	if($authorise or $own_timesheet) { //can view full timesheet
 		if($viewTimesheetCheck				=="true" or $viewOverride=="true"){
@@ -989,7 +989,6 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 						if($lunchDeduction[0]["lunch_deduction"] == "Yes") { //the event requires a lunch deduction to be taken off but only if equal or over 6 hours
 							$workingEvent 			+= strtotime($timediff);
 						}
-						//TODO : Need to check if there is a remainder event within this days events this should stop the minimum lunch being taken off even if greater than 6 hours
 						//check if an extended lunch was taken
 						if($event["event_lunch"] 	!= "00:00:00") { //extended lunch has been taken
 							//check if the extended lunch is greater than minimum lunch
@@ -998,7 +997,7 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 								$extended_lunch		= true;
 								$lunchDeducted 		= true;
 							}else{
-								$extended_lunch		=false;
+								$extended_lunch		= false;
 								//need to check if have to take lunch off
 								if($daysMinimumLunch=="Yes") {
 									if(date("G", strtotime($timediff)) > 6 ) { //if the time worked is greater than 6 hours then take off lunch
@@ -1008,7 +1007,7 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 								}
 							}
 						}else{
-							$extended_lunch			=false;
+							$extended_lunch			= false;
 							//need to check if have to take lunch off
 							if($daysMinimumLunch	=="Yes") {
 								// capture the time for this event as there may be multiple events on the one day (eg: working session then a training session followed by a working session
@@ -1022,10 +1021,33 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 						}
 						if(date("G", $workingEvent) >= 6 ) {
 							if(!$lunchDeducted) {
-								$timediff 					= date('H:i:s',strtotime($timediff) - strtotime($daysMinimumLunchDuration));
+								$timediff 			= date('H:i:s',strtotime($timediff) - strtotime($daysMinimumLunchDuration));
 								$lunchDeducted 		= true;
 							}
 						}
+						
+						// lunch has been deducted let's now check if any of the events on this day are remainder events
+						// if so then we'll add the minimum lunch back on. Should not apply if there is an extended lunch
+						if ($lunchDeducted 			== true) {
+							$eventDay = date('Y-m-d',strtotime($date)). " 00:00:00";
+							$eventlast 				= date('Y-m-d', strtotime($eventDay)). " 23:59:59";
+							$eventsToday 			= dl::select("flexi_event", "event_startdate_time >= '$eventDay' and event_enddate_time <= '$eventlast' and timesheet_id = $timesheetId");
+							if(count($eventsToday) > 1){
+								foreach ($eventsToday as $etoday) {
+									$foundRemainder = dl::select("flexi_remainder", "r_event = ".$etoday["event_id"]);
+									if(!empty($foundRemainder)) {
+										$dayHr 	= substr(date("H:i:s", strtotime($daysMinimumLunchDuration)),0,2)*60*60;
+										$dayMin = substr(date("H:i:s", strtotime($daysMinimumLunchDuration)),3,2)*60;
+										$daySec = substr(date("H:i:s", strtotime($daysMinimumLunchDuration)),5,2);
+										$lunchtoAdd = $dayHr + $dayMin + $daySec;
+										//add the minimum lunch back onto the $timediff variable
+										$timediff 	= date('H:i:s', strtotime($timediff) + $lunchtoAdd);
+									}
+								}
+							}
+						}
+						
+						
 						// add up the number of hours and mins
 						if($eventType[0]["event_flexi"]=="Yes") {
 							$flexiTimeHrs 			= $flexiTimeHrs + date("G", strtotime($timediff));
