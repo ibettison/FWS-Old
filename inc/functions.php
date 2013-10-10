@@ -1036,9 +1036,9 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 								foreach ($eventsToday as $etoday) {
 									$foundRemainder = dl::select("flexi_remainder", "r_event = ".$etoday["event_id"]);
 									if(!empty($foundRemainder)) {
-										$dayHr 	= substr(date("H:i:s", strtotime($daysMinimumLunchDuration)),0,2)*60*60;
-										$dayMin = substr(date("H:i:s", strtotime($daysMinimumLunchDuration)),3,2)*60;
-										$daySec = substr(date("H:i:s", strtotime($daysMinimumLunchDuration)),5,2);
+										$dayHr 		= substr(date("H:i:s", strtotime($daysMinimumLunchDuration)),0,2)*60*60;
+										$dayMin 	= substr(date("H:i:s", strtotime($daysMinimumLunchDuration)),3,2)*60;
+										$daySec 	= substr(date("H:i:s", strtotime($daysMinimumLunchDuration)),5,2);
 										$lunchtoAdd = $dayHr + $dayMin + $daySec;
 										//add the minimum lunch back onto the $timediff variable
 										$timediff 	= date('H:i:s', strtotime($timediff) + $lunchtoAdd);
@@ -1046,8 +1046,6 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 								}
 							}
 						}
-						
-						
 						// add up the number of hours and mins
 						if($eventType[0]["event_flexi"]=="Yes") {
 							$flexiTimeHrs 			= $flexiTimeHrs + date("G", strtotime($timediff));
@@ -1144,6 +1142,7 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 									}
 								}
 							}
+							
 							// add up the number of hours and mins
 							if($eventType[0]["event_flexi"]=="Yes") {
 								$flexiTimeHrs = $flexiTimeHrs + date("G", strtotime($timediff));
@@ -2744,12 +2743,13 @@ function save_event($userId) {
 						$startSecs = $timeStart * 60 * 60 + $timeStartMins * 60;
 						$endSecs = $timeEnd * 60 * 60 + $timeEndMins * 60;
 						$minLunch=0;
-						if(date("H", $endSecs-$startSecs) >= 6 ) {
+						// the below is commented as min lunch is excluded from a remainder display
+						/*if(date("H", $endSecs-$startSecs) >= 6 ) {
 							$minLunch = strtotime($minimum_lunch_duration); // add min lunch as it will be taken off
-						}
+						}*/
 						$durationSecs = substr($duration,0,2) * 60 * 60 + substr($duration,3,2) * 60 + substr($duration,6, 2) * 60;
 						$endTimeSecs = $startSecs + $durationSecs;
-						$endTimeSecs = $endTimeSecs - $startTimeSecs+$minLunch;
+						$endTimeSecs = $endTimeSecs - $startTimeSecs;
 						dl::update("flexi_event", array("event_enddate_time"=>$_POST["date_name"]." ".date("H:i:s", $endTimeSecs)), "event_id = ".$evs["event_id"]);
 					}
 				}
