@@ -18,6 +18,7 @@ require('inc/classes/form_class.php');
 require('inc/classes/libmail.inc');
 require('inc/classes/check_leave_class.php');
 require('inc/classes/tc_calendar.php');
+require('inc/classes/showteamleave_class.php');
 date_default_timezone_set('UTC');
 $cal = new calendars;
 ?>

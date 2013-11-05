@@ -1120,7 +1120,11 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 							$timeTo = date('H:i:s', strtotime($events[$loopCount]["event_enddate_time"]));
 							$alt = date('H:i', strtotime($events[$loopCount]["event_startdate_time"]))." - ".date('H:i', strtotime($events[$loopCount]["event_enddate_time"]));
 							$timediff = date('H:i:s',strtotime($timeTo) - strtotime($timeFrom));
-							$accumulateTime += strtotime($timeTo) - strtotime($timeFrom);
+							/*****************Annual Leave check **********************/
+							if($events[$loopCount]["event_type_id"] != 3 and $events[$loopCount]["event_type_id"] != 2) {
+								// if the event is not an Annual or Flexi Leave event then add the time to count for minimum lunch check.
+								$accumulateTime += strtotime($timeTo) - strtotime($timeFrom);
+							}
 							//check if the event Type is Flexi Leave if so then don't add the time but capture the flexi Leave
 							$eventType = dl::select("flexi_event_type", "event_type_id = ".$events[$loopCount]["event_type_id"]);
 							if(date("G", $accumulateTime) >= 6) {
@@ -1425,46 +1429,12 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 	echo "<div id='poof'></div>";
 	/*This is the portion to show team members leave in the currently displayed period*/
 	//dl::$debug=true;
-	$team = dl::select("flexi_team_user", "user_id = ".$userId);
-	if($authorise) {
-		foreach($team as $t) {
-			$localTeam = dl::select("flexi_team_local", "team_user_id = ".$t["team_user_id"]);
-			if(!empty($localTeam)) {
-				$userLocalTeam_id = $t["team_id"];
-				$localTeamName = dl::select("flexi_team", "team_id = ".$userLocalTeam_id);
-				$sql = "select * from flexi_team_user as u join flexi_team_local as l on (u.team_user_id=l.team_user_id)
-				where u.team_id = ".$userLocalTeam_id." and l.team_user_id IS NOT NULL";
-				$localTeamMembers = dl::getQuery($sql);
-			}
-		}
-		echo "<div class='timesheet_team_leave'><div class='timesheet_team_name'>Team Name : ".$localTeamName[0]["team_name"]."</div>";
-		echo "<div class='timesheet_members'>MEMBERS</div><div class='timesheet_members'>LEAVE IN PERIOD</div>";
-		foreach($localTeamMembers as $members) {
-			//get timesheet id of member
-			$timesheet_id = dl::select("flexi_timesheet", "user_id = ".$members["user_id"]);
-			$userName = dl::select("flexi_user", "user_id = ".$members["user_id"]);
-			//need to check if the user has not got the permission_view_override permmission set to true
-			$sql = "select * from flexi_user as u join flexi_permission_template_name as n on (u.user_permission_id=n.permission_id) 
-						join flexi_permission_template as t on (n.permission_id=t.permission_template_name_id)
-						where u.user_id = ".$members["user_id"];
-			$checkPermission = dl::getQuery($sql);
-			if($checkPermission[0]["permission_view_override"] == 'false') {
-			//check for a deleted user too
-				$deleted = dl::select("flexi_deleted", "user_id = ".$members["user_id"]);
-				if(empty($deleted)) {
-					$events = dl::select("flexi_event", "event_startdate_time >= '".$eventStartDate."' and event_enddate_time <= '".$eventEndDate."' and timesheet_id = ".$timesheet_id[0]["timesheet_id"]. " and event_type_id != 1", "event_startdate_time");
-					echo "<div class='timesheet_leave_name'><a href='index.php?func=nextperiod&start=".substr($eventStartDate,0,10)."&end=".substr($eventEndDate,0,10)."&userid=".$members["user_id"]."'>".$userName[0]["user_name"]."</a></div>";
-					foreach($events as $event) {
-						$event_type = dl::select("flexi_event_type", "event_type_id = ".$event["event_type_id"]);
-						echo "<div class='timesheet_leave_day' style='background-color: ".$event_type[0]["event_colour"]."'>".date("d/m", strtotime($event["event_startdate_time"]))." (".$event_type[0]["event_shortcode"].")</div>";
-					}
-				}
-			}
-			echo "<BR>";
-		}
-		echo "</div>"; //timesheet_team_leave
+	if($authorise){
+		showlocalteamleave::display_leave($userId, $eventStartDate, $eventEndDate);
 	}
+	
 }
+
 
 function set_pixelSize ( $screenRes ) {
 	if($screenRes 					> 1600) {
@@ -2594,6 +2564,7 @@ function save_event($userId) {
 	$eventFlexiLeave 					= $event[0]["event_flexi"];
 	$eventDelete 						= $event[0]["event_delete"];
 	$eventOverride						= $event[0]["event_override"];
+	
 	//*******************************************
 	//check the flexi template days settings to make sure the entered times are within the template ranges specified
 	$sql 								= "select * from flexi_user as u 
@@ -2611,6 +2582,7 @@ function save_event($userId) {
 	$days_settings_id 					= $ranges[0]["days_settings_id"];
 	$minimum_lunch 						= $ranges[0]["minimum_lunch"];
 	$minimum_lunch_duration 			= $ranges[0]["minimum_lunch_duration"];
+	$proRataLeave						= $ranges[0]["max_surplus"];
 	//$normal_day_duration[0]["normal_day_duration"]; the normal day duration is no longer required as the new flexi_day_times template accomodates the times for individual and multiple days
 	//********************************************
 	$eventSettings 						= dl::select("flexi_event_settings", "event_typeid=".$eventId);
@@ -2680,7 +2652,11 @@ function save_event($userId) {
 		}
 	}
 	if(!empty($duration_link) and !empty($leaveDuration)) { //if $leaveDuration is blank then use the user entered times
-		$duration = $duration_link[0]["fdt_working_time"];
+		if($eventType != "Flexi Leave") {// let's check if this is NOT flexileave
+			$duration = $duration_link[0]["fdt_working_time"]; //add the working time for the particular day 
+		}else{
+			$duration = "0".intval($proRataLeave).":".(60*fmod($proRataLeave,1)).":00"; //add the time for the proRata leave request
+		}
 		$startTime = $_POST["duration_time_start"].":".$_POST["duration_time_start_mins"].":00";
 		$startTimeSecs = $_POST["duration_time_start"] * 60 * 60 + $_POST["duration_time_start_mins"] * 60;
 		$eventsToday = dl::select("flexi_event", "event_startdate_time >= '".$_POST["date_name"]." 00:00:00' and event_enddate_time <= '".$_POST["date_name"]." 23:59:59' and timesheet_id = ".$timeSheetId." order by event_startdate_time ASC");
@@ -2716,8 +2692,14 @@ function save_event($userId) {
 		if(empty($duration_link)) { // this means that the weekday pattern is fixed for all days so lets check that with the weekday_id == 6
 			$duration_link = dl::select("flexi_day_times", "fdt_flexi_days_id = ".$days_settings_id." and fdt_weekday_id = 6");
 		}
-		if(!empty($duration_link)){
-			$duration = $duration_link[0]["fdt_working_time"];
+		if(!empty($duration_link)){ 
+			if($eventType != "Flexi Leave") // let's check if this is NOT flexileave
+			{
+				$duration = $duration_link[0]["fdt_working_time"]; //add the working time for the particular day 
+			}else{
+				$duration = "0".intval($proRataLeave).":".(60*fmod($proRataLeave,1)).":00"; //add the time for the proRata leave request
+			}
+			echo "<BR>$duration<BR>";
 			$eventsToday = dl::select("flexi_event", "event_startdate_time >= '".$_POST["date_name"]." 00:00:00' and event_enddate_time <= '".$_POST["date_name"]." 23:59:59' and timesheet_id = ".$timeSheetId." order by event_startdate_time ASC");
 			//lets check if there is more than one event on this day and check if it is an event which is a remainder event
 			//as we will probably have to change the end time of the remainder event.
@@ -2760,7 +2742,6 @@ function save_event($userId) {
 	}
 	$startDateTime = $_POST["date_name"]." ".$startTime;
 	$endDateTime = $_POST["date_name"]." ".$endTime;
-
 	//check to see if a date has been entered that lands on a weekend.
 	if(date("l", strtotime($_POST["date_name"])) == "Saturday" or date("l", strtotime($_POST["date_name"])) == "Sunday" or date("l", strtotime($_POST["date_name2"])) == "Saturday" or date("l", strtotime($_POST["date_name2"])) == "Sunday") {
 		//redirect to message and reenter details ?>
