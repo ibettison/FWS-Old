@@ -10,6 +10,7 @@ require('inc/classes/calendar_class.php');
 require('inc/classes/form_class.php');
 require('inc/classes/libmail.inc');
 require('inc/classes/tc_calendar.php');
+require('inc/classes/showteamleave_class.php');
 date_default_timezone_set('UTC');
 $cal = new calendars;
 
@@ -463,4 +464,16 @@ if($_POST["func"] == "edit_template") {
 	save_flexi_days_template_edit();
 }
 
+if($_POST["func"] == "p_period") {
+	$start 	= date("Y-m-d", strtotime(sub_date(strtotime($_POST["from"]),28)));
+	$end	= date("Y-m-d", strtotime(sub_date(strtotime($_POST["to"]),28)));
+	$user_id = $_SESSION["userSettings"]["userId"];
+	teamLeaveDisplay($start, $end, $user_id);
+}
+if($_POST["func"] == "n_period") {
+	$start 	= date("Y-m-d", strtotime(add_date(strtotime($_POST["from"]),28)));
+	$end	= date("Y-m-d", strtotime(add_date(strtotime($_POST["to"]),28)));
+	$user_id = $_SESSION["userSettings"]["userId"];
+	teamLeaveDisplay($start, $end, $user_id);
+}
 ?>

@@ -741,6 +741,11 @@ if($_SESSION["showMths"]== 4) {
 					echo "</div>";
 				}
 			}elseif($_GET["choice"] == "Reports") {
+				if($_GET["subchoice"] 		== "fullleaveReport") {
+					echo "<div class='left_body'>";
+					teamleaveReport();
+					echo "</div>";
+				}
 				if($_GET["subchoice"] == "sicknessReport") {
 					echo "<div class='left_body'>";
 					echo "<SCRIPT>redirect('reports.php?func=Sickness');</SCRIPT>" ;

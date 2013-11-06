@@ -465,10 +465,11 @@ function show_subMenu($button_choice) {
 		$view_icon = "<div class='show_icon'><img src='inc/images/template.jpg' title='View' /></div>";
 	}elseif($button_choice=="Reports") {
 		if($_SESSION["userPermissions"]["view_reports"]=="true") {
-			echo "<div class='sub_menu_button'>".show_menuLink($_SERVER['PHP_SELF']."?choice=".$_GET["choice"]."&subchoice=sicknessReport", 'Sickness Analysis')."</div>";
-			echo "<div class='sub_menu_button'>".show_menuLink($_SERVER['PHP_SELF']."?choice=".$_GET["choice"]."&subchoice=leaveManagementReport", 'Leave Management')."</div>";
+			echo "<div class='sub_menu_button'>".show_menuLink($_SERVER['PHP_SELF']."?choice=".$_GET["choice"]."&subchoice=fullleaveReport", 'Teams Leave')."</div>";
 		}
 		if($_SESSION["userPermissions"]["year_end"]=="true") {
+			echo "<div class='sub_menu_button'>".show_menuLink($_SERVER['PHP_SELF']."?choice=".$_GET["choice"]."&subchoice=sicknessReport", 'Sickness Analysis')."</div>";
+			echo "<div class='sub_menu_button'>".show_menuLink($_SERVER['PHP_SELF']."?choice=".$_GET["choice"]."&subchoice=leaveManagementReport", 'Leave Management')."</div>";
 			echo "<div class='sub_menu_button'>".show_menuLink($_SERVER['PHP_SELF']."?choice=".$_GET["choice"]."&subchoice=leaveResetReport", 'Leave Year End')."</div>";
 		}
 		$view_icon = "<div class='show_icon'><img src='inc/images/report.png' title='View' /></div>";
@@ -723,7 +724,7 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 		$permissionTemplate 				= $users[0]["user_permission_id"];
 		$own_timesheet 						= false;
 	}else{
-		$name									= $_SESSION["userSettings"]["name"];
+		$name								= $_SESSION["userSettings"]["name"];
 		$timeTemplate 						= $_SESSION["userSettings"]["timeTemplate"];
 		$flexiTemplate 						= $_SESSION["userSettings"]["flexiTemplate"];
 		$permissionTemplate 			    = $_SESSION["userSettings"]["permissionId"];
@@ -734,7 +735,7 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 	//change the flexi template to show the correct weekly time if there has been changes
 	$timesheet 								= dl::select("flexi_timesheet", "user_id=".$_GET["userid"]);
 	if(!empty($pEndDate)) {
-		$changes 								= dl::select("flexi_time_changes", "change_date > '".$pEndDate."' and timesheet_id = ".$timesheet[0]["timesheet_id"]." order by change_date ASC ");
+		$changes 							= dl::select("flexi_time_changes", "change_date > '".$pEndDate."' and timesheet_id = ".$timesheet[0]["timesheet_id"]." order by change_date ASC ");
 		if(!empty($changes)) { //changes have been made and therefore need to be applied to this view
 			$flexiTemplate 					= $changes[0]["old_template_id"];
 			$changeDate 					= $changes[0]["change_date"];
@@ -1435,6 +1436,59 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 	
 }
 
+function teamleaveReport() {
+	$user_id 				= $_SESSION["userSettings"]["userId"];
+	$current_period 		= dl::select("flexi_template");
+	$start 					= $current_period[0]["start_period"];
+	$end					= $current_period[0]["end_period"];
+	echo "<div class='timesheet_header'>TEAM LEAVE REPORT</div>";
+	echo "<div id='display_leave'>";
+	teamLeaveDisplay($start, $end, $user_id);
+	echo "</div>";
+}
+
+function teamLeaveDisplay($start, $end, $user_id) {
+	echo "<div class='timesheet_header'>Period - from [ ".$start." ] To [ ".$end." ]</div>";	
+	echo "<div class='timesheet_footer'><img id='previousArr' src='inc/images/arrow_left.jpg' border='0' align='middle' /> | <img id='nextArr' src='inc/images/arrow_right.jpg' border='0' align='middle' /></div>";
+	showallteamleave::display_leave($user_id, $start, $end);
+	echo "</div>";
+
+?>
+<script>
+		$("#previousArr").click(function() {
+			var func = "p_period";
+			var from = "<?php echo $start?>";
+			var to   = "<?php echo $end?>";
+			$.post(
+				"ajax.php",
+				{ func: func,
+				from: from,
+				to: to,
+				},
+				function (data)
+				{
+				$('#display_leave').html(data);
+			});
+		});
+		$("#nextArr").click(function() {
+			var func = "n_period";
+			var from = "<?php echo $start?>";
+			var to   = "<?php echo $end?>";
+			$.post(
+				"ajax.php",
+				{ func: func,
+				from: from,
+				to: to,
+				},
+				function (data)
+				{
+				$('#display_leave').html(data);
+			});
+		});
+</script>
+
+<?php
+}
 
 function set_pixelSize ( $screenRes ) {
 	if($screenRes 					> 1600) {

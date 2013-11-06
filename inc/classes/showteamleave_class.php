@@ -66,7 +66,8 @@ class showlocalteamleave extends showteamleave {
 				$userLocalTeam_id 								= $t["team_id"];
 				$localTeamName 									= dl::select("flexi_team", "team_id = ".$userLocalTeam_id);
 				$sql 											= "select * from flexi_team_user as u join flexi_team_local as l on (u.team_user_id=l.team_user_id)
-																where u.team_id = ".$userLocalTeam_id." and l.team_user_id IS NOT NULL";
+																join flexi_user as fu on (fu.user_id=u.user_id)
+																where u.team_id = ".$userLocalTeam_id." and l.team_user_id IS NOT NULL order by SUBSTRING_INDEX(user_name, ' ', -1)";
 				$localTeamMembers 								= dl::getQuery($sql);
 			}
 		}
@@ -85,7 +86,8 @@ class showallteamleave extends showteamleave {
 				self::display_title($team_name[0]["team_name"]);
 				$userTeam_id 									= $t["team_id"];
 				$sql 											= "select * from flexi_team_user as u join flexi_team_local as l on (u.team_user_id=l.team_user_id)
-																where u.team_id = ".$userTeam_id." and l.team_user_id IS NOT NULL";
+																join flexi_user as fu on (fu.user_id=u.user_id)
+																where u.team_id = ".$userTeam_id." and l.team_user_id IS NOT NULL order by SUBSTRING_INDEX(user_name, ' ',-1)";
 				$teamMembers 									= dl::getQuery($sql);
 				self::display_members($teamMembers);
 			}
