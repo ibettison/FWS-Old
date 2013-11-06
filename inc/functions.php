@@ -1448,7 +1448,7 @@ function teamleaveReport() {
 }
 
 function teamLeaveDisplay($start, $end, $user_id) {
-	echo "<div class='timesheet_header'>Period - from [ ".$start." ] To [ ".$end." ]</div>";	
+	echo "<div class='timesheet_subheader'>Period - from [ ".$start." ] To [ ".$end." ]</div>";	
 	echo "<div class='timesheet_footer'><img id='previousArr' src='inc/images/arrow_left.jpg' border='0' align='middle' /> | <img id='nextArr' src='inc/images/arrow_right.jpg' border='0' align='middle' /></div>";
 	showallteamleave::display_leave($user_id, $start, $end);
 	echo "</div>";
