@@ -5310,25 +5310,25 @@ function leave_dates($user_id, $year="") {
 		}
 		echo "</div>";
 		?>
-                <script>
-                $(function() {
-                    
-                    $("#view_notes").click(function(){
-                      $("#notes_div").dialog({
-                        resizable: false,
-                        height:500,
-                        width: 500,
-                        modal: true,
-                        buttons: {
-                            "Close": function() {
-                                $( "#notes_div" ).dialog( "close" );
-                            }
-                        }
-                      });
-                    });
-                });
-                </script>
-                <?php
+        <script>
+        $(function() {
+            
+            $("#view_notes").click(function(){
+              $("#notes_div").dialog({
+                resizable: false,
+                height:500,
+                width: 500,
+                modal: true,
+                buttons: {
+                    "Close": function() {
+                        $( "#notes_div" ).dialog( "close" );
+                    }
+                }
+              });
+            });
+        });
+        </script>
+        <?php
 	}
 	$yr								=date("Y")-5;
 	echo "<BR />View leave from previous years<BR />"; //5 years in the past

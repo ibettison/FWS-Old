@@ -145,16 +145,18 @@ $cal = new calendars;
 		$leave 						= new check_leave($_SESSION["userSettings"]["userId"]);
 		$arrTime 					= checkWeeklyHours($_SESSION["userSettings"]["userId"]);
 		$entitledTo 				= $leave->getLeaveEntitledTo();
-		$nextYrLeave 			= $leave->getNextYrLeaveTaken();
-		$hoursLeave				= $leave->getHoursLeave();
+		$nextYrLeave 				= $leave->getNextYrLeaveTaken();
+		$hoursLeave					= $leave->getHoursLeave();
 		$hoursTaken 				= $leave->getHoursTaken();
-		$leaveAccountType 	= $leave->getLeaveAccountType();
-		$proRataTime 			= $leave->getProRataTime();
+		$leaveAccountType 			= $leave->getLeaveAccountType();
+		$proRataTime 				= $leave->getProRataTime();
 		//now lets check if they have any additional holidays
 		$additional=0;
 		$additionalHols=dl::select("flexi_carried_forward_live", "timesheet_id=".$_SESSION["userSettings"]["timesheet"]);
 		$additional = $additionalHols[0]["additional_leave"]; 
-        
+        //lets check if there are any notes on the users leave template
+        $leaveNotes = dl::select("flexi_al_notes", "n_template_id = ".$_SESSION["userSettings"]["al"], "n_date DESC");
+		
 		?>
 		<div class='header_left'>
 			<div class='header_text'>
@@ -404,8 +406,38 @@ $cal = new calendars;
 				echo round($remaining, 1);
 				?> hrs
 				</div>
-		<?php }?>
+		<?php 
+			
+		}
+		if(!empty($leaveNotes)) {
+			//there are notes on the users leave templates, lets display a link to view them
+			echo "<div class='left_text_image'><img id='view-leave' src='inc/images/text-edit.png' style='cursor: pointer;' /></div><div class='left_text_small'>There are notes on your leave template.</div>";
+		}
+		?>
 		</div></div>
+		<div id="leave-dialog" title="Notes on your leave template" style="display: none; overflow-y: scroll;">
+		<div class='leaveNote-title'>Date</div><div class='leaveNote-title'>Note</div><BR /><BR />
+			<?php
+			foreach($leaveNotes as $ln) {
+				echo "<div class='leaveNote-date'>".$ln["n_date"]."</div><div class='leaveNote-message'>".nl2br($ln["n_note"])."</div>";
+			}
+			?>
+		</div>
+		<script>
+			$("#view-leave").click(function(){
+				$("#leave-dialog").dialog({
+					resizable: false,
+	                height:300,
+	                width: 500,
+	                modal: true,
+	                buttons: {
+	                    "Close": function() {
+	                        $( "#leave-dialog" ).dialog( "close" );
+	                    }
+                	}
+				});
+			});
+		</script>
 		<?php
 
 	}else{
