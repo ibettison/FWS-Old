@@ -571,6 +571,7 @@ if($_SESSION["showMths"]== 4) {
 									$carriedSign = "+";
 								}else{
 									$carriedSign = "-";
+									$timeSaved = $timeSaved * -1; //save the value as a positive value
 								}
 								$fieldList = array("timesheet_id", "sign", "flexitime","period_date");
 								$valuesArr = array($user["timesheet_id"], $cf[0]["sign"], $cf[0]["flexi_time_carried_forward"], date("Y-m-d", strtotime($endPeriod)));
@@ -616,7 +617,7 @@ if($_SESSION["showMths"]== 4) {
 									$carriedSign = "+";
 								}else{
 									$carriedSign = "-";
-									$timeSaved = $timeSaved * -1;
+									$timeSaved = $timeSaved * -1; //save the value as a positive value
 								}
 								$fieldList = array("timesheet_id", "sign", "flexitime","period_date");
 								$valuesArr = array($user["timesheet_id"], $cf[0]["sign"],  $cf[0]["flexi_time_carried_forward"], date("Y-m-d", strtotime($endPeriod)));

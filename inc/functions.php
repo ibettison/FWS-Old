@@ -572,7 +572,6 @@ function deliver_message($subject,$message) {
 
 function flexi_pot_edit($timesheetId) {
 	if(check_permission("Edit Flexipot")) {
-		
 		if( empty( $_GET["endDate"] ) or strtotime($_GET["endDate"]) > strtotime(date("Y-m-d")) ) {
 			//get the carried forward record
 			$carried = dl::select("flexi_carried_forward_live", "timesheet_id=".$timesheetId);
@@ -635,6 +634,7 @@ function add_reminder() {
 }
 
 function flexi_pot_save($timesheetId) {
+
 	if(check_permission("Edit Flexipot")) {
 		//dl::$debug=true;
 		if( empty( $_GET["endDate"] ) ) {
@@ -674,6 +674,12 @@ function flexi_pot_save($timesheetId) {
 			}
 			if($_POST["note"]!="") { //add the note to the carried forward note table
 				dl::insert("flexi_carried_forward_notes",array(timesheet_id=>$timesheetId, note=>$_POST["note"]));
+				if(!empty($_GET["endDate"])) { //update the date when the alteration is for instead of the current data and time.
+					$lastId = dl::getId();
+					dl::update("flexi_carried_forward_notes", array("note_datetime"=>$_GET["endDate"]." 23:59:59"), "note_id = ".$lastId);
+				}
+				
+				
 			}
 		}
 		echo "<SCRIPT language='javascript'>redirect('index.php?func=editflexipot&timesheet=$timesheetId');</SCRIPT>" ;
@@ -714,7 +720,7 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 			$_SESSION["endPeriod"] 			= "";
 			$_SESSION["user"]				= "";
 		}
-	if($userId 											!= $_SESSION["userSettings"]["userId"]) { //the timesheet request is not from the logged in user
+	if($userId 								!= $_SESSION["userSettings"]["userId"]) { //the timesheet request is not from the logged in user
 		//need to find the user's details
 		//need to check if the logged in user has management credentials
 		$users 								= dl::select("flexi_user", "user_id = ".$userId);
@@ -794,7 +800,6 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 	$daysTemplateType 						= $day_settings[0]["template_type"];
 	$daysPerWeek 							= $day_settings[0]["days_week"];
 	$daysDayDuration 						= $day_settings[0]["day_duration"]; //this is the policy day duration ie 7hr 24 mins ******* Not used anymore *********
-
 	$daysNormalDuration 					= $day_settings[0]["normal_day_duration"]; //this the user day duration as entered by them ******* Not used anymore *********
 	$daysTimeDifferential 					= strtotime($daysNormalDuration) - strtotime($daysDayDuration); //this is the difference between the day duration and Normal day duration
 	$daysHalfDayDuration 					= strtotime($daysDayDuration)/2;
@@ -851,6 +856,10 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 	}
 	// check which period we are looking at and get the flexi carry over for that period
 	$flexi_carry 							= dl::select("flexi_carried_forward", "timesheet_id=".$timesheetId." and period_date = '".substr($eventEndDate,0,10)."'");
+	
+	//check the flexi carried forward notes for any notes on this account
+	$flexi_notes							= dl::select("flexi_carried_forward_notes", "timesheet_id = ".$timesheetId." and note_datetime <= '".$eventEndDate. "' and note_datetime >= '".$eventStartDate."'");
+
 	if(!empty($flexi_carry)) { //we are looking at a timesheet in the past
 		$flexiInPot 						= date("H:i", $flexi_carry[0]["flexitime"]*60*60);
 		$sign 								= $flexi_carry[0]["sign"];
@@ -875,6 +884,34 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 		}else{
 			echo "<div class='timesheet_flexipot'><a href='index.php?func=editflexipot&timesheet=".$timesheetId."'>Edit Carried over time</a></div>";
 		}
+	}
+	if(!empty($flexi_notes)) {
+		echo "<div class='left_text_image'><img id='view-notes' src='inc/images/text-edit.png' style='cursor: pointer;' /></div><div class='left_text_small'>There are carried over notes for this period.</div>";
+		?>
+		<div id="notes-dialog" title="Carried Over Notes" style="display: none; overflow-y: scroll;">
+		<div class='leaveNote-title'>Date</div><div class='leaveNote-title'>Note</div><BR /><BR />
+			<?php
+			foreach($flexi_notes as $ln) {
+				echo "<div class='note-date'>".$ln["note_datetime"]."</div><div class='leaveNote-message'>".nl2br($ln["note"])."</div>";
+			}
+			?>
+		</div>
+		<script>
+		$("#view-notes").click(function(){
+			$("#notes-dialog").dialog({
+				resizable: true,
+                height:300,
+                width: 500,
+                modal: true,
+                buttons: {
+                    "Close": function() {
+                        $( "#notes-dialog" ).dialog( "close" );
+                    }
+            	}
+			});
+		});
+		</script>
+		<?php
 	}
 	echo "<div class='timesheet_workspace timesheet_workspace_times'>";
 		echo "<div class='timesheet_table_header_blank'><div class='timesheet_padding'>W/C</div></div>";
@@ -2753,7 +2790,6 @@ function save_event($userId) {
 			}else{
 				$duration = "0".intval($proRataLeave).":".(60*fmod($proRataLeave,1)).":00"; //add the time for the proRata leave request
 			}
-			echo "<BR>$duration<BR>";
 			$eventsToday = dl::select("flexi_event", "event_startdate_time >= '".$_POST["date_name"]." 00:00:00' and event_enddate_time <= '".$_POST["date_name"]." 23:59:59' and timesheet_id = ".$timeSheetId." order by event_startdate_time ASC");
 			//lets check if there is more than one event on this day and check if it is an event which is a remainder event
 			//as we will probably have to change the end time of the remainder event.
@@ -4622,7 +4658,7 @@ function edit_flexi_days_template() {
 				array("prompt"=>"Minimum Lunch", "type"=>"checkbox", "name"=>"minimum_lunch", "selected"=>$settings["minimum_lunch"], "value"=>"Yes", "clear"=>true),
 				array("prompt"=>"Min Lunch Duration", "type"=>"time", "name"=>"lunch_duration", "starttime"=>"0015", "endtime"=>"0100", "interval"=>15, "selected"=>$settings["minimum_lunch_duration"], "value"=>$settings["minimum_lunch_duration"], "clear"=>true),
 				array("prompt"=>"Lunch Earliest Start", "type"=>"time", "name"=>"lunch_earliest_start", "starttime"=>"1030", "endtime"=>"1200", "interval"=>15, "selected"=>$settings["lunch_earliest_start_time"], "value"=>$settings["lunch_earliest_start_time"], "clear"=>true),
-				array("prompt"=>"Lunch Latest Finish", "type"=>"time", "name"=>"lunch_latest_end", "starttime"=>"1030", "endtime"=>"1430", "interval"=>15, "selected"=>$settings["lunch_latest_end_time"], "value"=>$settings["lunch_latest_end_time"], "clear"=>true),		
+				array("prompt"=>"Lunch Latest Finish", "type"=>"time", "name"=>"lunch_latest_end", "starttime"=>"1030", "endtime"=>"1600", "interval"=>15, "selected"=>$settings["lunch_latest_end_time"], "value"=>$settings["lunch_latest_end_time"], "clear"=>true),		
 				array("prompt"=>"Earliest End Time", "type"=>"time", "name"=>"earliest_end", "starttime"=>"0700", "endtime"=>"1645", "interval"=>15, "selected"=>$settings["earliest_endtime"], "value"=>$settings["earliest_endtime"], "clear"=>true),
 				array("prompt"=>"Latest End Time", "type"=>"time", "name"=>"latest_end", "starttime"=>"1700", "endtime"=>"2345", "interval"=>15, "selected"=>$settings["latest_endtime"], "value"=>$settings["latest_endtime"], "clear"=>true),		
 				array("prompt"=>"Days per week", "type"=>"text", "name"=>"days_week", "length"=>10, "value"=>$settings["days_week"], "clear"=>true),

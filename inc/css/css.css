@@ -37,12 +37,17 @@ z-index:1000;
 	font-style: italic;
 }
 
-.leaveNote-date {
+.leaveNote-date, .note-date {
 	float: left;
 	width: 8em;
 	color:#666666;
 	margin: 0.25em;
 	padding: 0.25em;
+}
+
+.note-date {
+	clear:both;
+	font-size: 12px;
 }
 
 .leaveNote-message {
@@ -217,8 +222,9 @@ z-index:1000;
 .left_text, .left_text_small {
 	display: block;
 	overflow:hidden;
-	font-family:Arial, Helvetica, sans-serif;
-	font-size:12px;
+	//font-family:Arial, Helvetica, sans-serif;
+	font-size:11px;
+	color:#06F;
 }
 
 .left_text_small {
@@ -228,7 +234,7 @@ z-index:1000;
 
 .left_text_image {
 	float:left;
-	
+	padding-left: 10px;
 }
 
 .left_clear {
