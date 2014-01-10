@@ -21,6 +21,14 @@ if($_POST["func"] == "check_width") {
 	echo json_encode($width);
 }
 
+if($_POST["func"] == "get_event_type") {
+	$typePos = strpos($_POST["id"], "-");
+	$type = substr($_POST["id"], 0, $typePos);
+	$etypes = dl::select("flexi_event_type", "event_type_id = ".$type);
+	$returnType = array("type"=>$etypes[0]["event_type_name"]);
+	echo json_encode($returnType);
+}
+
 if($_POST["func"]=="days_changed") {
 	$days = dl::select("flexi_weekdays");
 	foreach($days as $day){

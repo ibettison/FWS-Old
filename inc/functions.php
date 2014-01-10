@@ -885,33 +885,35 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 			echo "<div class='timesheet_flexipot'><a href='index.php?func=editflexipot&timesheet=".$timesheetId."'>Edit Carried over time</a></div>";
 		}
 	}
-	if(!empty($flexi_notes)) {
-		echo "<div class='left_text_image'><img id='view-notes' src='inc/images/text-edit.png' style='cursor: pointer;' /></div><div class='left_text_small'>There are carried over notes for this period.</div>";
-		?>
-		<div id="notes-dialog" title="Carried Over Notes" style="display: none; overflow-y: scroll;">
-		<div class='leaveNote-title'>Date</div><div class='leaveNote-title'>Note</div><BR /><BR />
-			<?php
-			foreach($flexi_notes as $ln) {
-				echo "<div class='note-date'>".$ln["note_datetime"]."</div><div class='leaveNote-message'>".nl2br($ln["note"])."</div>";
-			}
+	if($own_timesheet or $authorise) {
+		if(!empty($flexi_notes)) {
+			echo "<div class='left_text_image'><img id='view-notes' src='inc/images/text-edit.png' style='cursor: pointer;' /></div><div class='left_text_small'>There are carried over notes for this period.</div>";
 			?>
-		</div>
-		<script>
-		$("#view-notes").click(function(){
-			$("#notes-dialog").dialog({
-				resizable: true,
-                height:300,
-                width: 500,
-                modal: true,
-                buttons: {
-                    "Close": function() {
-                        $( "#notes-dialog" ).dialog( "close" );
-                    }
-            	}
+			<div id="notes-dialog" title="Carried Over Notes" style="display: none; overflow-y: scroll;">
+			<div class='leaveNote-title'>Date</div><div class='leaveNote-title'>Note</div><BR /><BR />
+				<?php
+				foreach($flexi_notes as $ln) {
+					echo "<div class='note-date'>".$ln["note_datetime"]."</div><div class='leaveNote-message'>".nl2br($ln["note"])."</div>";
+				}
+				?>
+			</div>
+			<script>
+			$("#view-notes").click(function(){
+				$("#notes-dialog").dialog({
+					resizable: true,
+	                height:300,
+	                width: 500,
+	                modal: true,
+	                buttons: {
+	                    "Close": function() {
+	                        $( "#notes-dialog" ).dialog( "close" );
+	                    }
+	            	}
+				});
 			});
-		});
-		</script>
-		<?php
+			</script>
+			<?php
+		}
 	}
 	echo "<div class='timesheet_workspace timesheet_workspace_times'>";
 		echo "<div class='timesheet_table_header_blank'><div class='timesheet_padding'>W/C</div></div>";
@@ -1016,6 +1018,7 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 				}
 				if(date('Y-m-d',strtotime($date)) 	== date('Y-m-d',strtotime($event["event_startdate_time"]))) {
 					if(date('l',strtotime($date))	!="Saturday") { 
+						
 						$timeFrom 					= date('H:i:s', strtotime($event["event_startdate_time"]));
 						$timeTo 					= date('H:i:s', strtotime($event["event_enddate_time"]));
 						$timediff 					= date('H:i:s',strtotime($timeTo) - strtotime($timeFrom));
@@ -1136,7 +1139,7 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 						if($_SESSION["userPermissions"]["add_global"] == "true") { //if you have the global add permission then user is considered an Admin
 							echo "<div class='timesheet_table_header_white' title='$dateTitle'><div class='timesheet_padding'><div title='$alt' class='connected' id='time".$event["event_id"]."'style='cursor: move; float:left; background-color:".$eventColour."; width:".$pxWidth."px '>";
 						}else{
-							if( substr($event["event_startdate_time"],0,10) > $flexiStartPeriod) {
+							if( substr($event["event_startdate_time"],0,10) >= $flexiStartPeriod) {
 								if($eventType[0]["event_global"] == "No") {
 									echo "<div class='timesheet_table_header_white' title='$dateTitle'><div class='timesheet_padding'><div title='$alt' class='connected' id='time".$event["event_id"]."'style='cursor: move; float:left; background-color:".$eventColour."; width:".$pxWidth."px '>";
 								}else{
@@ -1251,12 +1254,50 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 							}
 							echo "&nbsp;</div>";
 						}
-						echo "<a href=\"index.php?choice=Add&subchoice=addevent&type=Working Day&userid=".$userId."&date=".date("Y-m-d", strtotime($date))."\" title='Add another event on ".date("d/m", strtotime($date))."'><div class='timesheet_table_header_addIcon'> </div></a>";
+						echo "<a href=\"index.php?choice=Add&subchoice=addevent&type=Working Day&userid=".$userId."&date=".date("Y-m-d", strtotime($date))."&option=another"."\" title='Add another event on ".date("d/m", strtotime($date))."'><div data-horizontal-offset='-322' data-vertical-offset='-12' data-dropdown='#dropdown-events".$event["event_id"]."' class='timesheet_table_header_addIcon'> </div></a>";
 						if($extended_lunch) {
 							echo "<img src='inc/images/fork_knife.jpg' title='".$event["event_lunch"]."' />";
 						}
 						echo "</div>";
+						echo "<div id='test'></div>";
+						 /* 
+						 * create dropdowns here
+						 */
+						echo "<div id='dropdown-events".$event["event_id"]."' class='dropdown dropdown-tip'>";
+						echo "<ul class='dropdown-menu'>";
+							//use event types to populate the dropdown list
+							$list_types = dl::select("flexi_event_type");
+							$ids="";
+							$eId = $event["event_id"];						
+							foreach($list_types as $lt){
+								echo "<li id='".$lt["event_type_id"]."-".$eId."'> <a href='#1'> ".$lt["event_type_name"]."</a><li>";
+								$ids[] = $lt["event_type_id"]."-".$eId;
+							}
+						echo "</ul>";
+						echo "</div>";
+						foreach($ids as $id) {
+							?>
+							<script>
+							$("#<?php echo $id?>").click(function() {
+								$.post(
+									"ajax.php",
+									{ 
+										func: 'get_event_type',
+										id: $(this).prop("id")
+									},
+									function (data)
+										{
+											var json = $.parseJSON(data);
+											window.location.href = "index.php?choice=Add&subchoice=addevent&type="+json.type+"&userid=<?php echo $userId?>&date=<?php echo date("Y-m-d", strtotime($date))?>&option=another";
+										}
+								);
+							});
+							</script>
+							<?php	
+						}
+					 
 						$date = add_date(strtotime($date),1);
+						
 					}else{
 						if($own_timesheet or $authorise) {
 							//summary
@@ -1458,9 +1499,42 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 		$pSubStartDate = sub_date(strtotime($eventStartDate),0,1);
 		$pSubEndDate = sub_date(strtotime($eventStartDate),1);
 	}
-	echo "<div class='timesheet_footer'><a href='index.php?func=previousperiod&start=".date("Y-m-d", strtotime($pSubStartDate))."&end=".date("Y-m-d", strtotime($pSubEndDate))."&userid=".$userId."'><img src='inc/images/arrow_left.jpg' border='0' align='middle' />Previous</a> | <a href='index.php?func=nextperiod&start=".date("Y-m-d", strtotime($pAddStartDate))."&end=".date("Y-m-d", strtotime($pAddEndDate))."&userid=".$userId."'><img src='inc/images/arrow_right.jpg' border='0' align='middle' />Next</a> |";
+	
+	//check if the user has Leave Template notes so the manager can view them here.
+	$leaveNotes = dl::select("flexi_al_notes", "n_template_id =".$timesheetId, "");
+	echo "<div class='timesheet_footer'><a href='index.php?func=previousperiod&start=".date("Y-m-d", strtotime($pSubStartDate))."&end=".date("Y-m-d", strtotime($pSubEndDate))."&userid=".$userId."'><img src='inc/images/arrow_left.jpg' border='0' align='middle' /></a> <a href='index.php?func=nextperiod&start=".date("Y-m-d", strtotime($pAddStartDate))."&end=".date("Y-m-d", strtotime($pAddEndDate))."&userid=".$userId."'><img src='inc/images/arrow_right.jpg' border='0' align='middle' /></a> ";
 	if($authorise) {
-		echo "<a href='index.php?func=edituserevents&userid=".$userId."&page=0'><img src='inc/images/small_pen_paper_icon.jpg' border='0' align='middle' />Edit Users events</a> <a href='index.php?func=showuserleave&userid=".$userId."'><img src='inc/images/leave.png' border='0' align='middle' />View Users leave dates</a>";
+		echo "<span title='Edit User Events' id='userEvents'><a href='index.php?func=edituserevents&userid=".$userId."&page=0'><img src='inc/images/small_pen_paper_icon.jpg' border='0' align='middle' /></a></span> <span id='view_leave' title='View User leave dates'><a href='index.php?func=showuserleave&userid=".$userId."'><img src='inc/images/leave.png' border='0' align='middle' /></a></span>";
+		if(!empty($leaveNotes)) {
+			echo " <span id='show_notes' style='cursor: pointer;' title='Leave Template Notes'> <img src='inc/images/text-edit.png' border='0' align='middle' /> </span>";
+			?>
+			<div id="notes-dialog2" title="Leave Template Notes" style="display: none; overflow-y: scroll;">
+			<div class='leaveNote-title'>Date</div><div class='leaveNote-title'>Note</div><BR /><BR />
+				
+				<?php
+				foreach($leaveNotes as $ln) {
+					echo "<div class='note-date'>".$ln["n_date"]."</div><div class='leaveNote-message'>".nl2br($ln["n_note"])."</div>";
+				}
+				?>
+				
+			</div>
+			<script>
+			$("#show_notes").click(function(){
+				$("#notes-dialog2").dialog({
+					resizable: true,
+	                height:300,
+	                width: 500,
+	                modal: true,
+	                buttons: {
+	                    "Close": function() {
+	                        $( "#notes-dialog2" ).dialog( "close" );
+	                    }
+	            	}
+				});
+			});
+			</script>
+			<?php
+		}
 	}
 	echo "</div>";
 	echo "<div id='delConfirm'></div><div id='sortable-deleted' class='connected' title='Drag time here to delete'></div>";
@@ -1470,7 +1544,6 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 	if($authorise){
 		showlocalteamleave::display_leave($userId, $eventStartDate, $eventEndDate);
 	}
-	
 }
 
 function teamleaveReport() {
@@ -2571,6 +2644,23 @@ function add_event($title, $intro, $user="") {
 			$multi_date = $event_type_settings[0]["multi_date_allowed"];
 			$working_session = $event[0]["event_work"];
 		}
+		//now get the timesheet of the userId
+		$sql = "select * from flexi_user as u join flexi_timesheet as t on (u.user_id=t.user_id)
+		where u.user_id = ".$userId;
+		$timesheet_id = dl::getQuery($sql);
+		
+		//lets check for other events already entered for this day
+		$eventsToday = dl::select("flexi_event", "event_startdate_time >= '".$_GET["date"]." 00:00:00' and event_enddate_time <= '".$_GET["date"]." 23:59:59' and timesheet_id =".$timesheet_id[0]["timesheet_id"]);
+		//now lets set the start Duration selected if the starttime is earlier than 10:00 and the option get value = 'another'
+		$selectedTime = "09:00";
+		if($_GET["option"] == "another") {
+			if($eventsToday[0]["event_startdate_time"] <= $_GET["date"]." 10:00:00") {
+				//lets set the selected value now
+				$hrs = substr($eventsToday[0]["event_enddate_time"], 11,2);
+				$mins = substr($eventsToday[0]["event_enddate_time"], 14,2);
+				$selectedTime = $hrs.":".$mins;
+			}
+		}
 		if($duration_type=="Fixed") {
 			$arrDurations= array("Full day", "Half day");
 			//altered to a Full day or a Half day as the new template flexi_day-times will calculate the event time for the selected Day.
@@ -2606,11 +2696,11 @@ function add_event($title, $intro, $user="") {
 			$formArr[]=array("prompt"=>"Date", "type"=>"date", "name"=>"date_name", "length"=>20, "value"=>$dateVal, zindex=>1, "clear"=>true);
 		}	
 		if($duration_type=="Fixed" or $duration_type == "Both") {
-			$formArr[]=array("prompt"=>"Start Duration", "type"=>"time", "name"=>"duration_time_start", "length"=>20, "starttime"=>$event_settings[0]["earliest_starttime"], "endtime"=>$event_settings[0]["latest_endtime"], "selected"=>"0900", "interval"=>1, "value"=>"", "clear"=>true);
+			$formArr[]=array("prompt"=>"Start Duration", "type"=>"time", "name"=>"duration_time_start", "length"=>20, "starttime"=>$event_settings[0]["earliest_starttime"], "endtime"=>$event_settings[0]["latest_endtime"], "selected"=>$selectedTime, "interval"=>1, "value"=>$selectedTime, "clear"=>true);
 			$formArr[]=array("prompt"=>"Event Duration", "type"=>"selection", "name"=>"duration", "listarr"=>$arrDurations, "selected"=>"", "value"=>"", "clear"=>true);
 		}
 		if($duration_type=="User definable" or $duration_type == "Both") {
-			$formArr[]=array("prompt"=>"Start Time", "type"=>"time", "name"=>"time_start", "length"=>20, "starttime"=>$event_settings[0]["earliest_starttime"], "endtime"=>$event_settings[0]["latest_endtime"], "selected"=>"0900", "interval"=>1, "value"=>"", "clear"=>true);
+			$formArr[]=array("prompt"=>"Start Time", "type"=>"time", "name"=>"time_start", "length"=>20, "starttime"=>$event_settings[0]["earliest_starttime"], "endtime"=>$event_settings[0]["latest_endtime"], "selected"=>$selectedTime, "interval"=>1, "value"=>$selectedTime, "clear"=>true);
 			$formArr[]=array("prompt"=>"End Time", "type"=>"time", "name"=>"time_end", "length"=>20, "starttime"=>$event_settings[0]["earliest_starttime"], "endtime"=>$event_settings[0]["latest_endtime"], "selected"=>"1700", "interval"=>1, "value"=>"", "clear"=>true);
 		}
 		if($working_session=="Yes") {
@@ -2655,13 +2745,15 @@ function save_event($userId) {
 	$eventFlexiLeave 					= $event[0]["event_flexi"];
 	$eventDelete 						= $event[0]["event_delete"];
 	$eventOverride						= $event[0]["event_override"];
+	$eventRemainder						= $event[0]["event_remainder"];
 	
 	//*******************************************
 	//check the flexi template days settings to make sure the entered times are within the template ranges specified
 	$sql 								= "select * from flexi_user as u 
 	join flexi_template as t on (u.user_flexi_template=t.template_id) 
 	join flexi_template_days as td on (td.template_name_id=t.template_name_id) 
-	join flexi_template_days_settings as tds on (tds.template_days_id=td.flexi_template_days_id) 
+	join flexi_template_days_settings as tds on (tds.template_days_id=td.flexi_template_days_id)
+	join flexi_al_template as al on (al.al_template_id=u.user_al_template) 
 	where u.user_id =".$userId;
 	$ranges 							= dl::getQuery($sql);
 	$earliest_start 					= $ranges[0]["earliest_starttime"];
@@ -2674,6 +2766,7 @@ function save_event($userId) {
 	$minimum_lunch 						= $ranges[0]["minimum_lunch"];
 	$minimum_lunch_duration 			= $ranges[0]["minimum_lunch_duration"];
 	$proRataLeave						= $ranges[0]["max_surplus"];
+	$userWorkStatus						= $ranges[0]["al_type"]; // is the user Full or Part time
 	//$normal_day_duration[0]["normal_day_duration"]; the normal day duration is no longer required as the new flexi_day_times template accomodates the times for individual and multiple days
 	//********************************************
 	$eventSettings 						= dl::select("flexi_event_settings", "event_typeid=".$eventId);
@@ -2751,11 +2844,68 @@ function save_event($userId) {
 		$startTime = $_POST["duration_time_start"].":".$_POST["duration_time_start_mins"].":00";
 		$startTimeSecs = $_POST["duration_time_start"] * 60 * 60 + $_POST["duration_time_start_mins"] * 60;
 		$eventsToday = dl::select("flexi_event", "event_startdate_time >= '".$_POST["date_name"]." 00:00:00' and event_enddate_time <= '".$_POST["date_name"]." 23:59:59' and timesheet_id = ".$timeSheetId." order by event_startdate_time ASC");
+		$chkEventType = dl::select("flexi_event_type", "event_type_id = ".$eventsToday[0]["event_type_id"]);
+		$eventTypeTxt = $chkEventType[0]["event_type_name"];
 		//TODO : REMAINDER need to look at a hospital appointment when it is not at the end of the day to change the time of the appointment to not exceed an equivalent full day for the persons working pattern
 		 
 		if($leaveDuration == "Remainder") {
-			//this is either a (offsite mtg, Sickness, Training, Hospital or Emergency leave)
-			if(count($eventsToday) > 0) { //there is an existing event on this day so get the start time and work out the end time from the day duration
+			//this is either a (Annual Leave, Flexi Leave, offsite mtg, Sickness, Training, Hospital or Emergency leave)
+			/* 
+			 * if this is a flexi leave or annual leave Remainder request then it can only be made by a part time user type.
+			 * we also have to change the duration from the proRATA type to the working time to
+			 * differentiate the remainder types. The other types can have the event entered first or indeed second
+			 * but a flexi or annual leave remainder event must be entered second and can only accompany the opposite leave type.
+			 * 
+			 * eg. Flexi Leave must accompany Annual Leave or Working Day event types and vice versa
+			 * 
+			*/
+			if($eventType == "Flexi Leave") {
+				//if this is a remainder event then we need to change the duration from the proRata time to the working time in order to correctly calculate the amount of flexi for the remainder of the day
+				//reset back to the working time because its a remainder
+				$duration = $duration_link[0]["fdt_working_time"]; //add the working time for the particular day 
+				if($eventTypeTxt == "Annual Leave" or $eventTypeTxt == "Working Day") {
+					if($userWorkStatus == "Fulltime") {
+						?>
+						<SCRIPT language="javascript">
+						alert("This option is only available to Part Time staff. \n\nYou must select either a full or half day event duration to add Flexi Leave.");
+						redirect("index.php?choice=Add&subchoice=addevent");
+						</SCRIPT>
+						<?php
+						die();
+					}
+				}else{
+					?>
+					<SCRIPT language="javascript">
+					alert("You have tried to enter a remainder event onto an incorrect accompanying event. \n\nThis remainder event type can only be used with an Annual Leave event or Working Day event.");
+					redirect("index.php?choice=Add&subchoice=addevent");
+					</SCRIPT>
+					<?php
+					die();
+				}
+			}
+			if($eventType == "Annual Leave") {
+				if($eventTypeTxt == "Flexi Leave" or $eventTypeTxt == "Working Day") {
+					if($userWorkStatus == "Fulltime") {
+						?>
+						<SCRIPT language="javascript">
+						alert("This option is only available to Part time staff. \n\nYou must select either a full or half day event duration to add Annual Leave.");
+						redirect("index.php?choice=Add&subchoice=addevent");
+						</SCRIPT>
+						<?php
+						die();
+					}
+				}else{
+					?>
+					<SCRIPT language="javascript">
+					alert("You have tried to enter a remainder event onto an incorrect accompanying event. \n\nThis remainder event type can only be used with a Flexi Leave event or Working Day event.");
+					redirect("index.php?choice=Add&subchoice=addevent");
+					</SCRIPT>
+					<?php
+					die();
+				}
+			}
+			if(count($eventsToday) > 0) {
+				 //there is an existing event on this day so get the start time and work out the end time from the day duration
 				//puts the earliest event at the top
 				$startSecs = substr($eventsToday[0]["event_startdate_time"],11,2) * 60 * 60 + substr($eventsToday[0]["event_startdate_time"],14,2) * 60 + substr($eventsToday[0]["event_startdate_time"],17,2) * 60;
 				$durationSecs = substr($duration,0,2) * 60 * 60 + substr($duration,3,2) * 60 + substr($duration,6, 2) * 60;
@@ -2768,13 +2918,17 @@ function save_event($userId) {
 				$endTimeSecs = $endTimeSecs - $startTimeSecs;
 			}
 		}else{
+			//need to check if the event is a flexileave event as it may be that the duration is less than the working time on this day.
+			if($eventType == "Flexi Leave"){
+				//this is a full or half day of flexi leave and should not include any minimum lunch time
+				$add_lunch = 0;
+			}
 			$endTimeSecs = substr($duration,0,2) * 60 * 60 + substr($duration,3,2) * 60 + substr($duration,6,2) * 60;
-			
 		}
 		if($leaveDuration == 'Half day') {
 			$endTimeSecs = $endTimeSecs/2;
 		}
-		$endTime = date("H:i:s", $startTimeSecs + $endTimeSecs+ $add_lunch);
+		$endTime = date("H:i:s", $startTimeSecs + $endTimeSecs + $add_lunch);
 	}else{
 		//need to find out which day the posted date is for
 		$dayNo = date("N", strtotime($_POST["date_name"]));
@@ -2826,6 +2980,7 @@ function save_event($userId) {
 					}
 				}
 			}
+			
 		}
 		$startTime = $_POST["time_start"].":".$_POST["time_start_mins"].":00";
 		$endTime = $_POST["time_end"].":".$_POST["time_end_mins"].":00";

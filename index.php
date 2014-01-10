@@ -26,18 +26,20 @@ $cal = new calendars;
 <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
 
 <title>Newcastle Biomedicine CRP Flexible Working Application</title>
-<LINK REL="StyleSheet" HREF="inc/css/normalise.css" TYPE="text/css" MEDIA="screen">
-<LINK REL="StyleSheet" HREF="inc/css/css.css" TYPE="text/css" MEDIA="screen">
-<LINK REL="StyleSheet" HREF="inc/css/form.css" TYPE="text/css" MEDIA="screen">
-<LINK REL="StyleSheet" HREF="inc/css/timesheet.css" TYPE="text/css" MEDIA="screen">
-<LINK REL="StyleSheet" HREF="inc/css/report.css" TYPE="text/css" MEDIA="screen">
-<LINK REL="StyleSheet" HREF="inc/js/jquery-ui-1.10.3.custom/css/redmond/jquery-ui-1.10.3.custom.css" TYPE="text/css" MEDIA="screen">
-<link REL="SHORTCUT ICON" HREF="inc/images/favicon.ico">
-<link href="inc/css/calendar.css" rel="stylesheet" type="text/css" />
-<script language="javascript" src="inc/classes/calendar.js"></script>
-<script language="javascript" src="inc/js/jquery-ui-1.10.3.custom/js/jquery-1.9.1.js"></script>
-<script language="javascript" src="inc/js/jquery-ui-1.10.3.custom/js/jquery-ui-1.10.3.custom.js"></script>
-<SCRIPT language	="JavaScript" src="inc/js/jquery.spritely.js"></SCRIPT>
+<LINK REL="StyleSheet" 		HREF="inc/css/normalise.css" TYPE="text/css" MEDIA="screen">
+<LINK REL="StyleSheet" 		HREF="inc/css/css.css" TYPE="text/css" MEDIA="screen">
+<LINK REL="StyleSheet" 		HREF="inc/css/form.css" TYPE="text/css" MEDIA="screen">
+<LINK REL="StyleSheet" 		HREF="inc/css/timesheet.css" TYPE="text/css" MEDIA="screen">
+<LINK REL="StyleSheet" 		HREF="inc/css/report.css" TYPE="text/css" MEDIA="screen">
+<LINK REL="StyleSheet" 		HREF="inc/js/jquery-ui-1.10.3.custom/css/redmond/jquery-ui-1.10.3.custom.css" TYPE="text/css" MEDIA="screen">
+<LINK REL="StyleSheet" 		HREF="inc/js/jquery-dropdown/jquery.dropdown.css" TYPE="text/css" MEDIA="screen">
+<link REL="SHORTCUT ICON" 	HREF="inc/images/favicon.ico">
+<link 						href="inc/css/calendar.css" rel="stylesheet" type="text/css" />
+<script language	="javascript" 			src="inc/classes/calendar.js"></script>
+<script language	="javascript" 			src="inc/js/jquery-ui-1.10.3.custom/js/jquery-1.9.1.js"></script>
+<script language	="javascript" 			src="inc/js/jquery-ui-1.10.3.custom/js/jquery-ui-1.10.3.custom.js"></script>
+<SCRIPT language	="JavaScript" 			src="inc/js/jquery.spritely.js"></SCRIPT>
+<script type		="text/javascript" 		src="inc/js/jquery-dropdown/jquery.dropdown.min.js"></script>
 </head>
 <body>
 <?php
@@ -1034,5 +1036,6 @@ function checkWidth(){
 		
 </script>
 </div>
+
 </body>
 </html>
