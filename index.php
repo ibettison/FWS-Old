@@ -33,6 +33,7 @@ $cal = new calendars;
 <LINK REL="StyleSheet" 		HREF="inc/css/report.css" TYPE="text/css" MEDIA="screen">
 <LINK REL="StyleSheet" 		HREF="inc/js/jquery-ui-1.10.3.custom/css/redmond/jquery-ui-1.10.3.custom.css" TYPE="text/css" MEDIA="screen">
 <LINK REL="StyleSheet" 		HREF="inc/js/jquery-dropdown/jquery.dropdown.css" TYPE="text/css" MEDIA="screen">
+<LINK REL="StyleSheet" 		HREF="inc/js/jquery-timepickr/jquery.ui.timepicker.css" TYPE="text/css" MEDIA="screen">
 <link REL="SHORTCUT ICON" 	HREF="inc/images/favicon.ico">
 <link 						href="inc/css/calendar.css" rel="stylesheet" type="text/css" />
 <script language	="javascript" 			src="inc/classes/calendar.js"></script>
@@ -40,6 +41,7 @@ $cal = new calendars;
 <script language	="javascript" 			src="inc/js/jquery-ui-1.10.3.custom/js/jquery-ui-1.10.3.custom.js"></script>
 <SCRIPT language	="JavaScript" 			src="inc/js/jquery.spritely.js"></SCRIPT>
 <script type		="text/javascript" 		src="inc/js/jquery-dropdown/jquery.dropdown.min.js"></script>
+<script type		="text/javascript" 		src="inc/js/jquery-timepickr/jquery.ui.timepicker.js"></script>
 </head>
 <body>
 <?php

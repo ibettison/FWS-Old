@@ -29,6 +29,182 @@ if($_POST["func"] == "get_event_type") {
 	echo json_encode($returnType);
 }
 
+if($_POST["func"] == "get_field_list") {
+	echo "<div class='dropdown-panel' style='min-height: 300px;'>";
+	echo "<h2>".$_POST["desc"]."</h2>";
+	
+	switch ($_POST["desc"]) {
+		case "Working Day": 
+			echo "<form id='workingdayform' action='index.php?func=saveevent&user=".$_POST["user"]."' method='post'>";
+			echo "<input type=\"text\" name=\"time_start_entry\" id=\"starttimeentry\" size=\"10\" placeholder=\"Start Time\" value=\"".$_POST["time"]."\"/><BR /><BR />";
+			echo "<input type=\"hidden\" name=\"time_start\" id=\"starttime\" size=\"10\" placeholder=\"Start Time\" />";
+			echo "<input type=\"hidden\" name=\"time_start_mins\" id=\"starttimemins\" size=\"10\" placeholder=\"Start Time\" />";
+			
+			echo "<input type=\"text\" name=\"time_end_entry\" id=\"endtimeentry\" size=\"10\" placeholder=\"End Time\"  value=\"".$_POST["start"]."\"/><BR /><BR />";
+			echo "<input type=\"hidden\" name=\"time_end\" id=\"endtime\" size=\"10\" placeholder=\"End Time\" />";
+			echo "<input type=\"hidden\" name=\"time_end_mins\" id=\"endtimemins\" size=\"10\" placeholder=\"End Time\" />";
+			
+			echo "<input type=\"checkbox\" id=\"extended_lunch\" value='Yes' name='extended_lunch' /> Extended Lunch<BR /><BR />";
+			
+			echo "<input type=\"text\" name=\"lunch_time_start_entry\" id=\"lunchstartentry\" size=\"12\" placeholder=\"Lunch Start Time\" /><BR /><BR />";
+			echo "<input type=\"hidden\" name=\"lunch_time_start\" id=\"lunchstart\" size=\"12\" placeholder=\"Lunch Start Time\" />";
+			echo "<input type=\"hidden\" name=\"lunch_time_start_mins\" id=\"lunchstartmins\" size=\"12\" placeholder=\"Lunch Start Time\" />";
+			
+			echo "<input type=\"text\" name=\"lunch_time_end_entry\" id=\"lunchendentry\" size=\"12\" placeholder=\"Lunch End Time\" /><BR /><BR />";
+			echo "<input type=\"hidden\" name=\"lunch_time_end\" id=\"lunchend\" size=\"12\" />";
+			echo "<input type=\"hidden\" name=\"lunch_time_end_mins\" id=\"lunchendmins\" size=\"12\" />";
+			
+			echo "<input type=\"hidden\" name=\"date_name\" id=\"date_name\" size=\"12\" />";
+			echo "<input type=\"hidden\" name=\"event_type\" id=\"event_type\" size=\"12\" />";
+			echo "<button id='submit_button'>Add Event</button>";
+			echo "</form>";
+			$formName = 'workingdayform';
+			break;
+		case "Annual Leave":
+		case "Maternity/Paternity Leave":
+		case "Flexi Leave":		
+		case "Carers Leave":
+		case "Emergency Leave":	
+		case "Unpaid leave":
+			$div = str_replace(array(" ", "/"), "", $_POST["desc"]);
+			echo "<form id='leaveform' action='index.php?func=saveevent&user=".$_POST["user"]."' method='post'>";		
+			echo "<input type=\"text\" name=\"duration_time_entry\" id=\"durationentrytime\" size=\"10\" placeholder=\"Duration Start\" value=\"".$_POST["time"]."\" /><BR /><BR />";
+			echo "<input type=\"hidden\" name=\"duration_time_start\" id=\"durationstarttime\" />";
+			echo "<input type=\"hidden\" name=\"duration_time_start_mins\" id=\"durationstarttimemins\" />";
+			echo "<div id='$div'>";
+			echo "<input type='radio' id='".$div."1' name='duration' value='Full day'><label for='".$div."1'>Full day</label>";
+			echo "<input type='radio' id='".$div."2' name='duration' value='Half day'><label for='".$div."2'>Half day</label>";
+			echo "<input type='radio' id='".$div."3' name='duration' value='Remainder' checked='checked'><label for='".$div."3'>Remainder</label>";
+			echo "</div><BR><BR>";
+			echo "<input type=\"hidden\" name=\"date_name\" id=\"date_name\" size=\"12\" />";
+			echo "<input type=\"hidden\" name=\"date_name2\" id=\"date_name2\" size=\"12\" />";
+			echo "<input type=\"hidden\" name=\"event_type\" id=\"event_type\" size=\"12\" />";
+			echo "<button id='submit_button'>Add Event</button>";
+			echo "</form>";
+			$formName = 'leaveform';
+			break;
+		case "Offsite Meeting":
+		case "Sickness":
+		case "Training":
+		case "Bereavement Leave":
+		case "Hospital":
+			$div = str_replace(" ", "", $_POST["desc"]);
+			echo "<form id='meetingform' action='index.php?func=saveevent&user=".$_POST["user"]."' method='post'>";
+			echo "<fieldset><h3>Duration</H3>";
+			echo "<input type=\"text\" name=\"duration_time_entry\" id=\"durationentrytime\" size=\"10\" placeholder=\"Duration Start\" /> (Can be Blank) <BR /><BR />";
+			echo "<input type=\"hidden\" name=\"duration_time_start\" id=\"durationstarttime\" />";
+			echo "<input type=\"hidden\" name=\"duration_time_start_mins\" id=\"durationstarttimemins\" />";
+			echo "<div id='$div'>";
+			echo "<input type='radio' id='".$div."1' name='duration' value='Full day'><label for='".$div."1'>Full day</label>";
+			echo "<input type='radio' id='".$div."2' name='duration' value='Half day'><label for='".$div."2'>Half day</label>";
+			echo "<input type='radio' id='".$div."3' name='duration' value='Remainder'><label for='".$div."3'>Remainder</label>";
+			echo "</div><BR><BR>";
+			echo "</fieldset><BR>";
+			echo "<fieldset><h3>Specific Time</h3>";			
+			echo "<input type=\"text\" name=\"time_start_entry\" id=\"starttimeentry\" size=\"10\" placeholder=\"Start Time\" value=\"".$_POST["time"]."\"/><BR /><BR />";
+			echo "<input type=\"hidden\" name=\"time_start\" id=\"starttime\" size=\"10\" placeholder=\"Start Time\" />";
+			echo "<input type=\"hidden\" name=\"time_start_mins\" id=\"starttimemins\" size=\"10\" placeholder=\"Start Time\" />";
+			
+			echo "<input type=\"text\" name=\"time_end_entry\" id=\"endtimeentry\" size=\"10\" placeholder=\"End Time\" value=\"".$_POST["start"]."\"/><BR /><BR />";
+			echo "<input type=\"hidden\" name=\"time_end\" id=\"endtime\" size=\"10\" placeholder=\"End Time\" />";
+			echo "<input type=\"hidden\" name=\"time_end_mins\" id=\"endtimemins\" size=\"10\" placeholder=\"End Time\" />";
+			echo "</fieldset><BR><BR>";
+			echo "<input type=\"hidden\" name=\"date_name\" id=\"date_name\" size=\"12\" />";
+			echo "<input type=\"hidden\" name=\"date_name2\" id=\"date_name2\" size=\"12\" />";
+			echo "<input type=\"hidden\" name=\"event_type\" id=\"event_type\" size=\"12\" />";
+			echo "<button id='submit_button'>Add Event</button>";
+			echo "</form>";
+			$formName = 'meetingform';
+			break;
+		case "TOIL":
+			echo "<form id='toilform' action='index.php?func=saveevent&user=".$_POST["user"]."' method='post'>";
+			echo "<fieldset><h3>Specific Time</h3>";			
+			echo "<input type=\"text\" name=\"time_start_entry\" id=\"starttimeentry\" size=\"10\" placeholder=\"Start Time\" value=\"".$_POST["time"]."\"/><BR /><BR />";
+			echo "<input type=\"hidden\" name=\"time_start\" id=\"starttime\" size=\"10\" placeholder=\"Start Time\" />";
+			echo "<input type=\"hidden\" name=\"time_start_mins\" id=\"starttimemins\" size=\"10\" placeholder=\"Start Time\" />";
+			
+			echo "<input type=\"text\" name=\"time_end_entry\" id=\"endtimeentry\" size=\"10\" placeholder=\"End Time\"  value=\"".$_POST["start"]."\"/><BR /><BR />";
+			echo "<input type=\"hidden\" name=\"time_end\" id=\"endtime\" size=\"10\" placeholder=\"End Time\" />";
+			echo "<input type=\"hidden\" name=\"time_end_mins\" id=\"endtimemins\" size=\"10\" placeholder=\"End Time\" />";
+			echo "</fieldset><BR><BR>";
+			echo "<input type=\"hidden\" name=\"date_name\" id=\"date_name\" size=\"12\" /><BR /><BR />";
+			echo "<input type=\"hidden\" name=\"event_type\" id=\"event_type\" size=\"12\" /><BR /><BR />";
+			echo "<button id='submit_button'>Add Event</button>";
+			echo "</form>";
+			$formName = 'toilform';
+			break;
+	}
+	echo "</div>";
+//TODO: Working on the submission of the data to the save_event function in function.php
+	?>
+	<script>
+	var fieldNames = new Array("#starttimeentry", "#endtimeentry", "#lunchstartentry", "#lunchendentry", "#durationentrytime");
+	for(var field in fieldNames) {
+		$(fieldNames[field]).timepicker({
+			defaultTime: '<?php echo $_POST["time"]?>',
+			showPeriodLabels: false,
+			hours: { starts: 7, ends: 23},
+			rows: 10,
+			minutes: { interval: 1}
+		});
+		
+	}
+	$(function(){
+		$("#<?php echo $div?>").buttonset();
+		$("#submit_button").button()
+		.click(function( event ){
+			$("#valDisp").hide();
+			$("#arrow-left").hide();
+			event.preventDefault();
+			/*
+			 * check the submit values and submit to save_event function
+			 */
+			<?php
+			switch($_POST["desc"]){
+				case "Working Day":
+					echo "$('#starttime').val( $('#starttimeentry').val().substring(0,2) );";
+					echo "$('#starttimemins').val( $('#starttimeentry').val().substring(3) );";
+					echo "$('#endtime').val( $('#endtimeentry').val().substring(0,2) );";
+					echo "$('#endtimemins').val( $('#endtimeentry').val().substring(3) );";
+					echo "$('#lunchend').val( $('#lunchendentry').val().substring(0,2) );";
+					echo "$('#lunchendmins').val( $('#lunchendentry').val().substring(3) );";
+					echo "$('#lunchstart').val( $('#lunchstartentry').val().substring(0,2) );";
+					echo "$('#lunchstartmins').val( $('#lunchstartentry').val().substring(3) );";
+					break;
+				case "Annual Leave":
+				case "Maternity/Paternity Leave":
+				case "Flexi Leave":
+				case "Carers Leave":
+				case "Emergency Leave":	
+				case "Unpaid leave":
+					echo "$('#durationstarttime').val( $('#durationentrytime').val().substring(0,2) );";
+					echo "$('#durationstarttimemins').val( $('#durationentrytime').val().substring(3) );";
+				break;
+				case "TOIL":
+					echo "$('#starttime').val( $('#starttimeentry').val().substring(0,2) );";
+					echo "$('#starttimemins').val( $('#starttimeentry').val().substring(3) );";
+					echo "$('#endtime').val( $('#endtimeentry').val().substring(0,2) );";
+					echo "$('#endtimemins').val( $('#endtimeentry').val().substring(3) );";
+				break;
+				default:
+					echo "$('#starttime').val( $('#starttimeentry').val().substring(0,2) );";
+					echo "$('#starttimemins').val( $('#starttimeentry').val().substring(3) );";
+					echo "$('#endtime').val( $('#endtimeentry').val().substring(0,2) );";
+					echo "$('#endtimemins').val( $('#endtimeentry').val().substring(3) );";
+					echo "$('#durationstarttime').val( $('#durationentrytime').val().substring(0,2) );";
+					echo "$('#durationstarttimemins').val( $('#durationentrytime').val().substring(3) );";
+			}
+			?>
+			$("#date_name").val("<?php echo $_POST["date"]?>");
+			$("#date_name2").val("<?php echo $_POST["date"]?>");
+			$("#event_type").val("<?php echo $_POST["desc"]?>");
+			$("#<?php echo $formName?>").submit();
+		});
+	});
+	</script>
+	<?php
+}
+
 if($_POST["func"]=="days_changed") {
 	$days = dl::select("flexi_weekdays");
 	foreach($days as $day){

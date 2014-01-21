@@ -929,9 +929,10 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 		$date = $eventStartDate;
 		$endDate = $eventEndDate;
 		$arrCount=0;
+		$emptyDate = 1;
 		//loop through the events
 		foreach($events as $event) {
-			// reset the couter for working Events
+			// reset the counter for working Events
 			$workingEvent = 0;
 			$lunchDeducted = false;
 			if($flexiAccPeriod == "4 Weekly") {
@@ -939,8 +940,45 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 					if(date('l',strtotime($date))=="Monday") { //start of the 4 weekly period display
 						echo "<div class='timesheet_table_header_blank'><div class='timesheet_padding'>".date($dateFormat, strtotime($date))."</div></div>";
 					}
-					if(date('l',strtotime($date))!="Saturday") { 
-						echo "<div class='timesheet_table_header_white' onclick='location.href=\"index.php?choice=Add&subchoice=addevent&type=Working Day&userid=".$userId."&date=".date("Y-m-d", strtotime($date))."\"' style='cursor: pointer;'><div class='timesheet_padding'>".date($shortDate, strtotime($date))."</div></div>";
+					if(date('l',strtotime($date))!="Saturday") {
+						echo "<div id='empty".$emptyDate."' data-horizontal-offset='-264' data-vertical-offset='-15' data-dropdown='#emptydropdown".$emptyDate."' class='timesheet_table_header_white' style='cursor: pointer;'><div class='timesheet_padding'>".date($shortDate, strtotime($date))."</div></div>";
+						//echo "<div id='empty".$emptyDate."' data-dropdown='emptydropdown".$emptyDate."' class='timesheet_table_header_white' onclick='location.href=\"index.php?choice=Add&subchoice=addevent&type=Working Day&userid=".$userId."&date=".date("Y-m-d", strtotime($date))."\"' style='cursor: pointer;'><div class='timesheet_padding'>".date($shortDate, strtotime($date))."</div></div>";
+						echo "<div id='emptydropdown".$emptyDate."' class='dropdown dropdown-tip'>";
+						echo "<ul class='dropdown-menu'>";
+							//use event types to populate the dropdown list
+							$list_types = dl::select("flexi_event_type");
+							$ids="";
+							$eId = $event["event_id"];						
+							foreach($list_types as $lt){
+								//lets exclude the types that only Admin can enter
+								if($lt["event_type_name"] !== "Bank Holiday" and $lt["event_type_name"] !== "University Shutdown") {
+									echo "<li id='".$lt["event_type_id"]."-empty".$emptyDate."'><a href='#1'>".$lt["event_type_name"]."</a><li>";								
+									$ids[] = $lt["event_type_id"]."-empty".$emptyDate;
+								}
+							}
+						echo "</ul>";
+						echo "</div>";
+						foreach($ids as $id) {			
+							?>
+							<script>
+							$("#<?php echo $id?>").click(function() {
+								$.post(
+									"ajax.php",
+									{ 
+										func: 'get_event_type',
+										id: $(this).prop("id")
+									},
+									function (data)
+										{
+											var json = $.parseJSON(data);
+											window.location.href = "index.php?choice=Add&subchoice=addevent&type="+json.type+"&userid=<?php echo $userId?>&date=<?php echo date("Y-m-d", strtotime($date))?>";
+										}
+								);
+							});
+							</script>
+							<?php
+						}
+						$emptyDate++;
 						$date = add_date(strtotime($date),1);
 					}else{
 						if($own_timesheet or $authorise) {
@@ -1254,7 +1292,7 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 							}
 							echo "&nbsp;</div>";
 						}
-						echo "<a href=\"index.php?choice=Add&subchoice=addevent&type=Working Day&userid=".$userId."&date=".date("Y-m-d", strtotime($date))."&option=another"."\" title='Add another event on ".date("d/m", strtotime($date))."'><div data-horizontal-offset='-322' data-vertical-offset='-12' data-dropdown='#dropdown-events".$event["event_id"]."' class='timesheet_table_header_addIcon'> </div></a>";
+						echo "<a href=\"index.php?choice=Add&subchoice=addevent&type=Working Day&userid=".$userId."&date=".date("Y-m-d", strtotime($date))."&option=another"."\" title='Add another event on ".date("d/m", strtotime($date))."'><div data-horizontal-offset='-306' data-vertical-offset='-12' data-dropdown='#dropdown-events".$event["event_id"]."' class='timesheet_table_header_addIcon'> </div></a>";
 						if($extended_lunch) {
 							echo "<img src='inc/images/fork_knife.jpg' title='".$event["event_lunch"]."' />";
 						}
@@ -1263,21 +1301,69 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 						 /* 
 						 * create dropdowns here
 						 */
-						echo "<div id='dropdown-events".$event["event_id"]."' class='dropdown dropdown-tip'>";
+						echo "<div id='dropdown-events".$event["event_id"]."' class='dropdown-anchor-right dropdown dropdown-tip' style='z-index: 1'>";
 						echo "<ul class='dropdown-menu'>";
 							//use event types to populate the dropdown list
 							$list_types = dl::select("flexi_event_type");
 							$ids="";
 							$eId = $event["event_id"];						
 							foreach($list_types as $lt){
-								echo "<li id='".$lt["event_type_id"]."-".$eId."'> <a href='#1'> ".$lt["event_type_name"]."</a><li>";
-								$ids[] = $lt["event_type_id"]."-".$eId;
+								//lets exclude the types that only Admin can enter
+								if($lt["event_type_name"] !== "Bank Holiday" and $lt["event_type_name"] !== "University Shutdown") {
+									echo "<li id='".$lt["event_type_id"]."-".$eId."'><a href='#1'>".$lt["event_type_name"]."</a><li>";								
+									$ids[] = $lt["event_type_id"]."-".$eId;
+								}
 							}
 						echo "</ul>";
 						echo "</div>";
+						$eventsToday = dl::select("flexi_event", "event_startdate_time >= '".substr($date,0,10)." 00:00:00' and event_enddate_time <= '".substr($date,0,10)." 23:59:59' and timesheet_id =".$timesheetId);
+						//now lets set the start Duration selected if the starttime is earlier than 10:00 and the option get value = 'another'
+						$selectedTime = "09:00";
+						$selectedEndTime = "";
+						if($eventsToday[0]["event_startdate_time"] <= $date." 10:00:00") {
+							//lets set the selected value now
+							$hrs = substr($eventsToday[0]["event_enddate_time"], 11,2);
+							$mins = substr($eventsToday[0]["event_enddate_time"], 14,2);
+							$selectedTime = $hrs.":".$mins;
+						}else{
+							$hrs = substr($eventsToday[0]["event_startdate_time"], 11,2);
+							$mins = substr($eventsToday[0]["event_startdate_time"], 14,2);
+							$selectedEndTime = $hrs.":".$mins;
+						}
+						echo "<div id='valDisp' class='dropdown dropdown-panel' style='z-index: 2;'></div>";
+						echo "<div id='arrow-left' class='dropdown dropdown-panel' style='z-index: 100; position: absolute; width:0; height:0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-right: 5px solid #fff; display:none;'></div>";
 						foreach($ids as $id) {
+							//lets check for other events already entered for this day
 							?>
 							<script>
+							$("#<?php echo $id?>").on({
+								mouseenter: function () {
+									divLeft 		= $("#dropdown-events<?php echo $eId?>").position().left;
+									divTop			= $("#dropdown-events<?php echo $eId?>").position().top; 
+									divWidth 		= $("#dropdown-events<?php echo $eId?>").width();									
+									divPos			= divLeft + divWidth+5;
+									$("#valDisp").css({top:divTop+8+'px', left:divPos+'px'});
+									$("#valDisp").show();
+									$("#arrow-left").css({top:divTop+$(this).position().top+15+'px', left:divPos-4+'px'});
+									$("#arrow-left").show();
+									$.post(
+										"ajax.php",
+										{ 
+											func: 'get_field_list',
+											id: $(this).prop("id"),
+											desc: $(this).text(),
+											date: '<?php echo substr($date,0,10) ?>',
+											time: '<?php echo $selectedTime?>',
+											start: '<?php echo $selectedEndTime?>',
+											user: '<?php echo $userId?>'
+										},
+										function (data)
+											{
+												$("#valDisp").html(data);
+											}
+									);
+								}
+							});
 							$("#<?php echo $id?>").click(function() {
 								$.post(
 									"ajax.php",
@@ -1415,7 +1501,46 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 				echo "<div class='timesheet_table_header_blank'>".date($dateFormat, strtotime($date))."</div>";
 			}
 			if(date('l',strtotime($date))!="Saturday") { 
-				echo "<div class='timesheet_table_header_white' onclick='location.href=\"index.php?choice=Add&subchoice=addevent&type=Working Day&userid=".$userId."&date=".date("Y-m-d", strtotime($date))."\"' style='cursor: pointer;'><div class='timesheet_padding'>".date($shortDate, strtotime($date))."</div></div>";
+				//echo "<div class='timesheet_table_header_white' onclick='location.href=\"index.php?choice=Add&subchoice=addevent&type=Working Day&userid=".$userId."&date=".date("Y-m-d", strtotime($date))."\"' style='cursor: pointer;'><div class='timesheet_padding'>".date($shortDate, strtotime($date))."</div></div>";
+				echo "<div id='empty".$emptyDate."' data-horizontal-offset='-264' data-vertical-offset='-15' data-dropdown='#emptydropdown".$emptyDate."' class='timesheet_table_header_white' style='cursor: pointer;'><div class='timesheet_padding'>".date($shortDate, strtotime($date))."</div></div>";
+				//echo "<div id='empty".$emptyDate."' data-dropdown='emptydropdown".$emptyDate."' class='timesheet_table_header_white' onclick='location.href=\"index.php?choice=Add&subchoice=addevent&type=Working Day&userid=".$userId."&date=".date("Y-m-d", strtotime($date))."\"' style='cursor: pointer;'><div class='timesheet_padding'>".date($shortDate, strtotime($date))."</div></div>";
+				echo "<div id='emptydropdown".$emptyDate."' class='dropdown dropdown-tip'>";
+				echo "<ul class='dropdown-menu'>";
+					//use event types to populate the dropdown list
+					$list_types = dl::select("flexi_event_type");
+					$ids="";
+					$eId = $event["event_id"];						
+					foreach($list_types as $lt){
+						//lets exclude the types that only Admin can enter
+						if($lt["event_type_name"] !== "Bank Holiday" and $lt["event_type_name"] !== "University Shutdown") {
+							echo "<li id='".$lt["event_type_id"]."-empty".$emptyDate."'><a href='#1'>".$lt["event_type_name"]."</a><li>";								
+							$ids[] = $lt["event_type_id"]."-empty".$emptyDate;
+						}
+					}
+				echo "</ul>";
+				echo "</div>";
+
+				foreach($ids as $id) {			
+				?>
+				<script>
+				$("#<?php echo $id?>").click(function() {
+					$.post(
+						"ajax.php",
+						{ 
+							func: 'get_event_type',
+							id: $(this).prop("id")
+						},
+						function (data)
+							{
+								var json = $.parseJSON(data);
+								window.location.href = "index.php?choice=Add&subchoice=addevent&type="+json.type+"&userid=<?php echo $userId?>&date=<?php echo date("Y-m-d", strtotime($date))?>";
+							}
+					);
+				});
+				</script>
+				<?php
+				}
+				$emptyDate++;
 				$date = add_date(strtotime($date),1);
 			}else{
 				if($own_timesheet or $authorise) {
@@ -1486,7 +1611,6 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 				$extra_time=0;
 			}
 		}
-	
 	echo "</div>"; //timesheet_workspace
 	if($flexiAccPeriod == "4 Weekly") {
 		$pAddStartDate = add_date(strtotime($eventEndDate),1);
@@ -1501,7 +1625,8 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 	}
 	
 	//check if the user has Leave Template notes so the manager can view them here.
-	$leaveNotes = dl::select("flexi_al_notes", "n_template_id =".$timesheetId, "");
+	$userALTemplate = dl::select("flexi_user", "user_id = ".$userId);
+	$leaveNotes = dl::select("flexi_al_notes", "n_template_id =".$userALTemplate[0]["user_al_template"], "");
 	echo "<div class='timesheet_footer'><a href='index.php?func=previousperiod&start=".date("Y-m-d", strtotime($pSubStartDate))."&end=".date("Y-m-d", strtotime($pSubEndDate))."&userid=".$userId."'><img src='inc/images/arrow_left.jpg' border='0' align='middle' /></a> <a href='index.php?func=nextperiod&start=".date("Y-m-d", strtotime($pAddStartDate))."&end=".date("Y-m-d", strtotime($pAddEndDate))."&userid=".$userId."'><img src='inc/images/arrow_right.jpg' border='0' align='middle' /></a> ";
 	if($authorise) {
 		echo "<span title='Edit User Events' id='userEvents'><a href='index.php?func=edituserevents&userid=".$userId."&page=0'><img src='inc/images/small_pen_paper_icon.jpg' border='0' align='middle' /></a></span> <span id='view_leave' title='View User leave dates'><a href='index.php?func=showuserleave&userid=".$userId."'><img src='inc/images/leave.png' border='0' align='middle' /></a></span>";
