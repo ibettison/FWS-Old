@@ -2855,8 +2855,9 @@ function add_event($title, $intro, $user="") {
 }
 
 function save_event($userId) {
+	print_r($_POST);
 	include("inc/email_messages.inc");
-	//dl::$debug=true;
+	dl::$debug=true;
 	$eventType							= $_POST["event_type"];
 	$leaveDuration						= $_POST["duration"]; // this 'Full day', 'Half day' 'Remainder' or Blank
 	$event 								= dl::select("flexi_event_type", "event_type_name='$eventType'");
@@ -3997,7 +3998,8 @@ function add_event_type() {
 }
 
 function save_event_type() {
-	$fieldarr = array("event_type_name", "event_colour", "event_shortcode","event_description","event_al", "event_flexi","event_work","event_global","event_authorisation", "event_sickness","event_delete", "event_override", "remainder");
+	//dl::$debug = true;
+	$fieldarr = array("event_type_name", "event_colour", "event_shortcode","event_description","event_al", "event_flexi","event_work","event_global","event_authorisation", "event_sickness","event_delete", "event_override", "event_remainder");
 	$leave=$_POST["leave_tag"];
 	$flexi=$_POST["flexi_tag"];
 	$work=$_POST["work_tag"];
