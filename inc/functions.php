@@ -711,7 +711,7 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 			$_SESSION["startPeriod"] 		= $_GET["start"];
 			$_SESSION["endPeriod"] 			= $_GET["end"];
 			$_SESSION["user"]				= $_GET["userid"];
-		}elseif($_GET["choice"]="View") {//adding to your own spreadsheet
+		}elseif($_GET["choice"]				="View") {	//adding to your own spreadsheet
 			$_SESSION["pageLocation"]		= "viewuserstimesheet";
 			$_SESSION["user"]				= $_SESSION["userSettings"]["userId"];
 		}else{
@@ -1050,7 +1050,7 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 						$weekTimeMins				= 0;
 						$extra_time 				= 0;
 					}
-				}
+				}// while end which shows empty days if there are any
 				if(date('l',strtotime($date))		=="Monday") { //start of the 4 weekly period display
 					echo "<div class='timesheet_table_header_blank'><div class='timesheet_padding'>".date($dateFormat, strtotime($date))."</div></div>";
 				}
@@ -1125,13 +1125,29 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 								}
 							}
 						}
+						// lets check the event type settings to make sure we need to count this time within the timesheet
+						$eventSettings = dl::select("flexi_event_settings", "event_typeid = ".$event["event_type_id"]);
 						// add up the number of hours and mins
-						if($eventType[0]["event_flexi"]=="Yes") {
+						if($eventType[0]["event_flexi"]=="Yes") { //this is a flexi event
+							if($lunchDeducted		== true) { //has lunch been deducted
+								if(count($eventsToday) == 1) { //is there only one event on the day
+									//add minimum lunch back onto the event
+									$dayHr 			= substr(date("H:i:s", strtotime($daysMinimumLunchDuration)),0,2)*60*60;
+									$dayMin 		= substr(date("H:i:s", strtotime($daysMinimumLunchDuration)),3,2)*60;
+									$daySec 		= substr(date("H:i:s", strtotime($daysMinimumLunchDuration)),5,2);
+									$lunchtoAdd 	= $dayHr + $dayMin + $daySec;
+									//add the minimum lunch back onto the $timediff variable
+									$timediff 		= date('H:i:s', strtotime($timediff) + $lunchtoAdd);
+								}
+							}
+								
 							$flexiTimeHrs 			= $flexiTimeHrs + date("G", strtotime($timediff));
 							$flexiTimeMins 			= $flexiTimeMins + date("i", strtotime($timediff));
 						}else{
-							$weekTimeHrs 			= $weekTimeHrs + date("G", strtotime($timediff));
-							$weekTimeMins 			= $weekTimeMins + date("i", strtotime($timediff));
+							if($eventSettings[0]["changes_time"] == "Yes") { //check if the time acquired by this event type needs recording on the timesheet
+								$weekTimeHrs 		= $weekTimeHrs + date("G", strtotime($timediff));
+								$weekTimeMins 		= $weekTimeMins + date("i", strtotime($timediff));
+							}
 						}
 						$hours 						= date("G", strtotime($timediff));
 						$mins 						= date("i", strtotime($timediff));
@@ -1225,14 +1241,18 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 									}
 								}
 							}
-							
+							// lets check the event type settings to make sure we need to count this time within the timesheet
+							$eventSettings = dl::select("flexi_event_settings", "event_typeid = ".$events[$loopCount]["event_type_id"]);
+
 							// add up the number of hours and mins
 							if($eventType[0]["event_flexi"]=="Yes") {
 								$flexiTimeHrs = $flexiTimeHrs + date("G", strtotime($timediff));
 								$flexiTimeMins = $flexiTimeMins + date("i", strtotime($timediff));
 							}else{
-								$weekTimeHrs = $weekTimeHrs + date("G", strtotime($timediff));
-								$weekTimeMins = $weekTimeMins + date("i", strtotime($timediff));
+								if($eventSettings[0]["changes_time"] == "Yes") { //check if the time acquired by this event type needs recording on the timesheet
+									$weekTimeHrs = $weekTimeHrs + date("G", strtotime($timediff));
+									$weekTimeMins = $weekTimeMins + date("i", strtotime($timediff));
+								}
 							}
 							$hours = date("G", strtotime($timediff));
 							$mins = date("i", strtotime($timediff));
@@ -2855,9 +2875,8 @@ function add_event($title, $intro, $user="") {
 }
 
 function save_event($userId) {
-	print_r($_POST);
 	include("inc/email_messages.inc");
-	dl::$debug=true;
+	//dl::$debug=true;
 	$eventType							= $_POST["event_type"];
 	$leaveDuration						= $_POST["duration"]; // this 'Full day', 'Half day' 'Remainder' or Blank
 	$event 								= dl::select("flexi_event_type", "event_type_name='$eventType'");
