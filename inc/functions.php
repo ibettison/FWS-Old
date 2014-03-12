@@ -1066,7 +1066,9 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 						//find out if the event has a lunch_deduction
 						$lunchDeduction 			= dl::select("flexi_event_settings", "event_typeid = ".$event["event_type_id"]);
 						if($lunchDeduction[0]["lunch_deduction"] == "Yes") { //the event requires a lunch deduction to be taken off but only if equal or over 6 hours
-							$workingEvent 			+= strtotime($timediff);
+							if($lunchDeduction[0]["event_work"] == "Yes"){
+								$workingEvent 			+= strtotime($timediff);
+							}
 						}
 						//check if an extended lunch was taken
 						if($event["event_lunch"] 	!= "00:00:00") { //extended lunch has been taken
@@ -1091,7 +1093,7 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 							if($daysMinimumLunch	=="Yes") {
 								// capture the time for this event as there may be multiple events on the one day (eg: working session then a training session followed by a working session
 								//*************************************************
-								if(date("G", strtotime($timediff)) >= 6 ) { //if the time worked is greater than 6 hours then take off lunch
+								if(date("G", $workingEvent) >= 6 ) { //if the time worked is greater than 6 hours then take off lunch
 									$timediff 		= date('H:i:s',strtotime($timediff) - strtotime($daysMinimumLunchDuration));
 									$lunchDeducted 	= true;
 								}
