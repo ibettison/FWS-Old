@@ -71,7 +71,7 @@ $cal = new calendars;
 			if(!empty($check_email)) {
 				foreach($check_email as $ce) {
 					//create array listing all user settings when login confirmed transfer to a session variable
-					$user_settings=array(secId=>$ce["user_security"],userId=>$ce["user_id"],permissionId=>$ce["user_permission_id"],email=>$ce["user_email"],name=>$ce["user_name"],al=>$ce["user_al_template"],timeTemplate=>$ce["user_time_template"],flexiTemplate=>$ce["user_flexi_template"],timesheet=>$check_timesheet[0]["timesheet_id"]);
+					$user_settings=array("secId"=>$ce["user_security"],"userId"=>$ce["user_id"],"permissionId"=>$ce["user_permission_id"],"email"=>$ce["user_email"],"name"=>$ce["user_name"],"al"=>$ce["user_al_template"],"timeTemplate"=>$ce["user_time_template"],"flexiTemplate"=>$ce["user_flexi_template"],"timesheet"=>$check_timesheet[0]["timesheet_id"]);
 				}
 				$check_password = dl::select("flexi_security", "security_id=".$user_settings['secId']);
 				if(!empty($check_password)) {
