@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourceManagerImpl" format="xml" hash="4030334509">
+    <data-source source="LOCAL" name="MySQL - nflexiem_crf@crf88.ncl.ac.uk" uuid="6a22273d-f9f5-4c04-aedf-e654221c9d79">
+      <driver-ref>mysql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>com.mysql.jdbc.Driver</jdbc-driver>
+      <jdbc-url>jdbc:mysql://crf88.ncl.ac.uk:3306/nflexiem_crf</jdbc-url>
+      <user-name>nflexiem_crf</user-name>
+      <user-password>dfd8dfc0df92df98df9bdf93dfdadfde</user-password>
+      <driver-properties>
+        <property name="zeroDateTimeBehavior" value="convertToNull" />
+        <property name="tinyInt1isBit" value="false" />
+      </driver-properties>
+      <libraries />
+    </data-source>
+  </component>
+</project>
+

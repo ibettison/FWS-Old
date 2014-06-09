@@ -477,7 +477,12 @@ if($_POST["func"]=="check_delete") {
 					$allowDelete = true;
 				}
 			}
-		}
+		}else{ //lets check to see if this manager has the over ride local manager constraint permission so this manager can delete other managers' events in the same team
+            $constraint_permission = dl::select("flexi_permission_template", "permission_template_name_id = ".$_SESSION["userSettings"]["permissionId"]);
+            if($constraint_permission[0]["permission_LM_constraint"] == 'true') {
+                $allowDelete = true;
+            }
+        }
 		if($highLevel or empty($localManager)) { 
 			// this is a request from the local team manager so the request should go to the non-local manager or there is no local manager in this group	
 			$sql = "select fu.user_id, user_name, user_email from flexi_permission_template as fpt 
