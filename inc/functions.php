@@ -5685,10 +5685,12 @@ function leave_dates($user_id, $year="") {
 }
 
 function calendar_picker($date_name, $date_view, $date_select="", $date_ZIndex) {
+    $startCalendarDate = "2008-05-13"; //The date the system was used from
+    $endCalendarDate = date("Y-m-d", strtotime("+3 years")); // this will always be 3 years from today.
 	$myCalendar = new tc_calendar($date_name, true);
 	$myCalendar->setZIndex($date_ZIndex);
 	$myCalendar->setIcon("inc/css/images/iconCalendar.gif");
-	// $date_view parameter is decided by date format field.
+	// $DATE_VIEW PARAMETER IS DECIDED BY DATE FORMAT FIELD.
 	if(empty($date_select)){
 		$myCalendar->setDate(date('d'), date('m'), date('Y'));
 	}else{
@@ -5696,7 +5698,7 @@ function calendar_picker($date_name, $date_view, $date_select="", $date_ZIndex) 
 	}
 	$myCalendar->setPath("inc/classes/");
 	$myCalendar->setYearInterval(2010, 2020);
-	$myCalendar->dateAllow('2008-05-13', '2015-03-01', false);
+	$myCalendar->dateAllow($startCalendarDate, $endCalendarDate, false);
 	$myCalendar->startMonday(true);
 	$myCalendar->writeScript();
 }

@@ -34,12 +34,15 @@ pre .builtin { color:#FF0000;  }
                 <tr>
                   <td valign="top" nowrap>Date 1 :</td>
                   <td valign="top"><?php
+      $startCalendarDate = "2008-05-13"; // this is the date the system started to be used
+      $endCalendarDate  = date("Y:m:d", strtotime("+2 years")); //todays date plus 2 years (always 2 years from todays date)
+                      echo $endCalendarDate;
 	  $myCalendar = new tc_calendar("date2");
 	  $myCalendar->setIcon("images/iconCalendar.gif");
 	  $myCalendar->setDate(date('d'), date('m'), date('Y'));
 	  $myCalendar->setPath("./");
-	  $myCalendar->setYearInterval(1970, 2020);
-	  $myCalendar->dateAllow('2008-05-13', '2015-03-01', false);
+	  $myCalendar->setYearInterval(1970, 2030);
+	  $myCalendar->dateAllow($startCalendarDate, $endCalendarDate, false);
 	  $myCalendar->startMonday(true);
 	  //$myCalendar->autoSubmit(true, "", "test.php");
 	  //$myCalendar->autoSubmit(true, "form1");
@@ -65,8 +68,8 @@ pre .builtin { color:#FF0000;  }
 	  $myCalendar->setIcon("images/iconCalendar.gif");
 	  $myCalendar->setDate(01, 03, 1960);
 	  $myCalendar->setPath("./");
-	  $myCalendar->setYearInterval(1960, 2015);
-	  $myCalendar->dateAllow('1960-01-01', '2015-03-01');
+	  $myCalendar->setYearInterval(1960, 2030);
+	  $myCalendar->dateAllow('1960-01-01', $endCalendarDate);
 	  //$myCalendar->setHeight(350);	  
 	  //$myCalendar->autoSubmit(true, "form1");
 	  $myCalendar->disabledDay("Sat");
@@ -94,7 +97,7 @@ pre .builtin { color:#FF0000;  }
 	  $myCalendar->setDate(date('d'), date('m'), date('Y'));
 	  $myCalendar->setPath("./");
 	  $myCalendar->setYearInterval(2000, 2015);
-	  $myCalendar->dateAllow('2008-05-13', '2015-03-01');
+	  $myCalendar->dateAllow($startCalendarDate, $endCalendarDate);
 	  $myCalendar->setDateFormat('j F Y');
 	  //$myCalendar->setHeight(350);	  
 	  //$myCalendar->autoSubmit(true, "form1");
@@ -146,7 +149,7 @@ pre .builtin { color:#FF0000;  }
 	  $myCalendar->setIcon("images/iconCalendar.gif");
 	  $myCalendar->setDate(date('d', strtotime($date1)), date('m', strtotime($date1)), date('Y', strtotime($date1)));
 	  $myCalendar->setPath("./");
-	  $myCalendar->setYearInterval(1970, 2020);
+	  $myCalendar->setYearInterval(1970, 2030);
 	  //$myCalendar->dateAllow('2009-02-20', "", false);
 	  $myCalendar->writeScript();	  
 	  ?>
@@ -160,7 +163,7 @@ pre .builtin { color:#FF0000;  }
 	  $myCalendar->setIcon("images/iconCalendar.gif");
 	  $myCalendar->setDate(date('d', strtotime($date2)), date('m', strtotime($date2)), date('Y', strtotime($date2)));
 	  $myCalendar->setPath("./");
-	  $myCalendar->setYearInterval(1970, 2020);
+	  $myCalendar->setYearInterval(1970, 2030);
 	  //$myCalendar->dateAllow("", '2009-11-03', false);
 	  $myCalendar->writeScript();	  
 	  ?>
