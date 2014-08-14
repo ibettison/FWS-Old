@@ -62,8 +62,7 @@ if($_POST["func"] == "get_field_list") {
 			break;
 		case "Annual Leave":
 		case "Maternity/Paternity Leave":
-		case "Flexi Leave":		
-		case "Carers Leave":
+		case "Flexi Leave":
 		case "Emergency Leave":	
 		case "Unpaid leave":
 			$div = str_replace(array(" ", "/"), "", $_POST["desc"]);
@@ -86,6 +85,7 @@ if($_POST["func"] == "get_field_list") {
 		case "Offsite Meeting":
 		case "Sickness":
 		case "Training":
+        case "Carers Leave":
 		case "Bereavement Leave":
 		case "Hospital":
 			$div = str_replace(" ", "", $_POST["desc"]);
