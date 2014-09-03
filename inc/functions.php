@@ -2877,7 +2877,7 @@ function add_event($title, $intro, $user="") {
 }
 
 function save_event($userId) {
-	include("inc/email_messages.inc");
+    include("inc/email_messages.inc");
 	//dl::$debug=true;
 	$eventType							= $_POST["event_type"];
 	$leaveDuration						= $_POST["duration"]; // this 'Full day', 'Half day' 'Remainder' or Blank
