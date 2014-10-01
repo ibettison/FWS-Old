@@ -608,7 +608,7 @@ function flexi_pot_edit($timesheetId) {
 			array("prompt"=>"User Name", "type"=>"label", "name"=>"usersCarriedOver", "length"=>30, "value"=>$username[0]["user_name"]." (".$leaveAccountType.")", "clear"=>true),
 			array("prompt"=>"Positive/minus", "type"=>"selection", "name"=>"posneg", "listarr"=>array("+","-"), "selected"=>$sign, "value"=>"", "clear"=>true),
 			array("prompt"=>"Carried over time", "type"=>"time", "name"=>"carried_over", "starttime"=>"0000", "endtime"=>"2300", "interval"=>1, "selected"=>$carriedOverTime, "clear"=>true),	
-			array("prompt"=>"Additional Leave", "type"=>"label", "name"=>"additionalLeave", "length"=>10, "value"=>$carried[0]["additional_leave"]." (1 day = ".$proRataTime." hours)", "clear"=>true),
+			array("prompt"=>"Additional Leave", "type"=>"label", "name"=>"additionalLeave", "length"=>10, "value"=>$carried[0]["additional_leave"]." (1 day = ".$proRataTime." <u>prorata hours</u>)", "clear"=>true),
 			array("prompt"=>"New Leave (+/-) Hours", "type"=>"text", "name"=>"newLeave", "length"=>10, "selected"=>"", "clear"=>true),
 			array("prompt"=>"Note", "type"=>"textarea", "name"=>"note", rows=>8, cols=>50, "selected"=>"", "clear"=>true),
 			array("type"=>"submit", "buttontext"=>"Edit", "clear"=>true), 
@@ -1823,8 +1823,8 @@ function view_team_members() {
 		//now lets check if they have any additional holidays
 		$additional				=0;
 		$additionalHols			=dl::select("flexi_carried_forward_live", "timesheet_id=".$timesheet[0]["timesheet_id"]);
-		$additional 				= $additionalHols[0]["additional_leave"];
-		$leave[]						=array("days_taken"=>$used, "entitled_to"=>$entitledTo, "additional"=>$additional, "next_year"=>$nextYrLeave, "hours_leave"=>$hoursLeave, "hours_taken"=>$hoursTaken, "account_type"=>$leaveAccountType, "proRata"=>$proRataTime);
+		$additional 			= $additionalHols[0]["additional_leave"];
+		$leave[]				=array("days_taken"=>$used, "entitled_to"=>$entitledTo, "additional"=>$additional, "next_year"=>$nextYrLeave, "hours_leave"=>$hoursLeave, "hours_taken"=>$hoursTaken, "account_type"=>$leaveAccountType, "proRata"=>$proRataTime);
 	}
 	$leaveCount = 0;
 	echo "<div class='timesheet_header'>Team Members</div>";
@@ -5791,7 +5791,7 @@ function reset_leave_report() {
 				where date_deleted is NULL order by u.user_id ASC";
 	$users = dl::getQuery($sql);
 	$reset = new report_on_leave( );
-	$header = array("Select","Leave month","User Name","Leave days", "Additional days", "Leave taken", "Leave Left");
+	$header = array("Select","Leave month","User Name","Leave days", "Additional hours", "Leave taken", "Leave Left");
 	$spacing = array(10,10,10,80,10,10,10);
 	echo $reset->show_header( $header, $spacing );
 	$spacing = array(90,160,90,90,70,60);
