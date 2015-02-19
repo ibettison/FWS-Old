@@ -9,6 +9,7 @@ function redirect(url) {
 session_start();
 error_reporting("E_ALL & ~E_NOTICE");
 //error_reporting("~E_NOTICE");
+
 require('inc/mysqli_datalayer.php');
 require('inc/connection.inc');
 include('inc/functions.php');
@@ -59,10 +60,9 @@ $cal = new calendars;
 	}else{
 		echo "<div class='calendar_main'>";
 	}
-
 	//a login request has been made
 	if($_GET["func"] == "login") { // attempt to login
-		$email= strtolower(addslashes($_POST["email_address"]));
+		$email= strtolower(addslashes(trim($_POST["email_address"])));
 		$password=$_POST["password"];
 		$check_email = dl::select("flexi_user", "user_email='$email'");
 		$check_deleted = dl::select("flexi_deleted", "user_id=".$check_email[0]["user_id"]);
@@ -106,7 +106,8 @@ $cal = new calendars;
 							}
 							//credentials confirmed
 							$_SESSION["loggedin"]=true;
-							
+							dl::closedb();
+							dl::connect("database.ncl.ac.uk", "nflexiem_crf", "rj8219pt", "nflexiem_crf");
 						}
 					}
 				}
@@ -292,6 +293,7 @@ $cal = new calendars;
 		$cTeams = $teams[0]["cTeams"];
 		if(!empty($manager)) { //An approver
 			//get team names and add to drop down list if count is > 1
+
 			echo "You're responsible for the requests from ".$cTeams." team(s)<BR>";
 		}else{
 			echo "You're a member of ".$cTeams." team(s)<BR><BR>";

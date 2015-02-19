@@ -6,8 +6,6 @@
       <synchronize>true</synchronize>
       <jdbc-driver>com.mysql.jdbc.Driver</jdbc-driver>
       <jdbc-url>jdbc:mysql://crf88.ncl.ac.uk:3306/nflexiem_crf</jdbc-url>
-      <user-name>nflexiem_crf</user-name>
-      <user-password>dfd8dfc0df92df98df9bdf93dfdadfde</user-password>
       <driver-properties>
         <property name="zeroDateTimeBehavior" value="convertToNull" />
         <property name="tinyInt1isBit" value="false" />

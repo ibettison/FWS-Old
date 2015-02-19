@@ -2498,6 +2498,7 @@ function edit_user() {
 }
 
 function save_user_edit() {
+
 	$user_details = dl::select("flexi_user", "user_id=".$_GET["id"]);
 	$timesheet = dl::select("flexi_timesheet", "user_id=".$_GET["id"]);
 	//check the templates to get the id's

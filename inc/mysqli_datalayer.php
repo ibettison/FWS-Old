@@ -123,8 +123,8 @@ class dl {
    
    static function _quote_val( $val ) {
      if ( is_numeric( $val ) and substr($val,0,1) !== "0" )
-       return $val;
-     return "'".addslashes($val)."'";
+       return htmlspecialchars($val);
+     return "'".htmlspecialchars($val)."'";
    }
  
    static function _quote_vals( $array ) {
@@ -145,6 +145,7 @@ class dl {
    
    public static function closedb() {
    	self::$mysqli->close();
+	   self::$mysqli = null;
    }	
  }
  ?>

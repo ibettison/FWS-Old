@@ -144,4 +144,4 @@
    	mysql_close( $this->link );
    }	
  }  
-?>
+
