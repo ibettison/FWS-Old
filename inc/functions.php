@@ -2222,10 +2222,13 @@ function change_password($post, $passcode) {
 		<?php die();
 	}
 	if($passcode==MD5(SALT.$post["email_address"])) { //everything confirmed
+		//lets connect using a writeable connection to allow the update
+		dl::closedb();
+		dl::connect("localhost", "nflexiem_crf", "rj8219pt", "nflexiem_crf");
 		// now need to locate user account and add password to security table and update user table
 		$user = dl::select("flexi_user", "user_email='".$post["email_address"]."'");
 		$user_id=$user[0]["user_id"];
-		$security = dl::update("flexi_security", array(security_password=>MD5(SALT.$post["password"])), "user_id=".$user_id);
+		dl::update("flexi_security", array(security_password=>MD5(SALT.$post["password"])), "user_id=".$user_id);
 	}
 	echo "<SCRIPT language='javascript'>redirect('index.php')</SCRIPT>" ;
 }

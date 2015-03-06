@@ -107,7 +107,7 @@ $cal = new calendars;
 							//credentials confirmed
 							$_SESSION["loggedin"]=true;
 							dl::closedb();
-							dl::connect("database.ncl.ac.uk", "nflexiem_crf", "rj8219pt", "nflexiem_crf");
+							dl::connect("localhost", "nflexiem_crf", "rj8219pt", "nflexiem_crf");
 						}
 					}
 				}
@@ -462,6 +462,9 @@ $cal = new calendars;
 			if($_POST["password"] == $_POST["compare"]) {
 				// check passcode and email address
 				if($_GET["passcode"]==MD5(SALT.$_POST["email_address"])) { //everything confirmed
+					//lets close the read only connection then connect to the database to allow updates
+					dl::closedb();
+					dl::connect("localhost", "nflexiem_crf", "rj8219pt", "nflexiem_crf");
 					// now need to locate user account and add password to security table and update user table
 					$user = dl::select("flexi_user", "user_email='".addslashes($_POST["email_address"])."'");
 					$user_id=$user[0]["user_id"];
