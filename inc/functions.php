@@ -1210,11 +1210,12 @@ function view_timesheet($userId, $pStartDate="", $pEndDate="") {
 						}
 						echo " &nbsp;</div></div>";
 						$loopCount=$arrCount+1;
+
                         $accumulateTime = 0;
+                        // check if the first event is a working event
                         if($lunchDeduction[0]["working_event"] == "Yes") {
                             $accumulateTime = strtotime($timediff);
                         }
-
 						//now loop through multiple events on the same day
 						while(date('Y-m-d',strtotime($date)) == date('Y-m-d',strtotime($events[$loopCount]["event_startdate_time"]))) {
 							$timeFrom = date('H:i:s', strtotime($events[$loopCount]["event_startdate_time"]));
